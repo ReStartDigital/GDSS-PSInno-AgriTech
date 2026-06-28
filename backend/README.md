@@ -42,7 +42,7 @@
 
 VegeLink Ghana is a cross-platform digital marketplace that directly connects smallholder vegetable farmers with buyers (retailers, restaurants, processors, households) while integrating **logistics coordination** and a **smart packaging system** — all in a single accessible platform.
 
-It is built for the realities of Ghana's agricultural sector: users with no smartphone experience, intermittent connectivity, and basic feature phones sit alongside urban buyers who expect a fast, modern web experience. VegeLink works for all of them.
+It is built for the realities of Ghana's agricultural sector: users with no smartphone experience, intermittent connectivity, and basic feature phones sit alongside urban buyers who expect a fast, modern web and mobile experience. VegeLink works for all of them.
 
 ```
 Farmer ──────────────────────────────────────────────────────────────── Buyer
