@@ -4,15 +4,30 @@ import cors from "cors";
 import helmet from "helmet";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger.js";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 
 // 1. Professional CORS Configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") ?? [];
+
 app.use(helmet());
 app.use(
   cors({
-    origin: "*",
+    origin: (origin, callback) => {
+      // ALLOW REQUEST WITH NO ORIGIN
+      if(!origin) return callback(null, true);
+
+      if(allowedOrigins.indexOf(origin) != -1){
+        callback(null, true);
+      }else{
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
   }),
 );
 
