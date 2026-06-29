@@ -8,7 +8,6 @@ const levels = {
   debug: 4,
 };
 
-// Colorize logs for terminal readability in development
 const colors = {
   error: "red",
   warn: "yellow",
@@ -18,24 +17,26 @@ const colors = {
 };
 winston.addColors(colors);
 
+// 🛠️ Keep the root format clean and focused on metadata injection
 const format = winston.format.combine(
   winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss:ms" }),
-  // In production, we want JSON for log parsers; in dev, we want readable strings
-  process.env.NODE_ENV === "production"
-    ? winston.format.json()
-    : winston.format.printf(
-        (info) => `${info.timestamp} ${info.level}: ${info.message}`,
-      ),
+  process.env.NODE_ENV === "production" ? winston.format.json() : winston.format.errors({ stack: true })
 );
 
 const transports = [
   new winston.transports.Console({
+    // 🔑 Explicitly tell the console to listen down to 'debug' or 'http' level
+    level: (process.env.NODE_ENV || "development") === "development" ? "debug" : "info",
     format:
       process.env.NODE_ENV === "production"
         ? winston.format.json()
-        : winston.format.combine(winston.format.colorize({ all: true })),
+        : winston.format.combine(
+            winston.format.colorize({ all: true }), // 1. Colorize first
+            winston.format.printf(
+              (info) => `${info.timestamp} ${info.level}: ${info.message}` // 2. Print template string second
+            )
+          ),
   }),
-  // Optional: Write errors to a file even in Docker for persistence
   new winston.transports.File({
     filename: "logs/error.log",
     level: "error",
