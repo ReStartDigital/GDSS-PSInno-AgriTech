@@ -15,7 +15,15 @@
   "type": "module",
   "main": "src/server.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts",
+    "start:worker": "tsx watch src/workers/main.ts",
+    "lint": "eslint \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "prepare": "cross-env NODE_ENV=development lefthook install"
   },
   "dependencies": {
     "axios": "^1.18.1",
@@ -30,6 +38,8 @@
     "multer": "^2.2.0",
     "pg": "^8.22.0",
     "rate-limit-redis": "^5.0.0",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1",
     "typeorm": "^1.0.0",
     "uuid": "^14.0.1",
     "winston": "^3.19.0",
@@ -45,6 +55,9 @@
     "@types/morgan": "^1.9.10",
     "@types/multer": "^2.1.0",
     "@types/node": "^26.0.1",
+    "@types/pg": "^8.20.0",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/parser": "^8.62.0",
     "daemon": "^1.1.0",
@@ -58,6 +71,7 @@
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }
 }
