@@ -106,3 +106,16 @@ export const registerSchema = z.object({
     role: z.enum(["farmer", "buyer", "transporter","agent"]).default("buyer"), // Enforce defined domain roles explicitly
   }),
 });
+
+export const refreshTokenSchema = z.object({
+  body: z.object({
+    accessToken: z
+      .string({ message: "Access token is required" })
+      .trim()
+      .min(1, { message: "Access token cannot be empty" }),
+    refreshToken: z
+      .string({ message: "Refresh token is required" })
+      .trim()
+      .min(1, { message: "Refresh token cannot be empty" }),
+  }),
+});
