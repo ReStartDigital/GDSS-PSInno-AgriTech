@@ -1,10 +1,9 @@
 import app from "./app.js";
-import logger from "./common/utils/logger.js"
+import logger from "./common/utils/logger.js";
 import pool from "./config/db.js";
 import * as dotenv from "dotenv";
 
 dotenv.config();
-
 
 // app.set("io", io);
 const PORT = process.env.PORT || 5000;

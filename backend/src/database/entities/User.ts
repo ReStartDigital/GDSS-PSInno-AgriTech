@@ -20,7 +20,13 @@ export class User {
   @Column({ type: "varchar", name: "first_name", length: 255 })
   firstName: string;
 
-  @Column({ type: "varchar", name: "middle_name", length: 255, nullable: true, default: null })
+  @Column({
+    type: "varchar",
+    name: "middle_name",
+    length: 255,
+    nullable: true,
+    default: null,
+  })
   middleName: string | null; // 🔑 Kept string | null to match database nullable state
 
   @Column({ type: "varchar", name: "last_name", length: 255 })

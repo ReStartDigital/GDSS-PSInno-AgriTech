@@ -1,4 +1,3 @@
-import  type { Request, Response} from "express"
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -22,16 +21,16 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // ALLOW REQUEST WITH NO ORIGIN
-      if(!origin) return callback(null, true);
+      if (!origin) return callback(null, true);
 
-      if(allowedOrigins.indexOf(origin) != -1){
+      if (allowedOrigins.indexOf(origin) != -1) {
         callback(null, true);
-      }else{
+      } else {
         callback(new Error("Not allowed by CORS"));
       }
     },
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
+    credentials: true,
   }),
 );
 

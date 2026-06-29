@@ -10,7 +10,6 @@ import {
 import { User } from "./User.js";
 import { ListingStatus } from "../../common/constants/enums.js";
 
-
 @Entity("produce_listings")
 export class ProduceListing {
   @PrimaryGeneratedColumn("uuid")
@@ -31,7 +30,11 @@ export class ProduceListing {
   @Column({ type: "numeric", precision: 10, scale: 2 })
   availableQuantity: number;
 
-  @Column({ type: "enum", enum: ListingStatus, default: ListingStatus.AVAILABLE })
+  @Column({
+    type: "enum",
+    enum: ListingStatus,
+    default: ListingStatus.AVAILABLE,
+  })
   status: ListingStatus;
 
   @Column({ type: "text", array: true, nullable: true })
@@ -43,7 +46,7 @@ export class ProduceListing {
     spatialFeatureType: "Point",
     srid: 4326,
   })
-  pickupLocation: string; 
+  pickupLocation: string;
 
   @Column({ type: "uuid", name: "farmer_id" })
   farmerId: string;

@@ -11,7 +11,9 @@ async function main() {
   const target = process.argv[2];
 
   if (!target) {
-    logger.error("❌ Please specify a seed target. Example: npm run db:seed user");
+    logger.error(
+      "❌ Please specify a seed target. Example: npm run db:seed user",
+    );
     process.exit(1);
   }
 
@@ -20,12 +22,14 @@ async function main() {
 
   try {
     logger.info(`🌱 Importing seed processor from: ${target}.seed.ts`);
-    
+
     // 🔑 Dynamically import the matching file on the fly
     const seedModule = await import(`file://${seedFilePath}`);
 
     if (typeof seedModule.run !== "function") {
-      throw new Error(`The seed file '${target}.seed.ts' must export a 'run' function.`);
+      throw new Error(
+        `The seed file '${target}.seed.ts' must export a 'run' function.`,
+      );
     }
 
     logger.info("🔌 Connecting to the database...");
@@ -34,8 +38,11 @@ async function main() {
     // Run the isolated seed logic passing the shared datasource
     await seedModule.run(AppDataSource);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    logger.error(`❌ Seeding failed for target [${target}]:` +  error.message || error);
+    logger.error(
+      `❌ Seeding failed for target [${target}]:` + error.message || error,
+    );
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();

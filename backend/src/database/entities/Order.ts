@@ -11,7 +11,6 @@ import { User } from "./User.js";
 import { ProduceListing } from "./ProduceListing.js";
 import { OrderStatus } from "../../common/constants/enums.js";
 
-
 @Entity("orders")
 export class Order {
   @PrimaryGeneratedColumn("uuid")
@@ -23,10 +22,19 @@ export class Order {
   @Column({ type: "numeric", precision: 10, scale: 2 })
   totalAmount: number; // In GHS
 
-  @Column({ type: "enum", enum: OrderStatus, default: OrderStatus.PENDING_PAYMENT })
+  @Column({
+    type: "enum",
+    enum: OrderStatus,
+    default: OrderStatus.PENDING_PAYMENT,
+  })
   status: OrderStatus;
 
-  @Column({ type: "varchar", length: 255, name: "delivery_address", nullable: true })
+  @Column({
+    type: "varchar",
+    length: 255,
+    name: "delivery_address",
+    nullable: true,
+  })
   deliveryAddress: string | null;
 
   @Column({ type: "uuid", name: "trader_id" })

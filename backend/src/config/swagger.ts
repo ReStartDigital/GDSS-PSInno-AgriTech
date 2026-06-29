@@ -37,7 +37,7 @@ const options: swaggerJsdoc.Options = {
 
   // Scans the current directory's parent for controllers and the app file
   apis: [
-    getSafeGlobPath(__dirname, "../features/**/*.ts"), 
+    getSafeGlobPath(__dirname, "../features/**/*.ts"),
     getSafeGlobPath(__dirname, "../features/**/*.js"),
   ],
 };

@@ -5,7 +5,7 @@ import logger from "../utils/logger.js";
 const stream: StreamOptions = {
   write: (message) => {
     logger.http(message.trim());
-},
+  },
 };
 
 // Skip logging during tests
@@ -16,9 +16,7 @@ const skip = () => {
 
 const morganMiddleware = morgan(
   ":method :url :status :res[content-length] - :response-time ms",
-  { stream, 
-    skip 
-},
+  { stream, skip },
 );
 
 export default morganMiddleware;
