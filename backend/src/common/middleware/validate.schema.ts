@@ -65,7 +65,10 @@ const locationRules = z
 
 export const loginSchema = z.object({
   body: z.object({
-    telephone: phoneRules,
+    phone: phoneRules,
+    pin: z
+      .string({ message: "PIN security code is required" })
+      .min(6, { message: "PIN must be at least 6 digits long" }),
   }),
 });
 
@@ -82,7 +85,10 @@ export const verifyOtpSchema = z.object({
       .trim()
       .min(6, { message: "OTP must be at least 6 digits" })
       .max(8, { message: "OTP cannot exceed 8 digits" }),
-    telephone: phoneRules,
+     pin: z
+      .string({ message: "PIN security code is required" })
+      .min(6, { message: "PIN must be at least 6 digits long" }),
+    phone: phoneRules,
   }),
 });
 
@@ -94,9 +100,9 @@ export const registerSchema = z.object({
     last_name: z.string().trim().min(1, { message: "Last name is required" }),
     pin: z
       .string({ message: "PIN security code is required" })
-      .min(4, { message: "PIN must be at least 4 digits long" }), // 🛠️ Fixed broken .minLength reference
+      .min(6, { message: "PIN must be at least 6 digits long" }), // 🛠️ Fixed broken .minLength reference
     email: emailRules,
     location: locationRules,
-    role: z.enum(["farmer", "trader", "agent", "admin"]).default("trader"), // Enforce defined domain roles explicitly
+    role: z.enum(["farmer", "buyer", "transporter","agent"]).default("buyer"), // Enforce defined domain roles explicitly
   }),
 });
