@@ -19,6 +19,7 @@
     "dev": "tsx watch src/server.ts",
     "start:worker": "tsx watch src/workers/main.ts",
     "lint": "eslint \"src/**/*.ts\"",
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "vitest run",
