@@ -19,12 +19,11 @@
     "dev": "tsx watch src/server.ts",
     "start:worker": "tsx watch src/workers/main.ts",
     "lint": "eslint \"src/**/*.ts\"",
-    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\"",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "prepare": "cross-env NODE_ENV=development lefthook install"
+    "typeorm": "typeorm-ts-node-esm",
+    "migration:run": "tsx ./node_modules/typeorm/cli.js migration:run -d src/database/data-source.ts",
+    "migration:revert": "tsx ./node_modules/typeorm/cli.js migration:revert -d src/database/data-source.ts"
   },
   "dependencies": {
     "axios": "^1.18.1",
@@ -61,6 +60,7 @@
     "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/parser": "^8.62.0",
+    "cross-env": "^10.1.0",
     "daemon": "^1.1.0",
     "eslint": "^10.6.0",
     "husky": "^9.1.7",

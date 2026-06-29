@@ -29,6 +29,9 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "noUncheckedSideEffectImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
 
     /* Remove JSX for Backend */
     "jsx": "react-jsx"
