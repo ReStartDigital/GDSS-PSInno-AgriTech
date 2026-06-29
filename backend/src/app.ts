@@ -1,0 +1,38 @@
+import  type { Request, Response} from "express"
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger.js";
+
+const app = express();
+
+// 1. Professional CORS Configuration
+app.use(helmet());
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  }),
+);
+
+
+// app.use(requestMiddleware);
+
+// 2. Swagger Documentation Route
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     responses:
+ *       200:
+ *         description: Server is healthy
+ */
+app.get("/health", (async(req: Request, resp: Response)=>{
+    resp.status(200).json({ status: "success", message: "Server is healthy" });
+}));
+
+export default app;
