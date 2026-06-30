@@ -51,7 +51,7 @@ export class User {
     srid: 4326,
     nullable: true,
   })
-  location: string | null; // Handled as GeoJSON string or WKT format in TypeORM
+  location: { type: "Point"; coordinates: [number, number] } | null;
 
   @Column({ type: "timestamptz", name: "phone_verified_at", nullable: true })
   phoneVerifiedAt: Date | null;

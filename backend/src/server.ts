@@ -1,28 +1,46 @@
-import app from "./app.js";
+import 'dotenv/config';
+import cron from 'node-cron';
+import {createApp} from "./app.js";
+import { AppDataSource } from './config/database.config.js';
 import { logger } from "./common/utils/logger.js";
-import pool from "./config/db.js";
+
+import { cleanupStaleUnverifiedRegistrations } from './jobs/cleanup-unverified-registrations.job.js';
+
 import * as dotenv from "dotenv";
 
 dotenv.config();
 
 // app.set("io", io);
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 3000;
 
-app.listen(PORT, async () => {
-  logger.info(`🚀 Community Hub running on port ${PORT}`);
+async function bootstrap(): Promise<void> {
+  await AppDataSource.initialize();
+  logger.info('Database connection established');
 
-  // 2026 PostGIS Check
-  try {
-    await pool.query("SELECT NOW()");
-    logger.info("✅ PostgreSQL Engine Active");
-  } catch (e) {
-    logger.error(e);
-    logger.error("❌ PostgreSQL missing! Run: CREATE PostgreSQL database;");
-  }
-});
+  const app = createApp();
 
-// Graceful Shutdown: Close DB pool when server stops
-process.on("SIGTERM", () => {
-  pool.end();
-  process.exit(0);
+  app.listen(PORT, () => {
+    logger.info(`VegeLink API listening on port ${PORT}`);
+  });
+
+  // Hourly cleanup of abandoned (unverified) registration attempts.
+  cron.schedule('0 * * * *', () => {
+    cleanupStaleUnverifiedRegistrations().catch((err) => {
+      logger.error('cleanupStaleUnverifiedRegistrations job failed', { error: (err as Error).message });
+    });
+  });
+
+  // ── Graceful shutdown ───────────────────────────────────────────────────
+  const shutdown = async (signal: string) => {
+    logger.info(`Received ${signal}, shutting down gracefully`);
+    await AppDataSource.destroy();
+    process.exit(0);
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+}
+
+bootstrap().catch((err) => {
+  logger.error('Fatal error during bootstrap', { error: (err as Error).message, stack: (err as Error).stack });
+  process.exit(1);
 });
