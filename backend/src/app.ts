@@ -37,7 +37,7 @@ app.use(
 // app.use(requestMiddleware);
 
 // 2. Swagger Documentation Route
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Health Endpoint
 app.use("/api/health", health_router);
