@@ -16,12 +16,11 @@ import { checkDatabaseHealth } from "./config/database.config.js";
 import { redisService } from "./infrastructure/redis/redis.client.js";
 import { authRouter } from "./features/auth/auth.routes.js";
 
-
 const API_PREFIX = process.env.API_PREFIX || "/api/v1";
 
 export function createApp(): Application {
   const app = express();
-  
+
   app.set("trust proxy", 1);
 
   app.use(express.json());

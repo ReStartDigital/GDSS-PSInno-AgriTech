@@ -4,6 +4,7 @@ import { logger } from "../../common/utils/logger.js";
 
 class RedisService {
   private client: Redis;
+    quit: any;
 
   constructor() {
     this.client = new Redis(redisConfig.url, redisConfig);
