@@ -6,6 +6,13 @@ export enum UserRole {
   ADMIN = "admin",
 }
 
+export const REGISTERABLE_ROLES: UserRole[] = [
+  UserRole.FARMER,
+  UserRole.BUYER,
+  UserRole.TRANSPORTER,
+  UserRole.AGENT,
+];
+
 export enum ListingStatus {
   AVAILABLE = "available",
   PENDING_DELIVERY = "pending_delivery",

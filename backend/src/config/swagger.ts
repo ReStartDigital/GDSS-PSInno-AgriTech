@@ -5,6 +5,9 @@ import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const getSafeGlobPath = (...args: string[]) => {
+  return path.join(...args).replace(/\\/g, "/");
+};
 const SWAGGER_URL = process.env.SWAGGER_URL || "http://localhost:3000";
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -34,8 +37,8 @@ const options: swaggerJsdoc.Options = {
 
   // Scans the current directory's parent for controllers and the app file
   apis: [
-    path.join(__dirname, "../**/*.js"),
-    path.join(__dirname, "../**/*.ts"),
+    getSafeGlobPath(__dirname, "../features/**/*.ts"),
+    getSafeGlobPath(__dirname, "../features/**/*.js"),
   ],
 };
 

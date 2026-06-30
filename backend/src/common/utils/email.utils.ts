@@ -7,7 +7,7 @@
 export function generateSyntheticEmail(phone: string): string {
   // Remove the '+' sign and any accidental whitespace or dashes
   const cleanPhone = phone.replace(/[+\s-]/g, "");
-  
+
   // Use a domain dedicated to your internal/synthetic traffic
   return `${cleanPhone}@platform.internal`;
 }

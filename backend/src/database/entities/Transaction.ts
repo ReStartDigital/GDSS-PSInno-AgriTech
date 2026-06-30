@@ -8,8 +8,10 @@ import {
 } from "typeorm";
 import { User } from "./User.js";
 import { Order } from "./Order.js";
-import { TransactionType, TransactionStatus } from "../../common/constants/enums.js";
-
+import {
+  TransactionType,
+  TransactionStatus,
+} from "../../common/constants/roles.enums.js";
 
 @Entity("transactions")
 export class Transaction {
@@ -22,14 +24,29 @@ export class Transaction {
   @Column({ type: "enum", enum: TransactionType })
   type: TransactionType;
 
-  @Column({ type: "enum", enum: TransactionStatus, default: TransactionStatus.PENDING })
+  @Column({
+    type: "enum",
+    enum: TransactionStatus,
+    default: TransactionStatus.PENDING,
+  })
   status: TransactionStatus;
 
   // 🔑 Crucial for Paystack synchronization hook matching
-  @Column({ type: "varchar", length: 100, unique: true, name: "paystack_reference", nullable: true })
+  @Column({
+    type: "varchar",
+    length: 100,
+    unique: true,
+    name: "paystack_reference",
+    nullable: true,
+  })
   paystackReference: string | null;
 
-  @Column({ type: "varchar", length: 50, name: "payment_method", default: "mobile_money" })
+  @Column({
+    type: "varchar",
+    length: 50,
+    name: "payment_method",
+    default: "mobile_money",
+  })
   paymentMethod: string; // mtn, telecel, airteltigo, card
 
   @Column({ type: "uuid", name: "user_id" })
