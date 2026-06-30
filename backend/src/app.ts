@@ -4,7 +4,6 @@ import cors from "cors";
 import helmet from "helmet";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger.js";
-import * as dotenv from "dotenv";
 import morganMiddleware from "./common/middleware/morgan.middleware.js";
 
 import { requestIdMiddleware } from "./common/middleware/request-id.middleware.js";
@@ -17,13 +16,14 @@ import { checkDatabaseHealth } from "./config/database.config.js";
 import { redisService } from "./infrastructure/redis/redis.client.js";
 import { authRouter } from "./features/auth/auth.routes.js";
 
-dotenv.config();
 
 const API_PREFIX = process.env.API_PREFIX || "/api/v1";
-const checkRedisHealth = redisService.checkRedisHealth();
 
 export function createApp(): Application {
   const app = express();
+  
+  app.set("trust proxy", 1);
+
   app.use(express.json());
 
   app.use(morganMiddleware);
@@ -59,7 +59,7 @@ export function createApp(): Application {
   app.get(`${API_PREFIX}/health`, async (_req, res) => {
     const [dbOk, redisOk] = await Promise.all([
       checkDatabaseHealth(),
-      checkRedisHealth,
+      redisService.checkRedisHealth(),
     ]);
     const healthy = dbOk && redisOk;
 
