@@ -11,6 +11,7 @@ import {
   verifyOtpSchema,
   setPinSchema,
   loginSchema,
+  resendOtpSchema,
 } from "./auth.schemas.js";
 
 const router = Router();
@@ -70,6 +71,38 @@ router.post(
   authRateLimiter,
   validate(registerSchema),
   asyncHandler(controller.register),
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/resend-otp:
+ *   post:
+ *     summary: Step 1.5 - Request a New Verification Code
+ *     description: Validates user status conditions and dispatches a fresh OTP SMS token using the Arkesel pipeline.
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [phone]
+ *             properties:
+ *               phone: 
+ *                 type: string
+ *                 example: "+233240000000"
+ *                 description: Explicit international E.164 formatted telephone number.
+ *     responses:
+ *       200: { description: OTP resent successfully. }
+ *       409: { description: Phone already linked to an active profile. }
+ *       422: { description: Validation or SMS gateway error. }
+ *       429: { description: Rate limit or cooling lock active. }
+ */
+router.post(
+  "/resend-otp",
+  authRateLimiter,
+  validate(resendOtpSchema),
+  asyncHandler(controller.resendOtp),
 );
 
 /**
