@@ -20,6 +20,9 @@ declare global {
       requestId: string;
       /** Set by `authenticate` middleware after verifying a full access token. */
       user?: AccessTokenPayload;
+      registrationContext?: {
+        phone: string;
+      };
       /** Set by `requireRegistrationToken` middleware — distinct from `user` on purpose,
        *  so a registration token can never accidentally be treated as a full login session. */
       registration?: RegistrationTokenPayload;
