@@ -5,5 +5,6 @@ export const ArkeselTemplates = {
   registrationOtpResent: (code: string) =>
     `VegeLink: Your new verification code is ${code}. Valid for 10 minutes.`,
 
-  welcomeAfterPinSet: (name: string) => `VegeLink: Welcome ${name}! Your account is ready to use.`,
+  welcomeAfterPinSet: (name: string) =>
+    `VegeLink: Welcome ${name}! Your account is ready to use.`,
 };

@@ -38,11 +38,11 @@ class RedisService {
   }
 
   public async checkRedisHealth(): Promise<boolean> {
-    try{
-        const pong = await this.client.ping();
-        return pong === 'PONG';
-    }catch{
-        return false
+    try {
+      const pong = await this.client.ping();
+      return pong === "PONG";
+    } catch {
+      return false;
     }
   }
 }

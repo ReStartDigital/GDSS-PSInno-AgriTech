@@ -1,7 +1,7 @@
-import axios, { type AxiosInstance } from 'axios';
-import { logger, logError } from '../../common/utils/logger.js';
+import axios, { type AxiosInstance } from "axios";
+import { logger, logError } from "../../common/utils/logger.js";
 
-const ARKESEL_BASE_URL = 'https://sms.arkesel.com/api';
+const ARKESEL_BASE_URL = "https://sms.arkesel.com/api";
 
 export interface ArkeselSendResult {
   success: boolean;
@@ -17,7 +17,7 @@ class ArkeselClient {
     this.http = axios.create({
       baseURL: ARKESEL_BASE_URL,
       timeout: 8000, // fail fast — registration UX must not hang on a slow SMS gateway
-      headers: { 'api-key': process.env.ARKESEL_API_KEY || '' },
+      headers: { "api-key": process.env.ARKESEL_API_KEY || "" },
     });
   }
 
@@ -27,20 +27,23 @@ class ArkeselClient {
    */
   async sendSms(phone: string, message: string): Promise<ArkeselSendResult> {
     try {
-      const response = await this.http.post('/v2/sms/send', {
-        sender: process.env.ARKESEL_SENDER_ID || 'VegeLink',
+      const response = await this.http.post("/v2/sms/send", {
+        sender: process.env.ARKESEL_SENDER_ID || "VegeLink",
         message,
         recipients: [phone],
       });
 
-      const ok = response.data?.status === 'success';
+      const ok = response.data?.status === "success";
       if (!ok) {
-        logger.warn('Arkesel SMS send returned non-success status', { phone, response: response.data });
+        logger.warn("Arkesel SMS send returned non-success status", {
+          phone,
+          response: response.data,
+        });
       }
       return { success: ok, rawResponse: response.data };
     } catch (error) {
-      logError('Arkesel sendSms request failed', error, { phone });
-      return { success: false, errorReason: 'NETWORK_ERROR' };
+      logError("Arkesel sendSms request failed", error, { phone });
+      return { success: false, errorReason: "NETWORK_ERROR" };
     }
   }
 
@@ -50,34 +53,43 @@ class ArkeselClient {
    * send can be surfaced to the user as PHONE_CANNOT_BE_VERIFIED instead of
    * silently succeeding.
    */
-  async generateOtp(phone: string, codeLength: number, expiryMinutes: number, full_name: string): Promise<ArkeselSendResult> {
+  async generateOtp(
+    phone: string,
+    codeLength: number,
+    expiryMinutes: number,
+    full_name: string,
+  ): Promise<ArkeselSendResult> {
     try {
-      const response = await this.http.post('/otp/generate', {
+      const response = await this.http.post("/otp/generate", {
         number: phone,
-        medium: 'sms',
+        medium: "sms",
         length: codeLength,
         expiry: expiryMinutes,
-        message: "Hello " + full_name + ",\nThis is OTP from Arkesel, %otp_code%",
-        sender_id: process.env.ARKESEL_SENDER_ID || 'VegeLink',
-        type: "numeric"
+        message:
+          "Hello " + full_name + ",\nThis is OTP from Arkesel, %otp_code%",
+        sender_id: process.env.ARKESEL_SENDER_ID || "VegeLink",
+        type: "numeric",
       });
 
       // Arkesel returns { code: "2000", message: "Successful" } on success.
-      const ok = response.data?.code === '1000';
+      const ok = response.data?.code === "1000";
       if (!ok) {
-        logger.warn('Arkesel generateOtp rejected the request', { phone, response: response.data });
+        logger.warn("Arkesel generateOtp rejected the request", {
+          phone,
+          response: response.data,
+        });
         return {
           success: false,
-          errorReason: response.data?.message || 'OTP_GENERATE_REJECTED',
+          errorReason: response.data?.message || "OTP_GENERATE_REJECTED",
           rawResponse: response.data,
         };
       }
       return { success: true, rawResponse: response.data };
     } catch (error) {
-      logError('Arkesel generateOtp request failed', error, { phone });
+      logError("Arkesel generateOtp request failed", error, { phone });
       // Network failure, timeout, or 4xx/5xx from Arkesel — treat uniformly
       // as "could not verify this phone" from the caller's perspective.
-      return { success: false, errorReason: 'NETWORK_ERROR' };
+      return { success: false, errorReason: "NETWORK_ERROR" };
     }
   }
 
@@ -90,15 +102,15 @@ class ArkeselClient {
    */
   async verifyOtp(phone: string, code: string): Promise<ArkeselSendResult> {
     try {
-      const response = await this.http.post('/otp/verify', {
+      const response = await this.http.post("/otp/verify", {
         number: phone,
         code,
       });
-      const ok = response.data?.code === '1100';
+      const ok = response.data?.code === "1100";
       return { success: ok, rawResponse: response.data };
     } catch (error) {
-      logError('Arkesel verifyOtp request failed', error, { phone });
-      return { success: false, errorReason: 'NETWORK_ERROR' };
+      logError("Arkesel verifyOtp request failed", error, { phone });
+      return { success: false, errorReason: "NETWORK_ERROR" };
     }
   }
 }
