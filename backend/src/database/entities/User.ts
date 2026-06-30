@@ -7,7 +7,7 @@ import {
 } from "typeorm";
 
 // Assuming UserRole enum is imported or defined above
-import { UserRole } from "../../common/constants/enums.js";
+import { UserRole } from "../../common/constants/roles.enums.js";
 
 @Entity("users")
 export class User {

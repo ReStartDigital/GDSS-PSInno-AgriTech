@@ -9,7 +9,7 @@ import {
 } from "typeorm";
 import { User } from "./User.js";
 import { ProduceListing } from "./ProduceListing.js";
-import { OrderStatus } from "../../common/constants/enums.js";
+import { OrderStatus } from "../../common/constants/roles.enums.js";
 
 @Entity("orders")
 export class Order {

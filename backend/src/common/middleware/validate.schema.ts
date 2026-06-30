@@ -85,7 +85,7 @@ export const verifyOtpSchema = z.object({
       .trim()
       .min(6, { message: "OTP must be at least 6 digits" })
       .max(8, { message: "OTP cannot exceed 8 digits" }),
-     pin: z
+    pin: z
       .string({ message: "PIN security code is required" })
       .min(6, { message: "PIN must be at least 6 digits long" }),
     phone: phoneRules,
@@ -103,7 +103,7 @@ export const registerSchema = z.object({
       .min(6, { message: "PIN must be at least 6 digits long" }), // 🛠️ Fixed broken .minLength reference
     email: emailRules,
     location: locationRules,
-    role: z.enum(["farmer", "buyer", "transporter","agent"]).default("buyer"), // Enforce defined domain roles explicitly
+    role: z.enum(["farmer", "buyer", "transporter", "agent"]).default("buyer"), // Enforce defined domain roles explicitly
   }),
 });
 

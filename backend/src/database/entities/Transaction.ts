@@ -11,7 +11,7 @@ import { Order } from "./Order.js";
 import {
   TransactionType,
   TransactionStatus,
-} from "../../common/constants/enums.js";
+} from "../../common/constants/roles.enums.js";
 
 @Entity("transactions")
 export class Transaction {
