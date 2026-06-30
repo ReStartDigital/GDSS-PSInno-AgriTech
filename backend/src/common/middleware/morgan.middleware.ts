@@ -1,5 +1,5 @@
 import morgan, { type StreamOptions } from "morgan";
-import logger from "../utils/logger.js";
+import { logger } from "../utils/logger.js";
 
 // Connect Morgan to our Winston logger
 const stream: StreamOptions = {
