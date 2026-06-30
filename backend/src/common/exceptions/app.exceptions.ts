@@ -1,4 +1,4 @@
-import { ErrorCode } from '../constants/error-codes.enum.js';
+import { ErrorCode } from "../constants/error-codes.enum.js";
 
 /**
  * Base class for every operational error in the app.
