@@ -1,5 +1,5 @@
-import crypto from 'crypto';
-import { AUTH_CONSTANTS } from '../constants/auth.constants.js';
+import crypto from "crypto";
+import { AUTH_CONSTANTS } from "../constants/auth.constants.js";
 
 /**
  * Generates a cryptographically secure numeric OTP.
@@ -8,7 +8,9 @@ import { AUTH_CONSTANTS } from '../constants/auth.constants.js';
  * output is predictable enough to be a real attack surface for something as
  * sensitive as an account-verification code. crypto.randomInt is.
  */
-export function generateOtp(length: number = AUTH_CONSTANTS.OTP.LENGTH): string {
+export function generateOtp(
+  length: number = AUTH_CONSTANTS.OTP.LENGTH,
+): string {
   const min = 10 ** (length - 1);
   const max = 10 ** length - 1;
   return crypto.randomInt(min, max + 1).toString();
