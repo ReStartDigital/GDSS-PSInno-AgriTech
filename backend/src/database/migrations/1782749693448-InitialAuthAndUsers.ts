@@ -42,7 +42,6 @@ export class InitialAuthAndUsers1782749693448 implements MigrationInterface {
         location GEOMETRY(Point, 4326), 
 
         phone_verified_at TIMESTAMPTZ,
-        email_verified_at TIMESTAMPTZ,
         is_active BOOLEAN NOT NULL DEFAULT FALSE,
         deleted_at TIMESTAMPTZ,
 
@@ -106,9 +105,30 @@ export class InitialAuthAndUsers1782749693448 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE IF EXISTS refresh_tokens CASCADE;`);
-    await queryRunner.query(`DROP TABLE IF EXISTS agent_assignments CASCADE;`);
-    await queryRunner.query(`DROP TABLE IF EXISTS users CASCADE;`);
-    await queryRunner.query(`DROP TYPE IF EXISTS user_role;`);
+    await queryRunner.query(`
+        -- Drop triggers
+        DROP TRIGGER IF EXISTS update_users_modtime ON users;
+
+        -- Drop tables
+        DROP TABLE IF EXISTS users;
+
+        -- Drop custom enum types
+        DROP TYPE IF EXISTS audit_action;
+        DROP TYPE IF EXISTS sms_status;
+        DROP TYPE IF EXISTS protection_level;
+        DROP TYPE IF EXISTS transport_status;
+        DROP TYPE IF EXISTS mobile_money_provider;
+        DROP TYPE IF EXISTS payment_channel;
+        DROP TYPE IF EXISTS payment_status;
+        DROP TYPE IF EXISTS fulfillment_mode;
+        DROP TYPE IF EXISTS order_status;
+        DROP TYPE IF EXISTS listing_status;
+        DROP TYPE IF EXISTS user_role;
+
+        -- Drop functions
+        DROP FUNCTION IF EXISTS update_modified_column();
+
+        -- Note: Extensions (uuid-ossp, postgis) are kept to prevent breaking other schemas
+    `);
   }
 }

@@ -37,7 +37,6 @@ CREATE TABLE users (
  location GEOMETRY(Point, 4326), 
 
  phone_verified_at TIMESTAMPTZ,
- email_verified_at TIMESTAMPTZ,
  is_active BOOLEAN NOT NULL DEFAULT FALSE,
  deleted_at TIMESTAMPTZ,
 
