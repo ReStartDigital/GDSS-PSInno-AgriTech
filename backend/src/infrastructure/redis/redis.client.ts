@@ -37,6 +37,10 @@ class RedisService {
     await this.client.del(key);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async call(command: string, ...args: string[]): Promise<any> {
+    return this.client.call(command, ...args);
+  }
   public async checkRedisHealth(): Promise<boolean> {
     try {
       const pong = await this.client.ping();
