@@ -1,5 +1,5 @@
 import app from "./app.js";
-import logger from "./common/utils/logger.js";
+import { logger } from "./common/utils/logger.js";
 import pool from "./config/db.js";
 import * as dotenv from "dotenv";
 

@@ -1,6 +1,6 @@
 import { z, ZodError } from "zod"; // 🔑 Removed AnyZodObject from here
 import type { Response } from "express";
-import logger from "../utils/logger.js";
+import { logger } from "../utils/logger.js";
 
 // =========================================================================
 // 🛠️ UTILITIES & GLOBAL ERROR HANDLING HANDLERS

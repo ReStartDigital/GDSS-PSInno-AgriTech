@@ -1,7 +1,7 @@
 import { AppDataSource } from "./data-source.js";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import logger from "../common/utils/logger.js";
+import { logger } from "../common/utils/logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
