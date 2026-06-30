@@ -36,9 +36,24 @@ class RedisService {
   public async del(key: string): Promise<void> {
     await this.client.del(key);
   }
+  // Add these inside your RedisService class in redis.client.ts
 
+  public async incr(key: string): Promise<number> {
+    return this.client.incr(key);
+  }
+
+  public async expire(key: string, ttlSeconds: number): Promise<boolean> {
+    const result = await this.client.expire(key, ttlSeconds);
+    return result === 1;
+  }
+
+  public async exists(key: string): Promise<boolean> {
+    const count = await this.client.exists(key);
+    return count > 0;
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async call(command: string, ...args: string[]): Promise<any> {
+    logger.info("Redis call: " + command);
     return this.client.call(command, ...args);
   }
   public async checkRedisHealth(): Promise<boolean> {

@@ -57,7 +57,7 @@ class ArkeselClient {
     phone: string,
     codeLength: number,
     expiryMinutes: number,
-    full_name: string,
+    full_name?: string | null,
   ): Promise<ArkeselSendResult> {
     try {
       const response = await this.http.post("/otp/generate", {
@@ -66,7 +66,7 @@ class ArkeselClient {
         length: codeLength,
         expiry: expiryMinutes,
         message:
-          "Hello " + full_name + ",\nThis is OTP from Arkesel, %otp_code%",
+          "Hello " + `${full_name ?? "there!"}` + ",\nThis is OTP from Arkesel, %otp_code%",
         sender_id: process.env.ARKESEL_SENDER_ID || "VegeLink",
         type: "numeric",
       });
