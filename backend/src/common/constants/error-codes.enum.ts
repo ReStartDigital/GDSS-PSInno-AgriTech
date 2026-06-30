@@ -11,6 +11,7 @@ export enum ErrorCode {
   NOT_FOUND = "NOT_FOUND",
   RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED",
   INTERNAL_ERROR = "INTERNAL_ERROR",
+  BAD_REQUEST = "BAD_REQUEST",
 
   // ── Auth: registration ───────────────────────────────────────────────────
   PHONE_ALREADY_REGISTERED = "PHONE_ALREADY_REGISTERED",
