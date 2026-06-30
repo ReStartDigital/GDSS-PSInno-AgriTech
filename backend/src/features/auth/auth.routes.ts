@@ -69,7 +69,7 @@ router.post(
   "/register",
   authRateLimiter,
   validate(registerSchema),
-  asyncHandler(controller.register)
+  asyncHandler(controller.register),
 );
 
 /**
@@ -100,7 +100,7 @@ router.post(
   "/verify-otp",
   authRateLimiter,
   validate(verifyOtpSchema),
-  asyncHandler(controller.verifyOtp)
+  asyncHandler(controller.verifyOtp),
 );
 
 /**
@@ -128,7 +128,7 @@ router.post(
   "/set-pin",
   requireRegistrationToken,
   validate(setPinSchema),
-  asyncHandler(controller.setPin)
+  asyncHandler(controller.setPin),
 );
 
 /**
@@ -154,9 +154,9 @@ router.post(
  */
 router.post(
   "/login",
-  authRateLimiter,           // Good practice to rate-limit login too
+  authRateLimiter, // Good practice to rate-limit login too
   validate(loginSchema),
-  asyncHandler(controller.login)
+  asyncHandler(controller.login),
 );
 
 /**

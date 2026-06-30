@@ -96,8 +96,6 @@ export const resendOtpSchema = z.object({
 });
 export type ResendOtpDto = z.infer<typeof resendOtpSchema>;
 
-
-
 // ── Step 3: POST /auth/set-pin ────────────────────────────────────────────────
 // Requires a valid registration token (Bearer header, checked by middleware,
 // not part of the body schema). Body only carries the new credential.

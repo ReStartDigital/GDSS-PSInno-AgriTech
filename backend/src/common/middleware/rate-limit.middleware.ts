@@ -27,7 +27,10 @@ function rateLimitHandler(req: Request, res: Response) {
  */
 export const authRateLimiter = rateLimit({
   windowMs: AUTH_CONSTANTS.RATE_LIMIT.AUTH_WINDOW_MS,
-  max: process.env.NODE_ENV === "development" ? 100 : AUTH_CONSTANTS.RATE_LIMIT.AUTH_MAX_REQUESTS,
+  max:
+    process.env.NODE_ENV === "development"
+      ? 100
+      : AUTH_CONSTANTS.RATE_LIMIT.AUTH_MAX_REQUESTS,
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,

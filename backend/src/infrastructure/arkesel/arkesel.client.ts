@@ -66,7 +66,9 @@ class ArkeselClient {
         length: codeLength,
         expiry: expiryMinutes,
         message:
-          "Hello " + `${full_name ?? "there!"}` + ",\nThis is OTP from Arkesel, %otp_code%",
+          "Hello " +
+          `${full_name ?? "there!"}` +
+          ",\nThis is OTP from Arkesel, %otp_code%",
         sender_id: process.env.ARKESEL_SENDER_ID || "VegeLink",
         type: "numeric",
       });

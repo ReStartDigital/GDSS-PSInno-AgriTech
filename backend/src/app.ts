@@ -7,20 +7,22 @@ import { swaggerSpec } from "./config/swagger.js";
 import * as dotenv from "dotenv";
 import morganMiddleware from "./common/middleware/morgan.middleware.js";
 
-import { requestIdMiddleware } from './common/middleware/request-id.middleware.js';
-import { generalRateLimiter } from './common/middleware/rate-limit.middleware.js';
-import { errorHandlerMiddleware, notFoundMiddleware } from './common/middleware/error-handler.middleware.js';
-import { checkDatabaseHealth } from './config/database.config.js';
-import { redisService } from './infrastructure/redis/redis.client.js';
-import { authRouter } from './features/auth/auth.routes.js';
+import { requestIdMiddleware } from "./common/middleware/request-id.middleware.js";
+import { generalRateLimiter } from "./common/middleware/rate-limit.middleware.js";
+import {
+  errorHandlerMiddleware,
+  notFoundMiddleware,
+} from "./common/middleware/error-handler.middleware.js";
+import { checkDatabaseHealth } from "./config/database.config.js";
+import { redisService } from "./infrastructure/redis/redis.client.js";
+import { authRouter } from "./features/auth/auth.routes.js";
 
 dotenv.config();
 
-const API_PREFIX = process.env.API_PREFIX || '/api/v1';
+const API_PREFIX = process.env.API_PREFIX || "/api/v1";
 const checkRedisHealth = redisService.checkRedisHealth();
 
 export function createApp(): Application {
-
   const app = express();
   app.use(express.json());
 
@@ -55,13 +57,16 @@ export function createApp(): Application {
 
   // ── Health check (public, used by Docker/Render) ────────────────────────
   app.get(`${API_PREFIX}/health`, async (_req, res) => {
-    const [dbOk, redisOk] = await Promise.all([checkDatabaseHealth(), checkRedisHealth]);
+    const [dbOk, redisOk] = await Promise.all([
+      checkDatabaseHealth(),
+      checkRedisHealth,
+    ]);
     const healthy = dbOk && redisOk;
 
     res.status(healthy ? 200 : 503).json({
-      status: healthy ? 'ok' : 'degraded',
-      db: dbOk ? 'connected' : 'error',
-      redis: redisOk ? 'connected' : 'error',
+      status: healthy ? "ok" : "degraded",
+      db: dbOk ? "connected" : "error",
+      redis: redisOk ? "connected" : "error",
       timestamp: new Date().toISOString(),
     });
   });

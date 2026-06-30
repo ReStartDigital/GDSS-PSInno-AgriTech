@@ -18,7 +18,10 @@ import type {
   SetPinDto,
   VerifyOtpDto,
 } from "./auth.schemas.js";
-import { UnprocessableException, ConflictException } from "../../common/exceptions/index.js";
+import {
+  UnprocessableException,
+  ConflictException,
+} from "../../common/exceptions/index.js";
 
 export class AuthService {
   private userRepository = userRepository;
@@ -228,9 +231,7 @@ export class AuthService {
     };
   }
 
-  public async login(
-    dto: LoginDto,
-  ): Promise<{
+  public async login(dto: LoginDto): Promise<{
     user: Partial<User>;
     accessToken: string;
     refreshToken: string;
@@ -269,14 +270,24 @@ export class AuthService {
       refreshToken,
     };
   }
-  private async sendOtpOrThrow(phone: string, full_name: string | null = null): Promise<void> {
-
-    const sendResult = await arkeselClient.generateOtp(phone, AUTH_CONSTANTS.OTP.LENGTH, AUTH_CONSTANTS.OTP.EXPIRY_SECONDS / 60, full_name);
+  private async sendOtpOrThrow(
+    phone: string,
+    full_name: string | null = null,
+  ): Promise<void> {
+    const sendResult = await arkeselClient.generateOtp(
+      phone,
+      AUTH_CONSTANTS.OTP.LENGTH,
+      AUTH_CONSTANTS.OTP.EXPIRY_SECONDS / 60,
+      full_name,
+    );
 
     if (!sendResult.success) {
-      logger.warn('Failed to send OTP via Arkesel', { phone, reason: sendResult.errorReason });
+      logger.warn("Failed to send OTP via Arkesel", {
+        phone,
+        reason: sendResult.errorReason,
+      });
       throw new UnprocessableException(
-        'We could not send a verification code to this number. Please check the number and try again.',
+        "We could not send a verification code to this number. Please check the number and try again.",
         ErrorCode.PHONE_CANNOT_BE_VERIFIED,
       );
     }
@@ -287,35 +298,40 @@ export class AuthService {
     // the phone number itself.
     await otpRepository.setCooldown(phone);
   }
-    public resendOtp = async (dto: ResendOtpDto): Promise<{ message: string; expiresInSeconds: number }>  => {
-      const existing = await userRepository.findByPhone(dto.phone);
-  
-      if (!existing) {
-        // Nothing to resend to — do not reveal whether a row exists, just
-        // treat it generically as "cannot verify" to avoid phone enumeration.
-        throw new UnprocessableException(
-          'We could not send a verification code to this number.',
-          ErrorCode.PHONE_CANNOT_BE_VERIFIED,
-        );
-      }
-  
-      if (existing.phoneVerifiedAt) {
-        throw new ConflictException(
-          'This phone number is already registered. Try logging in instead.',
-          ErrorCode.PHONE_ALREADY_REGISTERED,
-        );
-      }
-  
-      if (await otpRepository.isOnCooldown(dto.phone)) {
-        throw new UnprocessableException(
-          'Please wait a moment before requesting another code.',
-          ErrorCode.RATE_LIMIT_EXCEEDED,
-        );
-      }
-  
-      await this.sendOtpOrThrow(dto.phone);
-      return { message: 'OTP resent', expiresInSeconds: AUTH_CONSTANTS.OTP.EXPIRY_SECONDS };
+  public resendOtp = async (
+    dto: ResendOtpDto,
+  ): Promise<{ message: string; expiresInSeconds: number }> => {
+    const existing = await userRepository.findByPhone(dto.phone);
+
+    if (!existing) {
+      // Nothing to resend to — do not reveal whether a row exists, just
+      // treat it generically as "cannot verify" to avoid phone enumeration.
+      throw new UnprocessableException(
+        "We could not send a verification code to this number.",
+        ErrorCode.PHONE_CANNOT_BE_VERIFIED,
+      );
     }
+
+    if (existing.phoneVerifiedAt) {
+      throw new ConflictException(
+        "This phone number is already registered. Try logging in instead.",
+        ErrorCode.PHONE_ALREADY_REGISTERED,
+      );
+    }
+
+    if (await otpRepository.isOnCooldown(dto.phone)) {
+      throw new UnprocessableException(
+        "Please wait a moment before requesting another code.",
+        ErrorCode.RATE_LIMIT_EXCEEDED,
+      );
+    }
+
+    await this.sendOtpOrThrow(dto.phone);
+    return {
+      message: "OTP resent",
+      expiresInSeconds: AUTH_CONSTANTS.OTP.EXPIRY_SECONDS,
+    };
+  };
   /**
    * POST /auth/refresh
    * Implements secure single-use token rotation for mobile apps.
@@ -429,7 +445,10 @@ export class AuthService {
     const wktLocation = data.location
       ? {
           type: "Point" as const,
-          coordinates: [data.location.longitude, data.location.latitude] as [number, number], // [X, Y] / [Lng, Lat]
+          coordinates: [data.location.longitude, data.location.latitude] as [
+            number,
+            number,
+          ], // [X, Y] / [Lng, Lat]
         }
       : null;
 
@@ -472,7 +491,10 @@ export class AuthService {
     const wktLocation = data.location
       ? {
           type: "Point" as const,
-          coordinates: [data.location.longitude, data.location.latitude] as [number, number], // [X, Y] / [Lng, Lat]
+          coordinates: [data.location.longitude, data.location.latitude] as [
+            number,
+            number,
+          ], // [X, Y] / [Lng, Lat]
         }
       : null;
 
