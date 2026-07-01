@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { usersController } from "./users.controller.js";
-import {
-  validate
-} from "../../common/middleware/validate.middleware.js";
+
+import { validate } from "../../common/middleware/validate.middleware.js";
 import { authenticate as authenticateJwt } from "../../common/middleware/authenticate.middleware.js";
-import { authorize as authorizeRoles } from "../../common/middleware/authorization.middleware.js"; // Standard RBAC checker middleware
+import { authorize as authorizeRoles } from "../../common/middleware/authorization.middleware.js";
 import { uploadSingleImage as upload } from "../../common/middleware/upload.middleware.js";
+
 import { UserRole } from "../../common/constants/roles.enums.js";
 import {
   updateProfileSchema,
@@ -17,34 +17,34 @@ import {
 
 const router = Router();
 
-// All user management routes require a valid JWT Access Token
-router.use(authenticateJwt);
+/** ========================
+ *  GLOBAL MIDDLEWARE
+ *  ======================== */
+router.use(authenticateJwt); // All routes require valid JWT
 
-// ── OWN PROFILE ROUTING ──────────────────────────────────────────────────────
+// ── OWN PROFILE ─────────────────────────────────────────────────────────────
 
 /**
- * @openapi
+ * @swagger
  * /users/me:
  *   get:
- *     summary: Retrieve own profile details
- *     description: Returns the full authentic identity vector for the authenticated caller.
+ *     summary: Get current user profile
+ *     description: Returns the full profile of the authenticated user.
  *     tags: [Users Profile]
  *     security:
  *       - BearerAuth: []
  *     responses:
- *       200:
- *         description: Profile retrieved successfully.
- *       401:
- *         description: Unauthorized - Invalid or expired access token.
+ *       200: { description: Profile retrieved successfully. }
+ *       401: { description: Unauthorized - Invalid or expired token. }
  */
 router.get("/me", usersController.getMyProfile);
 
 /**
- * @openapi
+ * @swagger
  * /users/me:
  *   patch:
- *     summary: Update profile details
- *     description: Modifies mutable user attributes (Names, Geo-spatial Points) with runtime body checks.
+ *     summary: Update current user profile
+ *     description: Update mutable fields (name, location, etc.).
  *     tags: [Users Profile]
  *     security:
  *       - BearerAuth: []
@@ -55,10 +55,8 @@ router.get("/me", usersController.getMyProfile);
  *           schema:
  *             $ref: '#/components/schemas/UpdateProfileDto'
  *     responses:
- *       200:
- *         description: Profile mutated successfully.
- *       422:
- *         description: Validation failure or empty patch body.
+ *       200: { description: Profile updated successfully. }
+ *       422: { description: Validation error. }
  */
 router.patch(
   "/me",
@@ -67,11 +65,11 @@ router.patch(
 );
 
 /**
- * @openapi
+ * @swagger
  * /users/me/photo:
  *   post:
  *     summary: Upload profile photo
- *     description: Ingests an in-memory image stream buffer and uploads it directly to Cloudinary.
+ *     description: Uploads and processes a new avatar image via Cloudinary.
  *     tags: [Users Profile]
  *     security:
  *       - BearerAuth: []
@@ -86,19 +84,17 @@ router.patch(
  *                 type: string
  *                 format: binary
  *     responses:
- *       200:
- *         description: Avatar image uploaded and bound successfully.
- *       422:
- *         description: Multipart stream missing or malformed.
+ *       200: { description: Avatar uploaded successfully. }
+ *       422: { description: Invalid or missing image file. }
  */
 router.post("/me/photo", upload("avatar"), usersController.uploadAvatar);
 
 /**
- * @openapi
+ * @swagger
  * /users/me/pin:
  *   patch:
- *     summary: Change profile access PIN
- *     description: Rotates application security PIN strings after securely verifying the current PIN.
+ *     summary: Change PIN
+ *     description: Updates the user's security PIN after verifying the current one.
  *     tags: [Users Profile]
  *     security:
  *       - BearerAuth: []
@@ -109,29 +105,23 @@ router.post("/me/photo", upload("avatar"), usersController.uploadAvatar);
  *           schema:
  *             $ref: '#/components/schemas/ChangePinDto'
  *     responses:
- *       200:
- *         description: PIN rotated successfully.
- *       401:
- *         description: Verification failure - Old PIN mismatch.
+ *       200: { description: PIN changed successfully. }
+ *       401: { description: Current PIN verification failed. }
  */
-router.patch(
-  "/me/pin",
-  validate(changePinSchema),
-  usersController.changeMyPin,
-);
+router.patch("/me/pin", validate(changePinSchema), usersController.changeMyPin);
 
-// ── FINANCIAL / MERCHANT CONFIGURATION ROUTING (RBAC: Farmer, Transporter) ───
+// ── MERCHANT / FINANCIAL ────────────────────────────────────────────────────
 
 /**
- * @openapi
+ * @swagger
  * /users/me/payment-details:
  *   post:
- *     summary: Setup distribution channel details
- *     description: Provisions a split financial settlement subaccount with the Paystack Infrastructure network.
- *     x-rbac-roles: [farmer, transporter]
+ *     summary: Configure payment details
+ *     description: Sets up merchant split payment configuration (Paystack).
  *     tags: [Merchant Ledger]
  *     security:
  *       - BearerAuth: []
+ *     x-rbac-roles: [farmer, transporter]
  *     requestBody:
  *       required: true
  *       content:
@@ -139,12 +129,9 @@ router.patch(
  *           schema:
  *             $ref: '#/components/schemas/PaymentDetailsDto'
  *     responses:
- *       200:
- *         description: Merchant split ledger provisioned smoothly.
- *       403:
- *         description: Forbidden - Insufficient role clearance.
- *       409:
- *         description: Conflict - Payment parameters are already set.
+ *       200: { description: Payment details configured successfully. }
+ *       403: { description: Forbidden - Insufficient role. }
+ *       409: { description: Payment details already configured. }
  */
 router.post(
   "/me/payment-details",
@@ -154,20 +141,18 @@ router.post(
 );
 
 /**
- * @openapi
+ * @swagger
  * /users/me/earnings:
  *   get:
- *     summary: Get operator performance and earnings metrics
- *     description: Pulls aggregated transaction totals and payouts for the active operator.
- *     x-rbac-roles: [farmer, transporter]
+ *     summary: Get earnings & performance metrics
+ *     description: Returns aggregated earnings and transaction metrics for the current operator.
  *     tags: [Merchant Ledger]
  *     security:
  *       - BearerAuth: []
+ *     x-rbac-roles: [farmer, transporter]
  *     responses:
- *       200:
- *         description: Metrics generated successfully.
- *       403:
- *         description: Forbidden - Insufficient role clearance.
+ *       200: { description: Metrics retrieved successfully. }
+ *       403: { description: Forbidden - Insufficient role. }
  */
 router.get(
   "/me/earnings",
@@ -175,14 +160,14 @@ router.get(
   usersController.getMyEarnings,
 );
 
-// ── PUBLIC RESOURCE ROUTING ──────────────────────────────────────────────────
+// ── PUBLIC PROFILES ─────────────────────────────────────────────────────────
 
 /**
- * @openapi
+ * @swagger
  * /users/{id}:
  *   get:
- *     summary: Fetch public user profile
- *     description: Exposes an open user profile card stripped of critical PII or secret financial elements.
+ *     summary: Get public user profile
+ *     description: Retrieves a public-facing profile (limited PII).
  *     tags: [Users Profile]
  *     security:
  *       - BearerAuth: []
@@ -192,27 +177,25 @@ router.get(
  *         required: true
  *         schema:
  *           type: string
- *         description: Unique identity footprint key.
+ *         description: User ID
  *     responses:
- *       200:
- *         description: Public card array retrieved successfully.
- *       404:
- *         description: Active target profile not found.
+ *       200: { description: Public profile retrieved successfully. }
+ *       404: { description: User not found. }
  */
 router.get("/:id", usersController.getPublicProfile);
 
-// ── PROXY AGENT MANAGEMENT ACTIONS (RBAC: Agent) ─────────────────────────────
+// ── AGENT MANAGEMENT ────────────────────────────────────────────────────────
 
 /**
- * @openapi
+ * @swagger
  * /agent/clients:
  *   post:
- *     summary: Register an offline client entity
- *     description: Provisions an unverified offline-first proxy client mapped underneath the active agent.
- *     x-rbac-roles: [agent]
+ *     summary: Register managed client
+ *     description: Creates a new offline client under the current agent.
  *     tags: [Agent Management]
  *     security:
  *       - BearerAuth: []
+ *     x-rbac-roles: [agent]
  *     requestBody:
  *       required: true
  *       content:
@@ -220,12 +203,9 @@ router.get("/:id", usersController.getPublicProfile);
  *           schema:
  *             $ref: '#/components/schemas/RegisterClientDto'
  *     responses:
- *       201:
- *         description: Client profile generated and bound cleanly.
- *       403:
- *         description: Forbidden - Only agents can register clients.
- *       409:
- *         description: Conflict - Number footprint already exists or loop assignment error.
+ *       201: { description: Client registered successfully. }
+ *       403: { description: Forbidden - Agent role required. }
+ *       409: { description: Client already exists. }
  */
 router.post(
   "/agent/clients",
@@ -235,29 +215,24 @@ router.post(
 );
 
 /**
- * @openapi
+ * @swagger
  * /agent/clients:
  *   get:
- *     summary: List assigned managed clients
- *     description: Returns a paginated window of all offline clients assigned to this agent's dashboard.
- *     x-rbac-roles: [agent]
+ *     summary: List managed clients
+ *     description: Returns a paginated list of clients assigned to the current agent.
  *     tags: [Agent Management]
  *     security:
  *       - BearerAuth: []
+ *     x-rbac-roles: [agent]
  *     parameters:
  *       - in: query
  *         name: page
- *         schema:
- *           type: integer
- *           default: 1
+ *         schema: { type: integer, default: 1 }
  *       - in: query
  *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
+ *         schema: { type: integer, default: 20 }
  *     responses:
- *       200:
- *         description: Paginated collection returned successfully.
+ *       200: { description: Paginated clients list. }
  */
 router.get(
   "/agent/clients",
@@ -267,15 +242,15 @@ router.get(
 );
 
 /**
- * @openapi
+ * @swagger
  * /agent/clients/{id}/unassign:
  *   patch:
- *     summary: Unassign a tracked client
- *     description: Breaks the active management tracking bridge map link between the agent and client.
- *     x-rbac-roles: [agent]
+ *     summary: Unassign managed client
+ *     description: Removes the management relationship between agent and client.
  *     tags: [Agent Management]
  *     security:
  *       - BearerAuth: []
+ *     x-rbac-roles: [agent]
  *     parameters:
  *       - in: path
  *         name: id
@@ -283,10 +258,8 @@ router.get(
  *         schema:
  *           type: string
  *     responses:
- *       200:
- *         description: Tracking linkage deactivated cleanly.
- *       404:
- *         description: No matching active assignment relationship found.
+ *       200: { description: Client unassigned successfully. }
+ *       404: { description: Assignment not found. }
  */
 router.patch(
   "/agent/clients/:id/unassign",
