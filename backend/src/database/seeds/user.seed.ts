@@ -1,7 +1,7 @@
 import { type DataSource } from "typeorm";
 import { User } from "../entities/User.js";
 import { UserRole } from "../../common/constants/roles.enums.js";
-import logger from "../../common/utils/logger.js";
+import { logger } from "../../common/utils/logger.js";
 
 export async function run(dataSource: DataSource): Promise<void> {
   const userRepository = dataSource.getRepository(User);

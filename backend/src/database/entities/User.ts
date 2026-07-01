@@ -14,7 +14,7 @@ export class User {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: "varchar", length: 20, unique: true })
+  @Column({ name: "phone", type: "varchar", length: 20, unique: true })
   phone: string;
 
   @Column({ type: "varchar", name: "first_name", length: 255 })
@@ -51,7 +51,7 @@ export class User {
     srid: 4326,
     nullable: true,
   })
-  location: string | null; // Handled as GeoJSON string or WKT format in TypeORM
+  location: { type: "Point"; coordinates: [number, number] } | null;
 
   @Column({ type: "timestamptz", name: "phone_verified_at", nullable: true })
   phoneVerifiedAt: Date | null;
