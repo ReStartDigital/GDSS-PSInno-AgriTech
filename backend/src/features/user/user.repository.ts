@@ -1,10 +1,18 @@
-import { IsNull, Repository, type FindOptionsSelect, type DataSource } from "typeorm";
+import {
+  IsNull,
+  Repository,
+  type FindOptionsSelect,
+  type DataSource,
+} from "typeorm";
 import { AppDataSource } from "../../config/database.config.js";
 import { User } from "../../database/entities/User.js";
 import { UserRole } from "../../common/constants/roles.enums.js";
 import { AgentAssignment } from "../../database/entities/AgentAssignment.js";
-import { paginate, type PaginatedResult, type PaginationParams } from "../../common/utils/paginate.util.js";
-
+import {
+  paginate,
+  type PaginatedResult,
+  type PaginationParams,
+} from "../../common/utils/paginate.util.js";
 
 // Change arrays to column selection boolean flags
 const PUBLIC_COLUMNS: FindOptionsSelect<User> = {
@@ -111,7 +119,9 @@ export class UserRepository {
 
     const updatedUser = await this.findById(id);
     if (!updatedUser) {
-      throw new Error(`User row with identifier ${id} lost during state transition updates.`);
+      throw new Error(
+        `User row with identifier ${id} lost during state transition updates.`,
+      );
     }
     return updatedUser;
   }
@@ -124,7 +134,9 @@ export class UserRepository {
     await this.user.update(id, { pinHash, isActive: true });
     const activeUser = await this.findById(id);
     if (!activeUser) {
-      throw new Error(`User row with identifier ${id} lost during finalization.`);
+      throw new Error(
+        `User row with identifier ${id} lost during finalization.`,
+      );
     }
     return activeUser;
   }
@@ -208,7 +220,9 @@ export class UserRepository {
     return result[0];
   }
 
-  async getAverageRating(userId: string): Promise<{ averageRating: string; totalRatings: string }> {
+  async getAverageRating(
+    userId: string,
+  ): Promise<{ averageRating: string; totalRatings: string }> {
     const result = await this.ds.query(
       `SELECT
         ROUND(AVG(score)::numeric, 2)::text AS "averageRating",
@@ -217,23 +231,38 @@ export class UserRepository {
        WHERE ratee_id = $1`,
       [userId],
     );
-    return { averageRating: result[0]?.averageRating ?? '0', totalRatings: result[0]?.totalRatings ?? '0' };
+    return {
+      averageRating: result[0]?.averageRating ?? "0",
+      totalRatings: result[0]?.totalRatings ?? "0",
+    };
   }
 
-  async findActiveAgentForUser(userId: string): Promise<AgentAssignment | null> {
+  async findActiveAgentForUser(
+    userId: string,
+  ): Promise<AgentAssignment | null> {
     return this.assignments.findOne({
       where: { userId, unassignedAt: IsNull() },
-      relations: {agent: true},
+      relations: { agent: true },
     });
   }
 
   async hasActiveAgent(userId: string): Promise<boolean> {
-    const count = await this.assignments.count({ where: { userId, unassignedAt: IsNull() } });
+    const count = await this.assignments.count({
+      where: { userId, unassignedAt: IsNull() },
+    });
     return count > 0;
   }
 
-  async createAgentAssignment(agentId: string, userId: string): Promise<AgentAssignment> {
-    const entity = this.assignments.create({ agentId, userId, assignedAt: new Date(), unassignedAt: null });
+  async createAgentAssignment(
+    agentId: string,
+    userId: string,
+  ): Promise<AgentAssignment> {
+    const entity = this.assignments.create({
+      agentId,
+      userId,
+      assignedAt: new Date(),
+      unassignedAt: null,
+    });
     return this.assignments.save(entity);
   }
 
@@ -241,33 +270,41 @@ export class UserRepository {
     await this.assignments.update(assignmentId, { unassignedAt: new Date() });
   }
 
-  async findAgentClients(agentId: string, pagination: PaginationParams): Promise<PaginatedResult<User>> {
+  async findAgentClients(
+    agentId: string,
+    pagination: PaginationParams,
+  ): Promise<PaginatedResult<User>> {
     const qb = this.user
-      .createQueryBuilder('u')
+      .createQueryBuilder("u")
       .innerJoin(
         AgentAssignment,
-        'aa',
-        'aa.user_id = u.id AND aa.agent_id = :agentId AND aa.unassigned_at IS NULL',
+        "aa",
+        "aa.user_id = u.id AND aa.agent_id = :agentId AND aa.unassigned_at IS NULL",
         { agentId },
       )
       .select([
-        'u.id',
-        'u.firstName',
-        'u.middleName',
-        'u.lastName',
-        'u.phone',
-        'u.role',
-        'u.profilePhotoUrl',
-        'u.isActive',
-        'u.createdAt',
+        "u.id",
+        "u.firstName",
+        "u.middleName",
+        "u.lastName",
+        "u.phone",
+        "u.role",
+        "u.profilePhotoUrl",
+        "u.isActive",
+        "u.createdAt",
       ])
-      .orderBy('u.firstName', 'ASC'); // Corrected string mapping references 
+      .orderBy("u.firstName", "ASC"); // Corrected string mapping references
 
     return paginate(qb, pagination);
   }
 
-  async findAssignmentByAgentAndUser(agentId: string, userId: string): Promise<AgentAssignment | null> {
-    return this.assignments.findOne({ where: { agentId, userId, unassignedAt: IsNull() } });
+  async findAssignmentByAgentAndUser(
+    agentId: string,
+    userId: string,
+  ): Promise<AgentAssignment | null> {
+    return this.assignments.findOne({
+      where: { agentId, userId, unassignedAt: IsNull() },
+    });
   }
 }
 
