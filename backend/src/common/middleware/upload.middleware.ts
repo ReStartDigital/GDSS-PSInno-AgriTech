@@ -1,10 +1,7 @@
 import multer, { type FileFilterCallback } from "multer";
-import { type Request } from "express";
+import { type Request, type Response, type NextFunction } from "express";
 import { UnprocessableException } from "../exceptions/index.js";
 import { ErrorCode } from "../constants/error-codes.enum.js";
-import * as dotenv from "dotenv";
-
-dotenv.config();
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_FILE_SIZE_BYTES =
@@ -23,45 +20,65 @@ function fileFilter(
   cb: FileFilterCallback,
 ): void {
   if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
-    cb(
-      new UnprocessableException(
-        `Invalid file type "${file.mimetype}". Accepted types: JPEG, PNG, WebP.`,
-        ErrorCode.INVALID_FILE_TYPE,
-      ) as unknown as null,
-      false,
+    // Pass a standard Error object with signature metadata attached
+    const error = new Error(
+      `Invalid file type "${file.mimetype}". Accepted types: JPEG, PNG, WebP.`,
     );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (error as any).code = ErrorCode.INVALID_FILE_TYPE;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cb(error as any, false);
     return;
   }
   cb(null, true);
 }
 
+const multerInstance = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: MAX_FILE_SIZE_BYTES },
+});
+
 export const uploadSingleImage = (fieldName: string) =>
-  multer({
-    storage,
-    fileFilter,
-    limits: { fileSize: MAX_FILE_SIZE_BYTES },
-  }).single(fieldName);
+  multerInstance.single(fieldName);
 
 /**
- * Wraps multer errors (file-too-large, unexpected field) into our standard
- * error envelope. Must be used as a middleware AFTER uploadSingleImage().
+ * Intercepts Multer validation/file size bounds failures and maps them
+ * safely into our application's unified custom exception boundary format.
  */
 export function handleMulterError(
   err: unknown,
   _req: Request,
-  _res: unknown,
-  next: (err: unknown) => void,
+  _res: Response,
+  next: NextFunction,
 ): void {
+  if (!err) {
+    return next();
+  }
+
+  // Handle standard Multer runtime constraint limits
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
-      next(
+      return next(
         new UnprocessableException(
-          "File is too large. Maximum size is 8 MB.",
+          `File is too large. Maximum size is ${MAX_FILE_SIZE_BYTES / (1024 * 1024)} MB.`,
           ErrorCode.FILE_TOO_LARGE,
         ),
       );
-      return;
     }
   }
+
+  // Handle our custom file filter type validation check
+  if (
+    err instanceof Error &&
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (err as any).code === ErrorCode.INVALID_FILE_TYPE
+  ) {
+    return next(
+      new UnprocessableException(err.message, ErrorCode.INVALID_FILE_TYPE),
+    );
+  }
+
   next(err);
 }

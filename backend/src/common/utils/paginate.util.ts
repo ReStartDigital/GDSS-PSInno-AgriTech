@@ -20,8 +20,8 @@ export async function paginate<T extends ObjectLiteral>(
   { page, limit }: PaginationParams,
 ): Promise<PaginatedResult<T>> {
   const [data, total] = await qb
-    .skip((page - 1) * limit)
-    .take(limit)
+    .offset((page - 1) * limit)
+    .limit(limit)
     .getManyAndCount();
 
   return {

@@ -19,9 +19,9 @@ export const SUPPORTED_MOBILE_NETWORKS = Object.keys(
 
 interface CreateSubaccountPayload {
   business_name: string;
-  settlement_bank: string; // e.g., "MTN", "VODAFONE", "AIRTEL_TIGO"
+  //   settlement_bank: string; // e.g., "MTN", "VODAFONE", "AIRTEL_TIGO"
   account_number: string; // The MoMo Phone Number
-  percentage_charge: number; // 0 for giving them 100% of their cut minus processing fees
+  //   percentage_charge: number; // 0 for giving them 100% of th/eir cut minus processing fees
   primary_contact_email: string; // The virtual email we generate
   mobileNetwork: string;
 }

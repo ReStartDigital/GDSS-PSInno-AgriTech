@@ -32,13 +32,19 @@ const phoneSchema = z
   });
 
 // ── PATCH /users/me ────────────────────────────────────────────────────────────
-// All fields optional — patch semantics. At least one must be present.
 export const updateProfileSchema = z
   .object({
-    name: z
+    firstName: z
       .string()
       .trim()
-      .min(2, "Name must be at least 2 characters")
+      .min(2, "First name must be at least 2 characters")
+      .max(100)
+      .optional(),
+    middleName: z.string().trim().max(100).nullable().optional(),
+    lastName: z
+      .string()
+      .trim()
+      .min(2, "Last name must be at least 2 characters")
       .max(100)
       .optional(),
     location: z
@@ -48,9 +54,16 @@ export const updateProfileSchema = z
       })
       .optional(),
   })
-  .refine((data) => Object.keys(data).length > 0, {
-    message: "At least one field must be provided",
-  });
+  .refine(
+    (data) =>
+      Object.keys(data).filter(
+        (k) => data[k as keyof typeof data] !== undefined,
+      ).length > 0,
+    {
+      message:
+        "At least one field must be provided for an profile modification",
+    },
+  );
 export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;
 
 // ── PATCH /users/me/pin ────────────────────────────────────────────────────────
@@ -69,7 +82,7 @@ export type ChangePinDto = z.infer<typeof changePinSchema>;
 export const paymentDetailsSchema = z.object({
   mobile_number: phoneSchema,
   mobile_network: z.enum(SUPPORTED_MOBILE_NETWORKS as [string, ...string[]], {
-    error: `Network must be one of: ${SUPPORTED_MOBILE_NETWORKS.join(", ")}`,
+    message: `Network must be one of: ${SUPPORTED_MOBILE_NETWORKS.join(", ")}`, // ✨ Corrected to 'message'
   }),
 });
 export type PaymentDetailsDto = z.infer<typeof paymentDetailsSchema>;
@@ -84,9 +97,19 @@ export type PaginationDto = z.infer<typeof paginationSchema>;
 // ── POST /agent/clients ────────────────────────────────────────────────────────
 export const registerClientSchema = z.object({
   phone: phoneSchema,
-  name: z.string().trim().min(2).max(100),
+  firstName: z
+    .string()
+    .trim()
+    .min(2, "First name must be at least 2 characters")
+    .max(100),
+  middleName: z.string().trim().max(100).nullable().optional(),
+  lastName: z
+    .string()
+    .trim()
+    .min(2, "Last name must be at least 2 characters")
+    .max(100),
   role: z.enum(REGISTERABLE_ROLES as [string, ...string[]], {
-    message: `Role must be one of: ${REGISTERABLE_ROLES.join(", ")}`,
+    message: `Role must be one of: ${REGISTERABLE_ROLES.join(", ")}`, // ✨ Corrected to 'message'
   }),
   location: z
     .object({
