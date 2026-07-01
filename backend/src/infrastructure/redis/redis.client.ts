@@ -4,7 +4,6 @@ import { logger } from "../../common/utils/logger.js";
 
 class RedisService {
   private client: Redis;
-    quit: any;
 
   constructor() {
     this.client = new Redis(redisConfig.url, redisConfig);
@@ -64,6 +63,13 @@ class RedisService {
     } catch {
       return false;
     }
+  }
+  public async quit(): Promise<string> {
+    return this.client.quit();
+  }
+
+  public async disconnect(): Promise<void> {
+    this.client.disconnect();
   }
 }
 
