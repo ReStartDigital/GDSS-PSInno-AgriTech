@@ -1,8 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import { logError, logger } from "../../common/utils/logger.js";
-import * as dotenv from "dotenv";
-
-dotenv.config();
+import { AppException } from "../../common/exceptions/app.exceptions.js";
+import { ErrorCode } from "../../common/constants/error-codes.enum.js";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME ?? "",
@@ -12,44 +11,43 @@ cloudinary.config({
 });
 
 export interface CloudinaryUploadResult {
-  success: boolean;
-  url?: string;
-  thumbnailUrl?: string;
-  publicId?: string;
-  errorReason?: string;
+  url: string;
+  thumbnailUrl: string;
+  publicId: string;
 }
 
 class CloudinaryClient {
   /**
    * Uploads a raw buffer to Cloudinary and returns both a full-resolution
-   * URL and a thumbnail URL (300px wide, auto-format, auto-quality).
-   * The thumbnail is served from the same asset — no duplicate storage.
+   * WebP URL and a lightweight thumbnail URL.
    */
   async uploadBuffer(
     buffer: Buffer,
     folder: string,
     publicId?: string,
   ): Promise<CloudinaryUploadResult> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const options = {
         folder,
         public_id: publicId ?? "",
         resource_type: "image" as const,
-        // Auto-convert to WebP for modern clients — reduces bandwidth
-        // significantly for farmers on low-data mobile plans.
         format: "webp",
         transformation: [{ quality: "auto" }],
       };
 
-      cloudinary.uploader
-        .upload_stream(options, (error, result) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        options,
+        (error, result) => {
           if (error || !result) {
             logError("Cloudinary upload failed", error);
-            resolve({
-              success: false,
-              errorReason: error?.message || "UPLOAD_FAILED",
-            });
-            return;
+            return reject(
+              new AppException(
+                400,
+                ErrorCode.PHOTO_UPLOAD_FAILED,
+                error?.message ||
+                  "Failed to push image asset to cloud storage tier.",
+              ),
+            );
           }
 
           // Thumbnail transformation via URL API — derived from the same asset
@@ -63,14 +61,16 @@ class CloudinaryClient {
           logger.debug("Cloudinary upload succeeded", {
             publicId: result.public_id,
           });
+
           resolve({
-            success: true,
             url: result.secure_url,
             thumbnailUrl,
             publicId: result.public_id,
           });
-        })
-        .end(buffer);
+        },
+      );
+
+      uploadStream.end(buffer);
     });
   }
 
@@ -78,8 +78,7 @@ class CloudinaryClient {
     try {
       await cloudinary.uploader.destroy(publicId);
     } catch (error) {
-      // Non-fatal — log and continue. A dangling Cloudinary asset is
-      // not worth blocking the user's profile update.
+      // Keep this non-fatal as you designed — we don't want a dangling asset to break a DB transaction
       logError("Cloudinary delete failed", error, { publicId });
     }
   }
