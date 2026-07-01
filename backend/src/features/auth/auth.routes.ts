@@ -88,7 +88,7 @@ router.post(
  *             type: object
  *             required: [phone]
  *             properties:
- *               phone: 
+ *               phone:
  *                 type: string
  *                 example: "+233240000000"
  *                 description: Explicit international E.164 formatted telephone number.

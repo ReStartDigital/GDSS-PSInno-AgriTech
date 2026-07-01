@@ -32,6 +32,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "strictPropertyInitialization": false,
+    "esModuleInterop":true,
 
     /* Remove JSX for Backend */
     "jsx": "react-jsx"

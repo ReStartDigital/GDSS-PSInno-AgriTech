@@ -1,0 +1,84 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+
+jobs:
+  test:
+    name: Test & Validate
+    runs-on: ubuntu-latest
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: './backend/package-lock.json'
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
+      
+      - name: Provision Cryptographic Keys
+        run: |
+          cd backend
+          mkdir -p keys
+          
+          echo "${{ secrets.JWT_PRIVATE_KEY }}" > keys/private.pem
+          echo "${{ secrets.JWT_PUBLIC_KEY }}" > keys/public.pem
+          
+          chmod 600 keys/private.pem
+          chmod 600 keys/public.pem
+
+      - name: Code Quality (Linter)
+        run: |
+          cd backend
+          npm run lint
+
+      - name: TypeScript Compilation Check
+        run: |
+          cd backend
+          npm run build
+
+      - name: Run test
+        env:
+          # Point your app to the GitHub Runner's local Redis container service
+          REDIS_URL: redis://localhost:6379
+          NODE_ENV: test
+          JWT_PRIVATE_KEY_PATH: "./keys/private.pem"
+          JWT_PUBLIC_KEY_PATH: "./keys/public.pem"
+        run: |
+          cd backend
+          npm run test
+
+  deploy:
+    name: Production Deployment
+    needs: test
+    
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Step
+        run: echo "Triggering deployment script to hosting provider (Render/AWS)..."

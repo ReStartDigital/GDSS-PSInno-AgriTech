@@ -64,6 +64,13 @@ class RedisService {
       return false;
     }
   }
+  public async quit(): Promise<string> {
+    return this.client.quit();
+  }
+
+  public async disconnect(): Promise<void> {
+    this.client.disconnect();
+  }
 }
 
 export const redisService = new RedisService();
