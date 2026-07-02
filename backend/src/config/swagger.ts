@@ -18,12 +18,14 @@ const options: swaggerJsdoc.Options = {
     info: {
       title: "VegeLink Ghana API",
       version: "1.0.0",
-      description: "Farmer-to-Buyer Digital Marketplace Platform with Integrated Logistics",
+      description:
+        "Farmer-to-Buyer Digital Marketplace Platform with Integrated Logistics",
     },
     servers: [{ url: SWAGGER_URL }],
     components: {
       securitySchemes: {
-        BearerAuth: { // ✨ Normalized to CamelCase to exactly match common headers layout
+        BearerAuth: {
+          // ✨ Normalized to CamelCase to exactly match common headers layout
           type: "http",
           scheme: "bearer",
           bearerFormat: "JWT",
