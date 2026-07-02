@@ -17,6 +17,7 @@ import type {
   RegisterClientDto,
   PaginationDto,
 } from "./users.schemas.js";
+import * as HashUtil from "../../common/utils/hash.util.js";
 import type { PaginatedResult } from "../../common/utils/paginate.util.js";
 import type { User } from "../../database/entities/User.js";
 import crypto from "crypto";
@@ -104,15 +105,21 @@ export class UsersService {
   async changePin(userId: string, dto: ChangePinDto): Promise<void> {
     const user = await this.getPrivateProfile(userId);
 
-    const currentHash = this.hashPin(dto.current_pin);
-    if (user.pinHash !== currentHash) {
+    const isVerified = await HashUtil.verifySecret(
+      dto.current_pin,
+      user.pinHash ?? "",
+    );
+    console.log(
+      `User hash: ${user.pinHash}\nCurrent Hash: ${isVerified}\n${dto.current_pin}`,
+    );
+    if (!isVerified) {
       throw new UnauthorizedException(
         "The current PIN entered is invalid.",
         ErrorCode.INVALID_OLD_PIN,
       );
     }
 
-    const newHash = this.hashPin(dto.new_pin);
+    const newHash = await HashUtil.hashSecret(dto.new_pin);
     await this.repo.updatePinHash(user.id, newHash);
   }
 
