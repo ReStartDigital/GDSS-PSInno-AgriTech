@@ -26,7 +26,7 @@ router.use(authenticateJwt); // All routes require valid JWT
 
 /**
  * @swagger
- * /users/me:
+ * /api/v1/users/me:
  *   get:
  *     summary: Get current user profile
  *     description: Returns the full profile of the authenticated user.
@@ -41,7 +41,7 @@ router.get("/me", usersController.getMyProfile);
 
 /**
  * @swagger
- * /users/me:
+ * /api/v1/users/me:
  *   patch:
  *     summary: Update current user profile
  *     description: Update mutable fields (name, location, etc.).
@@ -66,7 +66,7 @@ router.patch(
 
 /**
  * @swagger
- * /users/me/photo:
+ * /api/v1/users/me/photo:
  *   post:
  *     summary: Upload profile photo
  *     description: Uploads and processes a new avatar image via Cloudinary.
@@ -91,7 +91,7 @@ router.post("/me/photo", upload("avatar"), usersController.uploadAvatar);
 
 /**
  * @swagger
- * /users/me/pin:
+ * /api/v1/users/me/pin:
  *   patch:
  *     summary: Change PIN
  *     description: Updates the user's security PIN after verifying the current one.
@@ -114,7 +114,7 @@ router.patch("/me/pin", validate(changePinSchema), usersController.changeMyPin);
 
 /**
  * @swagger
- * /users/me/payment-details:
+ * /api/v1/users/me/payment-details:
  *   post:
  *     summary: Configure payment details
  *     description: Sets up merchant split payment configuration (Paystack).
@@ -142,7 +142,7 @@ router.post(
 
 /**
  * @swagger
- * /users/me/earnings:
+ * /api/v1/users/me/earnings:
  *   get:
  *     summary: Get earnings & performance metrics
  *     description: Returns aggregated earnings and transaction metrics for the current operator.
@@ -164,7 +164,7 @@ router.get(
 
 /**
  * @swagger
- * /users/{id}:
+ * /api/v1/users/{id}:
  *   get:
  *     summary: Get public user profile
  *     description: Retrieves a public-facing profile (limited PII).
@@ -188,7 +188,7 @@ router.get("/:id", usersController.getPublicProfile);
 
 /**
  * @swagger
- * /agent/clients:
+ * /api/v1/users/agent/clients:
  *   post:
  *     summary: Register managed client
  *     description: Creates a new offline client under the current agent.
@@ -216,7 +216,7 @@ router.post(
 
 /**
  * @swagger
- * /agent/clients:
+ * /api/v1/users/agent/clients:
  *   get:
  *     summary: List managed clients
  *     description: Returns a paginated list of clients assigned to the current agent.
@@ -243,7 +243,7 @@ router.get(
 
 /**
  * @swagger
- * /agent/clients/{id}/unassign:
+ * /api/v1/users/agent/clients/{id}/unassign:
  *   patch:
  *     summary: Unassign managed client
  *     description: Removes the management relationship between agent and client.
