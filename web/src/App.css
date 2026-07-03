@@ -27,7 +27,6 @@
   gap: 16px;
 }
 
-.brand-mark,
 .avatar,
 .status-pill,
 .mini-badges span,
@@ -42,13 +41,14 @@
 }
 
 .brand-mark {
-  width: 60px;
-  height: 60px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #d6ffcd 0%, #8fbc8f 100%);
+  background: #d6ffcd;
   color: #264123;
-  box-shadow: 0 4px 6px -1px rgba(38, 65, 35, 0.1);
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .brand-mark svg,
@@ -98,8 +98,8 @@
 }
 
 .sidebar h1 {
-  font-size: clamp(2rem, 2.5vw, 2.5rem);
-  line-height: 1.05;
+  font-size: clamp(1.4rem, 1.8vw, 1.8rem);
+  line-height: 1.15;
 }
 
 .sidebar-nav {
@@ -445,7 +445,7 @@
 
 .role-chip {
   padding: 0 16px;
-  border-radius: 16px;
+  border-radius: 6px;
   background: #ffffff;
   color: #264123;
   border: 1px solid rgba(38, 65, 35, 0.12);
@@ -729,7 +729,7 @@
   width: 72px;
   min-width: 72px;
   height: 72px;
-  border-radius: 22px;
+  border-radius: 6px;
   font-size: 1.1rem;
 }
 
@@ -758,7 +758,7 @@
 .field input {
   min-height: 50px;
   padding: 0 14px;
-  border-radius: 16px;
+  border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.1);
   color: #f8faf5;

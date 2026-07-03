@@ -43,7 +43,7 @@ export default function RegisterPage() {
           <h2>Join VegeLink Ghana.</h2>
           <p>Phone-only registration. No email required.</p>
         </div>
-        <Link to="/auth/login" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px', borderRadius: 18 }}>
+        <Link to="/auth/login" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px' }}>
           Already have an account
         </Link>
       </section>
@@ -66,7 +66,7 @@ export default function RegisterPage() {
                   <button key={r.value} type="button"
                     onClick={() => setValue('role', r.value, { shouldValidate: true })}
                     style={{
-                      padding: '12px 14px', borderRadius: 16, textAlign: 'left', cursor: 'pointer',
+                      padding: '12px 14px', borderRadius: 6, textAlign: 'left', cursor: 'pointer',
                       border: `2px solid ${selectedRole === r.value ? '#d6ffcd' : 'rgba(255,255,255,0.14)'}`,
                       background: selectedRole === r.value ? 'rgba(214,255,205,0.18)' : 'rgba(255,255,255,0.06)',
                       color: '#f8faf5',

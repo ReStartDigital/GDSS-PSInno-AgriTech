@@ -24,7 +24,7 @@ export default function LoginPage() {
           <h2>Log in to VegeLink Ghana.</h2>
           <p>Enter your phone number and PIN to continue.</p>
         </div>
-        <Link to="/auth/register" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px', borderRadius: 18 }}>
+        <Link to="/auth/register" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px' }}>
           Create account
         </Link>
       </section>
@@ -54,7 +54,7 @@ export default function LoginPage() {
           </div>
           <p>Phone number, OTP verification, then set a PIN. No email needed.</p>
           <div style={{ marginTop: 20 }}>
-            <Link to="/auth/register" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px', borderRadius: 18 }}>
+            <Link to="/auth/register" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px' }}>
               Get started
             </Link>
           </div>
