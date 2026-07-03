@@ -1,0 +1,35 @@
+import type { InputHTMLAttributes } from 'react'
+import type { FieldError } from 'react-hook-form'
+
+interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
+  label: string
+  error?: FieldError
+  dark?: boolean
+}
+
+export function Field({ label, error, dark, ...props }: FieldProps) {
+  return (
+    <label className="field" style={dark ? {} : { '--field-color': '#1f2937' } as React.CSSProperties}>
+      <span style={dark ? {} : { color: '#4b5563', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        {label}
+      </span>
+      <input
+        {...props}
+        style={{
+          minHeight: 50,
+          padding: '0 14px',
+          borderRadius: 16,
+          border: `1px solid ${error ? '#dc2626' : dark ? 'rgba(255,255,255,0.14)' : 'rgba(38,65,35,0.18)'}`,
+          background: dark ? 'rgba(255,255,255,0.1)' : '#fff',
+          color: dark ? '#f8faf5' : '#1f2937',
+          fontSize: '1rem',
+          width: '100%',
+          boxSizing: 'border-box',
+        }}
+      />
+      {error && (
+        <span style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: 4 }}>{error.message}</span>
+      )}
+    </label>
+  )
+}
