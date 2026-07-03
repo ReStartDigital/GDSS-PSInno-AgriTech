@@ -1,27 +1,48 @@
 import { Link } from "expo-router";
 import { useMemo, useState } from "react";
-import { FlatList, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import {
   listingCategories,
   ListingCategoryFilter,
   MarketplaceListing,
   marketplaceListings,
 } from "@/lib/marketplace-data";
+import { vlClassNames, vlColors } from "@/lib/design-system";
 
 type SortMode = "nearest" | "price_low" | "price_high" | "stock";
+type ViewMode = "grid" | "list";
 
 const sortOptions: { label: string; value: SortMode }[] = [
-  { label: "Nearest", value: "nearest" },
-  { label: "Low price", value: "price_low" },
-  { label: "High price", value: "price_high" },
-  { label: "Most stock", value: "stock" },
+  { label: "Nearest First", value: "nearest" },
+  { label: "Lowest Price", value: "price_low" },
+  { label: "Highest Price", value: "price_high" },
+  { label: "Most Stock", value: "stock" },
 ];
+
+const regions = [
+  "All Regions",
+  "Greater Accra",
+  "Ashanti",
+  "Eastern",
+  "Northern",
+  "Western",
+  "Volta",
+  "Brong-Ahafo",
+] as const;
 
 export function ListingFlatList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] =
     useState<ListingCategoryFilter>("All");
   const [sortMode, setSortMode] = useState<SortMode>("nearest");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [selectedRegion, setSelectedRegion] = useState<(typeof regions)[number]>(
+    "All Regions",
+  );
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const activeSortLabel =
+    sortOptions.find((option) => option.value === sortMode)?.label ?? "Nearest First";
 
   const filteredListings = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -30,13 +51,21 @@ export function ListingFlatList() {
       .filter((listing) => {
         const matchesCategory =
           selectedCategory === "All" || listing.category === selectedCategory;
+        const matchesRegion =
+          selectedRegion === "All Regions" ||
+          listing.farmer.locationLabel.includes(selectedRegion);
         const matchesSearch =
           normalizedQuery.length === 0 ||
           listing.cropName.toLowerCase().includes(normalizedQuery) ||
           listing.farmer.fullName.toLowerCase().includes(normalizedQuery) ||
           listing.farmer.locationLabel.toLowerCase().includes(normalizedQuery);
 
-        return matchesCategory && matchesSearch && listing.status === "available";
+        return (
+          matchesCategory &&
+          matchesRegion &&
+          matchesSearch &&
+          listing.status === "available"
+        );
       })
       .sort((left, right) => {
         if (sortMode === "price_low") {
@@ -53,58 +82,330 @@ export function ListingFlatList() {
 
         return left.distanceKm - right.distanceKm;
       });
-  }, [searchQuery, selectedCategory, sortMode]);
+  }, [searchQuery, selectedCategory, selectedRegion, sortMode]);
+
+  const resetFilters = () => {
+    setSelectedCategory("All");
+    setSelectedRegion("All Regions");
+    setSortMode("nearest");
+    setSearchQuery("");
+  };
 
   return (
-    <FlatList
-      data={filteredListings}
-      keyExtractor={(item) => item.id}
-      contentContainerClassName="gap-3 px-4 pb-8"
-      ListHeaderComponent={
-        <View className="gap-4 pb-2 pt-4">
-          <View className="rounded-lg border border-green-100 bg-green-50 px-4 py-4">
-            <Text className="text-xs font-semibold uppercase text-green-700">
-              Greater Accra vegetable belt
-            </Text>
-            <Text className="mt-1 text-2xl font-bold text-green-950">
-              Fresh produce near you
-            </Text>
-            <Text className="mt-2 text-sm leading-5 text-green-900">
-              Compare price, stock, farmer location, packaging, and delivery
-              timing before you place an order.
+    <View className="flex-1 bg-gray-50">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerClassName="px-5 pb-28 pt-12"
+      >
+        <View className="flex-row items-start justify-between">
+          <View>
+            <Text className="text-3xl font-black text-gray-950">Browse Produce</Text>
+            <Text className="mt-1 text-sm font-black text-gray-400">
+              {marketplaceListings.length} products available
             </Text>
           </View>
 
+          <Pressable
+            accessibilityLabel={viewMode === "grid" ? "Show list view" : "Show grid view"}
+            className="h-12 w-12 items-center justify-center rounded-2xl border-2 bg-gray-100 active:bg-gray-200"
+            style={{ borderColor: viewMode === "grid" ? vlColors.brandGreen : "transparent" }}
+            onPress={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+          >
+            <Text className="text-2xl font-black text-gray-700">
+              {viewMode === "grid" ? "▦" : "▤"}
+            </Text>
+          </Pressable>
+        </View>
+
+        <View className="mt-5 min-h-12 flex-row items-center rounded-2xl bg-gray-100 px-4">
+          <Text className="mr-2 text-2xl font-black text-gray-400">⌕</Text>
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Search crop, farmer, or town"
-            placeholderTextColor="#6B7280"
-            className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-base text-gray-950"
+            placeholder="Search vegetables, farmers, regions..."
+            placeholderTextColor="#98A1B2"
             returnKeyType="search"
+            className="flex-1 text-sm font-black text-gray-950"
           />
+        </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerClassName="gap-2"
+        <View className="mt-3 flex-row gap-2">
+          <Pressable
+            className="h-11 flex-1 flex-row items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 active:bg-gray-50"
+            onPress={() =>
+              setSortMode((current) =>
+                current === "nearest"
+                  ? "price_low"
+                  : current === "price_low"
+                    ? "price_high"
+                    : current === "price_high"
+                      ? "stock"
+                      : "nearest",
+              )
+            }
           >
+            <View className="flex-row items-center gap-2">
+              <Text className="text-lg font-black text-green-800">≡</Text>
+              <Text className="text-sm font-black text-gray-700">{activeSortLabel}</Text>
+            </View>
+            <Text className="text-lg font-black text-gray-400">⌄</Text>
+          </Pressable>
+
+          <Pressable
+            className="h-11 flex-row items-center rounded-2xl border border-gray-200 bg-white px-4 active:bg-gray-50"
+            onPress={() => setIsFilterOpen(true)}
+          >
+            <Text className="mr-2 text-lg font-black text-gray-500">▽</Text>
+            <Text className="text-sm font-black text-gray-700">Filter</Text>
+          </Pressable>
+        </View>
+
+        {filteredListings.length === 0 ? (
+          <EmptyState onReset={resetFilters} />
+        ) : viewMode === "grid" ? (
+          <View className="mt-5 flex-row flex-wrap justify-between">
+            {filteredListings.map((listing) => (
+              <GridCard key={listing.id} listing={listing} />
+            ))}
+          </View>
+        ) : (
+          <View className="mt-5 gap-3">
+            {filteredListings.map((listing) => (
+              <ListCard key={listing.id} listing={listing} />
+            ))}
+          </View>
+        )}
+      </ScrollView>
+
+      <FilterSheet
+        visible={isFilterOpen}
+        selectedCategory={selectedCategory}
+        selectedRegion={selectedRegion}
+        onClose={() => setIsFilterOpen(false)}
+        onReset={resetFilters}
+        onSelectCategory={setSelectedCategory}
+        onSelectRegion={setSelectedRegion}
+      />
+    </View>
+  );
+}
+
+function ListCard({ listing }: { listing: MarketplaceListing }) {
+  return (
+    <Link href={{ pathname: "/listings/[id]", params: { id: listing.id } }} asChild>
+      <Pressable className="rounded-2xl bg-white p-3 shadow-sm active:opacity-80">
+        <View className="flex-row items-center">
+          <ProduceThumb listing={listing} size="sm" />
+
+          <View className="ml-4 flex-1">
+            <View className="flex-row items-start justify-between gap-2">
+              <View className="flex-1">
+                <Text className="text-base font-black text-gray-950" numberOfLines={2}>
+                  {listing.cropName}
+                </Text>
+                <Price listing={listing} />
+              </View>
+              <FreshnessPill listing={listing} compact />
+            </View>
+
+            <View className="mt-2 flex-row items-center gap-3">
+              <Text className="text-xs font-black text-amber-500">
+                ★ {listing.farmer.rating.toFixed(1)}
+              </Text>
+              <Text className="text-xs font-semibold text-gray-400">
+                ⌖ {listing.distanceKm} km
+              </Text>
+            </View>
+          </View>
+
+          <Pressable className="ml-3 h-10 w-10 items-center justify-center rounded-full bg-gray-50">
+            <Text className="text-2xl font-black text-gray-300">♡</Text>
+          </Pressable>
+        </View>
+      </Pressable>
+    </Link>
+  );
+}
+
+function GridCard({ listing }: { listing: MarketplaceListing }) {
+  return (
+    <Link href={{ pathname: "/listings/[id]", params: { id: listing.id } }} asChild>
+      <Pressable className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white active:opacity-80">
+        <View
+          className="h-32 items-center justify-center"
+          style={{ backgroundColor: listing.tintColor }}
+        >
+          <View className="absolute left-3 top-3">
+            <FreshnessPill listing={listing} compact />
+          </View>
+          <Pressable className="absolute right-3 top-3 h-9 w-9 items-center justify-center rounded-full bg-white">
+            <Text className="text-xl font-black text-gray-300">♡</Text>
+          </Pressable>
+          <ProduceThumb listing={listing} size="lg" />
+        </View>
+
+        <View className="p-3">
+          <Text className="text-base font-black text-gray-950" numberOfLines={2}>
+            {listing.cropName}
+          </Text>
+          <Price listing={listing} />
+          <Text className="mt-2 text-xs font-black text-amber-500">
+            ★ {listing.farmer.rating.toFixed(1)}
+          </Text>
+          <Text className="mt-2 text-xs font-semibold text-gray-400" numberOfLines={1}>
+            ⌖ {listing.farmer.locationLabel} · {listing.distanceKm} km
+          </Text>
+        </View>
+      </Pressable>
+    </Link>
+  );
+}
+
+function Price({ listing }: { listing: MarketplaceListing }) {
+  return (
+    <Text className="mt-1 text-lg font-black text-green-700">
+      GHC{listing.pricePerUnit}
+      <Text className="text-xs font-semibold text-gray-400">
+        /{listing.unitOfMeasure}
+      </Text>
+    </Text>
+  );
+}
+
+function FreshnessPill({
+  listing,
+  compact = false,
+}: {
+  listing: MarketplaceListing;
+  compact?: boolean;
+}) {
+  const isBlue = listing.freshnessTag === "Top rated";
+  const isYellow = listing.freshnessTag === "Best value" || listing.freshnessTag === "In season";
+
+  return (
+    <View
+      className={`rounded-full ${compact ? "px-2 py-1" : "px-3 py-1.5"}`}
+      style={{
+        backgroundColor: isBlue ? "#DBEAFE" : isYellow ? "#FEF3C7" : "#DCFCE7",
+      }}
+    >
+      <Text
+        className="text-[10px] font-black"
+        style={{
+          color: isBlue ? vlColors.blue : isYellow ? "#92400E" : vlColors.brandGreen,
+        }}
+      >
+        {listing.freshnessTag}
+      </Text>
+    </View>
+  );
+}
+
+function ProduceThumb({
+  listing,
+  size,
+}: {
+  listing: MarketplaceListing;
+  size: "sm" | "lg";
+}) {
+  const dimensions = size === "sm" ? "h-20 w-20" : "h-20 w-20";
+  const cropInitials = listing.cropName
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 2);
+
+  return (
+    <View
+      className={`${dimensions} items-center justify-center rounded-2xl`}
+      style={{ backgroundColor: listing.tintColor }}
+    >
+      <View
+        className="h-14 w-14 items-center justify-center rounded-full"
+        style={{
+          backgroundColor: listing.accentColor,
+          shadowColor: listing.accentColor,
+          shadowOpacity: 0.22,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 7 },
+        }}
+      >
+        <View className="absolute -right-1 -top-1 h-5 w-7 rotate-45 rounded-full bg-white/40" />
+        <Text className="text-base font-black text-white">{cropInitials}</Text>
+      </View>
+    </View>
+  );
+}
+
+function EmptyState({ onReset }: { onReset: () => void }) {
+  return (
+    <View className="mt-8 items-center rounded-2xl border border-dashed border-gray-200 bg-white px-5 py-10">
+      <Text className="text-xl font-black text-gray-950">No produce found</Text>
+      <Text className="mt-2 text-center text-sm leading-6 text-gray-500">
+        Try another crop, category, region, or sort option.
+      </Text>
+      <Pressable className="mt-5 rounded-2xl bg-green-800 px-6 py-3" onPress={onReset}>
+        <Text className="font-black text-white">Reset Filters</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function FilterSheet({
+  visible,
+  selectedCategory,
+  selectedRegion,
+  onClose,
+  onReset,
+  onSelectCategory,
+  onSelectRegion,
+}: {
+  visible: boolean;
+  selectedCategory: ListingCategoryFilter;
+  selectedRegion: (typeof regions)[number];
+  onClose: () => void;
+  onReset: () => void;
+  onSelectCategory: (category: ListingCategoryFilter) => void;
+  onSelectRegion: (region: (typeof regions)[number]) => void;
+}) {
+  const handleReset = () => {
+    onReset();
+    onClose();
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View className="flex-1 justify-end bg-black/40">
+        <View className="rounded-t-3xl bg-white px-5 pb-7 pt-5">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-2xl font-black text-gray-950">Filter Produce</Text>
+            <Pressable
+              accessibilityLabel="Close filter"
+              className="h-10 w-10 items-center justify-center rounded-full bg-gray-100"
+              onPress={onClose}
+            >
+              <Text className="text-2xl font-black text-gray-400">×</Text>
+            </Pressable>
+          </View>
+
+          <Text className="mt-5 text-sm font-black uppercase text-gray-500">
+            Category
+          </Text>
+          <View className="mt-3 flex-row flex-wrap gap-2">
             {listingCategories.map((category) => {
-              const isActive = selectedCategory === category;
+              const active = selectedCategory === category;
 
               return (
                 <Pressable
                   key={category}
-                  className={`rounded-full border px-4 py-2 ${
-                    isActive
-                      ? "border-green-800 bg-green-800"
-                      : "border-gray-200 bg-white"
+                  className={`rounded-2xl px-5 py-3 ${
+                    active ? "bg-green-800" : "bg-gray-100"
                   }`}
-                  onPress={() => setSelectedCategory(category)}
+                  onPress={() => onSelectCategory(category)}
                 >
                   <Text
-                    className={`text-sm font-semibold ${
-                      isActive ? "text-white" : "text-gray-700"
+                    className={`text-sm font-black ${
+                      active ? "text-white" : "text-gray-700"
                     }`}
                   >
                     {category}
@@ -112,136 +413,57 @@ export function ListingFlatList() {
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerClassName="gap-2"
-          >
-            {sortOptions.map((option) => {
-              const isActive = sortMode === option.value;
+          <Text className="mt-7 text-sm font-black uppercase text-gray-500">
+            Region
+          </Text>
+          <View className="mt-3 flex-row flex-wrap justify-between gap-y-2">
+            {regions.map((region) => {
+              const active = selectedRegion === region;
 
               return (
                 <Pressable
-                  key={option.value}
-                  className={`rounded-lg border px-3 py-2 ${
-                    isActive
-                      ? "border-amber-500 bg-amber-50"
-                      : "border-gray-200 bg-white"
+                  key={region}
+                  className={`h-11 w-[48%] flex-row items-center justify-between rounded-2xl border px-4 ${
+                    active ? "bg-green-50" : "bg-gray-100"
                   }`}
-                  onPress={() => setSortMode(option.value)}
+                  style={{
+                    borderColor: active ? vlColors.brandGreen : "transparent",
+                  }}
+                  onPress={() => onSelectRegion(region)}
                 >
                   <Text
-                    className={`text-xs font-semibold ${
-                      isActive ? "text-amber-800" : "text-gray-600"
+                    className={`text-sm font-black ${
+                      active ? "text-green-800" : "text-gray-700"
                     }`}
                   >
-                    {option.label}
+                    {region}
                   </Text>
+                  {active ? (
+                    <Text className="text-base font-black text-green-800">✓</Text>
+                  ) : null}
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
 
-          <Text className="text-sm text-gray-500">
-            {filteredListings.length} active listing
-            {filteredListings.length === 1 ? "" : "s"} available
-          </Text>
-        </View>
-      }
-      ListEmptyComponent={
-        <View className="rounded-lg border border-dashed border-gray-300 px-5 py-8">
-          <Text className="text-center text-lg font-semibold text-gray-900">
-            No listings found
-          </Text>
-          <Text className="mt-2 text-center text-gray-600">
-            Try another crop, farmer, location, or category.
-          </Text>
-        </View>
-      }
-      renderItem={({ item }) => <ListingCard listing={item} />}
-    />
-  );
-}
-
-function ListingCard({ listing }: { listing: MarketplaceListing }) {
-  return (
-    <Link href={`/listings/${listing.id}`} asChild>
-      <Pressable className="rounded-lg border border-gray-200 bg-white p-4 active:bg-green-50">
-        <View className="flex-row gap-3">
-          <View
-            className="h-16 w-16 items-center justify-center rounded-lg"
-            style={{ backgroundColor: listing.tintColor }}
-          >
-            <Text
-              className="text-xl font-black"
-              style={{ color: listing.accentColor }}
+          <View className="mt-8 flex-row gap-3">
+            <Pressable
+              className="h-14 flex-1 items-center justify-center rounded-2xl border border-gray-200 bg-white"
+              onPress={handleReset}
             >
-              {listing.cropName
-                .split(" ")
-                .map((word) => word[0])
-                .join("")
-                .slice(0, 2)}
-            </Text>
-          </View>
-
-          <View className="flex-1">
-            <View className="flex-row items-start justify-between gap-3">
-              <View className="flex-1">
-                <Text className="text-lg font-bold text-green-950">
-                  {listing.cropName}
-                </Text>
-                <Text className="mt-1 text-sm text-gray-600">
-                  {listing.farmer.locationLabel}
-                </Text>
-              </View>
-              <View className="items-end">
-                <Text className="text-lg font-black text-green-900">
-                  GHS {listing.pricePerUnit}
-                </Text>
-                <Text className="text-xs text-gray-500">
-                  per {listing.unitOfMeasure}
-                </Text>
-              </View>
-            </View>
-
-            <View className="mt-3 flex-row flex-wrap gap-2">
-              <Badge label={listing.freshnessTag} tone="green" />
-              <Badge label={`${listing.distanceKm} km`} tone="gray" />
-              <Badge label={listing.deliveryEstimate} tone="amber" />
-            </View>
-
-            <View className="mt-4 border-t border-gray-100 pt-3">
-              <View className="flex-row items-center justify-between">
-                <Text className="text-sm font-semibold text-gray-800">
-                  {listing.availableQuantity} {listing.unitOfMeasure} available
-                </Text>
-                <Text className="text-sm font-semibold text-green-800">
-                  View details
-                </Text>
-              </View>
-              <Text className="mt-1 text-xs text-gray-500">
-                Recommended: {listing.packagingRecommendation}
-              </Text>
-            </View>
+              <Text className="font-black text-gray-600">Reset</Text>
+            </Pressable>
+            <Pressable
+              className={`h-14 flex-[2] items-center justify-center ${vlClassNames.primaryButton}`}
+              onPress={onClose}
+            >
+              <Text className={vlClassNames.primaryButtonText}>Apply Filters</Text>
+            </Pressable>
           </View>
         </View>
-      </Pressable>
-    </Link>
-  );
-}
-
-function Badge({ label, tone }: { label: string; tone: "green" | "amber" | "gray" }) {
-  const toneClassName = {
-    green: { container: "bg-green-50", text: "text-green-800" },
-    amber: { container: "bg-amber-50", text: "text-amber-800" },
-    gray: { container: "bg-gray-100", text: "text-gray-700" },
-  }[tone];
-
-  return (
-    <View className={`rounded-full px-2.5 py-1 ${toneClassName.container}`}>
-      <Text className={`text-xs font-semibold ${toneClassName.text}`}>{label}</Text>
-    </View>
+      </View>
+    </Modal>
   );
 }
