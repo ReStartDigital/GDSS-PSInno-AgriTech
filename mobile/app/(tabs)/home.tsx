@@ -1,284 +1,257 @@
 import { Link } from "expo-router";
-import { Pressable, ScrollView, Text, View } from "react-native";
-import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { UserRole, useAuthStore } from "@vegelink/shared";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useAuthStore } from "@vegelink/shared";
+import { listingCategories, marketplaceListings } from "@/lib/marketplace-data";
+import { vlColors } from "@/lib/design-system";
 
-type DashboardAction = {
-  label: string;
-  detail: string;
-  href:
-    | "/(tabs)/marketplace"
-    | "/(tabs)/listings"
-    | "/(tabs)/orders"
-    | "/(tabs)/jobs"
-    | "/listings/new"
-    | "/agent/clients"
-    | "/agent/pending";
-};
+const pulseItems = [
+  { crop: "Tomato", price: "GHC8/kg", accent: "#DC2626" },
+  { crop: "Yam", price: "GHC15/kg", accent: "#B45309" },
+  { crop: "Pepper", price: "GHC10/kg", accent: "#EF4444" },
+];
 
-type DashboardContent = {
-  title: string;
-  subtitle: string;
-  heroMetric: string;
-  heroLabel: string;
-  accent: string;
-  tint: string;
-  stats: { label: string; value: string }[];
-  actions: DashboardAction[];
-  checklist: string[];
-};
-
-const dashboardByRole: Record<UserRole, DashboardContent> = {
-  buyer: {
-    title: "Buy fresh produce",
-    subtitle: "Find nearby farmers, prepare orders, and pay with mobile money.",
-    heroMetric: "5",
-    heroLabel: "active listings near Accra",
-    accent: "#92400E",
-    tint: "#FFF7ED",
-    stats: [
-      { label: "Avg. delivery", value: "Same day" },
-      { label: "Payment", value: "MoMo ready" },
-      { label: "Packaging", value: "Quoted" },
-    ],
-    actions: [
-      {
-        label: "Browse marketplace",
-        detail: "Search crops, farmers, price, stock, and distance.",
-        href: "/(tabs)/marketplace",
-      },
-      {
-        label: "Track orders",
-        detail: "See payment, confirmation, and transport status.",
-        href: "/(tabs)/orders",
-      },
-    ],
-    checklist: [
-      "Compare produce by stock, price, and pickup town.",
-      "Choose quantity, packaging, transport, and MoMo provider.",
-      "Wait for farmer confirmation before delivery starts.",
-    ],
-  },
-  farmer: {
-    title: "Manage your harvest",
-    subtitle: "List produce, confirm orders, and keep buyers updated.",
-    heroMetric: "GHS 382",
-    heroLabel: "sample confirmed value today",
-    accent: "#15803D",
-    tint: "#F0FDF4",
-    stats: [
-      { label: "Listings", value: "3 active" },
-      { label: "Confirmations", value: "SMS/App" },
-      { label: "Payout", value: "MoMo" },
-    ],
-    actions: [
-      {
-        label: "Create listing",
-        detail: "Add crop, quantity, price, photo, and GPS pickup point.",
-        href: "/listings/new",
-      },
-      {
-        label: "My listings",
-        detail: "Review available, pending delivery, and sold produce.",
-        href: "/(tabs)/listings",
-      },
-      {
-        label: "Orders",
-        detail: "Confirm, decline, or review buyer order requests.",
-        href: "/(tabs)/orders",
-      },
-    ],
-    checklist: [
-      "Keep available quantity current to avoid overselling.",
-      "Use recommended packaging to reduce post-harvest losses.",
-      "Confirm orders quickly or rely on SMS and agent fallback.",
-    ],
-  },
-  transporter: {
-    title: "Move produce safely",
-    subtitle: "Accept nearby jobs and update delivery progress in the field.",
-    heroMetric: "15 km",
-    heroLabel: "matching radius for nearby jobs",
-    accent: "#1D4ED8",
-    tint: "#EFF6FF",
-    stats: [
-      { label: "Jobs", value: "4 nearby" },
-      { label: "Rate", value: "GHS 2.50/km" },
-      { label: "Updates", value: "Live status" },
-    ],
-    actions: [
-      {
-        label: "View jobs",
-        detail: "See pickup, dropoff, packaging notes, and distance.",
-        href: "/(tabs)/jobs",
-      },
-      {
-        label: "Orders",
-        detail: "Update pickup, in-transit, and delivered statuses.",
-        href: "/(tabs)/orders",
-      },
-    ],
-    checklist: [
-      "Check packaging notes before loading.",
-      "Update status at pickup and in transit.",
-      "Use buyer delivery OTP before marking delivered.",
-    ],
-  },
-  agent: {
-    title: "Support field clients",
-    subtitle: "Help farmers onboard, create listings, and confirm orders.",
-    heroMetric: "6 PM",
-    heroLabel: "daily farmer digest target",
-    accent: "#6D28D9",
-    tint: "#F5F3FF",
-    stats: [
-      { label: "Clients", value: "8 farmers" },
-      { label: "Pending", value: "3 orders" },
-      { label: "Fallback", value: "SMS safe" },
-    ],
-    actions: [
-      {
-        label: "My clients",
-        detail: "View assigned farmers and assisted registrations.",
-        href: "/agent/clients",
-      },
-      {
-        label: "Pending approvals",
-        detail: "Confirm orders on behalf of assigned farmers.",
-        href: "/agent/pending",
-      },
-      {
-        label: "Orders",
-        detail: "Review order status and buyer requests.",
-        href: "/(tabs)/orders",
-      },
-    ],
-    checklist: [
-      "Only act for farmers assigned to you.",
-      "Confirm orders after farmer consent.",
-      "Remind farmers they can block unsafe confirmations by SMS.",
-    ],
-  },
-  admin: {
-    title: "Platform overview",
-    subtitle: "Monitor marketplace activity, orders, and fulfilment readiness.",
-    heroMetric: "MVP",
-    heroLabel: "mobile flow in progress",
-    accent: "#374151",
-    tint: "#F3F4F6",
-    stats: [
-      { label: "Roles", value: "5" },
-      { label: "Modules", value: "8" },
-      { label: "Security", value: "RBAC" },
-    ],
-    actions: [
-      {
-        label: "Orders",
-        detail: "Review order lifecycle examples.",
-        href: "/(tabs)/orders",
-      },
-      {
-        label: "Browse marketplace",
-        detail: "Inspect listing presentation and buyer flow.",
-        href: "/(tabs)/marketplace",
-      },
-    ],
-    checklist: [
-      "Validate role-specific tabs and navigation.",
-      "Review readiness for REST API and WebSocket wiring.",
-      "Keep mobile slices small and committed locally.",
-    ],
-  },
-};
+const quickActions = [
+  { label: "Browse\nProduce", icon: "▦", href: "/(tabs)/marketplace" },
+  { label: "My Orders", icon: "▤", href: "/(tabs)/orders" },
+  { label: "Track\nDelivery", icon: "▣", href: "/(tabs)/orders" },
+  { label: "Saved Items", icon: "♡", href: "/(tabs)/profile" },
+] as const;
 
 export default function HomeScreen() {
   const user = useAuthStore((state) => state.user);
+  const firstName = user?.fullName?.split(" ")[0] ?? "Kofi";
+  const fullName = user?.fullName ?? "Kofi Mensah";
   const role = user?.role ?? "buyer";
-  const content = dashboardByRole[role];
-  const firstName = user?.fullName?.split(" ")[0] ?? "there";
 
   return (
-    <View className="flex-1 bg-white">
-      <ScreenHeader title="Home" />
-      <ScrollView contentContainerClassName="px-4 pb-8 pt-4">
-        <View
-          className="rounded-lg border border-gray-200 p-4"
-          style={{ backgroundColor: content.tint }}
-        >
-          <Text className="text-sm font-semibold uppercase text-gray-700">
-            Welcome, {firstName}
+    <View className="flex-1 bg-gray-50">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerClassName="pb-28"
+      >
+        <View className="overflow-hidden bg-green-800 px-5 pb-7 pt-14">
+          <View className="absolute -right-8 -top-8 h-40 w-40 rounded-full border border-green-600" />
+          <View className="absolute right-6 top-7 h-20 w-20 rounded-full bg-lime-900 opacity-40" />
+
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-3">
+              <View className="h-7 w-7 items-center justify-center rounded-full bg-white">
+                <Text className="text-[9px] font-black text-green-800">VL</Text>
+              </View>
+              <Text className="text-lg font-black text-white">VegeLink</Text>
+            </View>
+
+            <Pressable className="h-11 w-11 items-center justify-center rounded-full bg-white/20">
+              <Text className="text-2xl font-black text-white">⌾</Text>
+              <View className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-yellow-400" />
+            </Pressable>
+          </View>
+
+          <Text className="mt-9 text-sm font-black text-green-100">
+            Good evening, {firstName}
           </Text>
-          <Text className="mt-2 text-3xl font-black text-green-950">
-            {content.title}
+          <Text className="mt-1 text-2xl font-black text-white">{fullName}</Text>
+          <Text className="mt-2 text-sm font-black capitalize text-yellow-400">
+            Greater Accra - {role}
           </Text>
-          <Text className="mt-2 text-base leading-6 text-gray-700">
-            {content.subtitle}
-          </Text>
-          <View className="mt-5 rounded-lg bg-white p-4">
-            <Text className="text-4xl font-black" style={{ color: content.accent }}>
-              {content.heroMetric}
-            </Text>
-            <Text className="mt-1 text-sm font-semibold text-gray-700">
-              {content.heroLabel}
-            </Text>
+
+          <View className="mt-6 min-h-14 flex-row items-center rounded-2xl bg-white px-4">
+            <Text className="mr-3 text-2xl font-black text-gray-400">⌕</Text>
+            <TextInput
+              placeholder="Find fresh produce..."
+              placeholderTextColor="#98A1B2"
+              className="flex-1 text-base font-black text-gray-950"
+            />
           </View>
         </View>
 
-        <View className="mt-4 flex-row gap-2">
-          {content.stats.map((stat) => (
-            <View
-              key={stat.label}
-              className="flex-1 rounded-lg border border-gray-200 bg-white p-3"
-            >
-              <Text className="text-xs font-semibold text-gray-500">
-                {stat.label}
-              </Text>
-              <Text className="mt-1 text-base font-black text-gray-950">
-                {stat.value}
-              </Text>
+        <View className="-mt-4 px-5">
+          <View className="rounded-2xl bg-white p-4 shadow-sm">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center gap-2">
+                <View className="h-8 w-8 items-center justify-center rounded-xl bg-orange-50">
+                  <Text className="font-black text-orange-500">↗</Text>
+                </View>
+                <Text className="text-base font-black text-gray-950">Market Pulse</Text>
+              </View>
+              <Text className="text-sm font-semibold text-gray-400">Today</Text>
             </View>
-          ))}
-        </View>
 
-        <Text className="mt-6 text-lg font-bold text-green-950">
-          Next actions
-        </Text>
-        <View className="mt-3 gap-3">
-          {content.actions.map((action) => (
-            <Link key={action.label} href={action.href} asChild>
-              <Pressable className="rounded-lg border border-gray-200 bg-white p-4 active:bg-green-50">
-                <View className="flex-row items-center justify-between gap-4">
-                  <View className="flex-1">
-                    <Text className="text-base font-bold text-gray-950">
-                      {action.label}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="mt-4"
+              contentContainerClassName="gap-3"
+            >
+              {pulseItems.map((item) => (
+                <View
+                  key={item.crop}
+                  className="min-w-32 flex-row items-center rounded-2xl bg-gray-50 px-3 py-2"
+                >
+                  <ProduceMark accent={item.accent} />
+                  <View className="ml-3">
+                    <Text className="text-xs font-black text-gray-950">
+                      {item.crop}
                     </Text>
-                    <Text className="mt-1 text-sm leading-5 text-gray-600">
-                      {action.detail}
+                    <Text className="text-sm font-black text-gray-950">
+                      {item.price}
                     </Text>
                   </View>
-                  <Text className="text-2xl font-bold text-green-800">{">"}</Text>
                 </View>
-              </Pressable>
-            </Link>
-          ))}
+              ))}
+            </ScrollView>
+          </View>
         </View>
 
-        <View className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <Text className="text-lg font-bold text-amber-950">
-            Today&apos;s checklist
-          </Text>
-          <View className="mt-3 gap-3">
-            {content.checklist.map((item) => (
-              <View key={item} className="flex-row gap-3">
-                <View className="mt-1.5 h-2 w-2 rounded-full bg-amber-700" />
-                <Text className="flex-1 text-sm leading-5 text-amber-950">
-                  {item}
-                </Text>
-              </View>
+        <View className="mt-6 px-5">
+          <Text className="text-lg font-black text-gray-950">Quick Actions</Text>
+          <View className="mt-5 flex-row justify-between">
+            {quickActions.map((action, index) => (
+              <Link key={action.label} href={action.href} asChild>
+                <Pressable className="w-[22%] items-center active:opacity-75">
+                  <View
+                    className="h-14 w-14 items-center justify-center rounded-2xl"
+                    style={{
+                      backgroundColor:
+                        index === 0
+                          ? "#ECFDF3"
+                          : index === 1
+                            ? "#FFF8E1"
+                            : index === 2
+                              ? "#EFF6FF"
+                              : "#FFF1F2",
+                    }}
+                  >
+                    <Text
+                      className="text-2xl font-black"
+                      style={{
+                        color:
+                          index === 0
+                            ? vlColors.brandGreen
+                            : index === 1
+                              ? vlColors.warning
+                              : index === 2
+                                ? vlColors.blue
+                                : vlColors.danger,
+                      }}
+                    >
+                      {action.icon}
+                    </Text>
+                  </View>
+                  <Text className="mt-3 text-center text-xs font-black leading-4 text-gray-700">
+                    {action.label}
+                  </Text>
+                </Pressable>
+              </Link>
             ))}
           </View>
         </View>
+
+        <View className="mt-7">
+          <Text className="px-5 text-lg font-black text-gray-950">Categories</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mt-4"
+            contentContainerClassName="gap-2 px-5"
+          >
+            {listingCategories.map((category, index) => (
+              <Pressable
+                key={category}
+                className={`rounded-2xl px-5 py-3 ${
+                  index === 0 ? "bg-green-800" : "bg-white"
+                }`}
+              >
+                <Text
+                  className={`text-sm font-black ${
+                    index === 0 ? "text-white" : "text-gray-700"
+                  }`}
+                >
+                  {category}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+
+        <View className="mt-7">
+          <View className="flex-row items-center justify-between px-5">
+            <View className="flex-row items-center gap-2">
+              <Text className="text-lg font-black text-gray-950">Fresh Today</Text>
+              <View className="h-6 w-6 items-center justify-center rounded-full bg-red-50">
+                <Text className="text-xs font-black text-red-400">!</Text>
+              </View>
+            </View>
+            <Link href="/(tabs)/marketplace" asChild>
+              <Pressable>
+                <Text className="text-sm font-black text-green-800">See all  ›</Text>
+              </Pressable>
+            </Link>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mt-4"
+            contentContainerClassName="gap-3 px-5"
+          >
+            {marketplaceListings.slice(0, 4).map((listing) => (
+              <Link
+                key={listing.id}
+                href={{ pathname: "/listings/[id]", params: { id: listing.id } }}
+                asChild
+              >
+                <Pressable className="w-40 overflow-hidden rounded-2xl bg-white active:opacity-80">
+                  <View
+                    className="h-28 items-center justify-center"
+                    style={{ backgroundColor: listing.tintColor }}
+                  >
+                    <ProduceMark accent={listing.accentColor} large />
+                  </View>
+                  <View className="p-3">
+                    <Text className="text-sm font-black text-gray-950" numberOfLines={1}>
+                      {listing.cropName}
+                    </Text>
+                    <Text className="mt-1 text-lg font-black text-green-700">
+                      GHC{listing.pricePerUnit}
+                      <Text className="text-xs font-semibold text-gray-400">
+                        /{listing.unitOfMeasure}
+                      </Text>
+                    </Text>
+                    <Text className="mt-1 text-xs font-semibold text-gray-400">
+                      {listing.distanceKm} km away
+                    </Text>
+                  </View>
+                </Pressable>
+              </Link>
+            ))}
+          </ScrollView>
+        </View>
       </ScrollView>
+    </View>
+  );
+}
+
+function ProduceMark({ accent, large = false }: { accent: string; large?: boolean }) {
+  const size = large ? 54 : 28;
+
+  return (
+    <View
+      className="items-center justify-center rounded-full"
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: accent,
+        shadowColor: accent,
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+      }}
+    >
+      <View
+        className="rounded-full bg-white/30"
+        style={{ width: size * 0.55, height: size * 0.55 }}
+      />
     </View>
   );
 }
