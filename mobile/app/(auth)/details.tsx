@@ -37,7 +37,7 @@ export default function DetailsScreen() {
     };
 
     setAuth(user, "demo-token");
-    router.replace("/(tabs)/home");
+    router.replace("/(auth)/success");
   };
 
   return (
