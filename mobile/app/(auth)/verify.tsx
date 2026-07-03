@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { AuthUser, UserRole, useAuthStore } from "@vegelink/shared";
+import { UserRole } from "@vegelink/shared";
 import { OTPInput } from "@/components/common/OTPInput";
 import { vlClassNames } from "@/lib/design-system";
 
@@ -15,14 +15,10 @@ export default function VerifyScreen() {
     phone?: string;
     role?: UserRole;
   }>();
-  const setAuth = useAuthStore((s) => s.setAuth);
   const [otp, setOtp] = useState("");
 
-  const safeFirstName = firstName?.trim() || "Kofi";
-  const safeLastName = lastName?.trim() || "Mensah";
   const safePhone = phone?.trim() || "+233059983273";
   const safeRole: UserRole = role ?? "farmer";
-  const fullName = `${safeFirstName} ${safeLastName}`;
   const isOtpReady = otp.length === otpLength;
 
   const handleVerify = () => {
@@ -30,15 +26,15 @@ export default function VerifyScreen() {
       return;
     }
 
-    const user: AuthUser = {
-      id: `demo-${safeRole}`,
-      phone: safePhone,
-      role: safeRole,
-      fullName,
-    };
-
-    setAuth(user, "demo-token");
-    router.replace("/(tabs)/home");
+    router.push({
+      pathname: "/(auth)/details",
+      params: {
+        firstName,
+        lastName,
+        phone: safePhone,
+        role: safeRole,
+      },
+    });
   };
 
   const handleResend = () => {
