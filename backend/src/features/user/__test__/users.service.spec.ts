@@ -7,7 +7,7 @@ import { UserRepository } from "../user.repository.js";
 import { paystackClient } from "../../../infrastructure/paystack/paystack.client.js";
 // import { arkeselClient } from "../../../infrastructure/arkesel/arkesel.client.js";
 import { hashSecret } from "../../../common/utils/hash.util.js";
-import { buildAssignment, buildFarmer } from "./fixtures.js";
+import { buildAgent, buildAssignment, buildFarmer } from "./fixtures.js";
 import { UserRole } from "../../../common/constants/roles.enums.js";
 // import { ForbiddenException, UnprocessableException, NotFoundException } from "../../../common/exceptions/index.js";
 
@@ -81,11 +81,14 @@ beforeEach(() => {
   mockUserRepo.updatePaymentDetails = jest
     .fn<any>()
     .mockResolvedValue(undefined);
+  mockUserRepo.findAgentClients = jest.fn<any>().mockResolvedValue(null);
 
   mockHashSecret = jest.fn<any>().mockResolvedValue("hashed-pin-string");
 
   mockUserRepo.unassignClient = jest.fn<any>().mockResolvedValue(null);
-  mockUserRepo.findAssignmentByAgentAndUser = jest.fn<any>().mockResolvedValue(null);
+  mockUserRepo.findAssignmentByAgentAndUser = jest
+    .fn<any>()
+    .mockResolvedValue(null);
 
   // Reset Paystack mock methods cleanly
   jest.spyOn(paystackClient, "createSubaccount").mockImplementation(
@@ -345,19 +348,47 @@ describe("UsersService.getPublicProfile", () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 // unassignClient
 // ═══════════════════════════════════════════════════════════════════════════════
-describe('UsersService.unassignClient', () => {
-  it('unassigns client and returns success message', async () => {
+describe("UsersService.unassignClient", () => {
+  it("unassigns client and returns success message", async () => {
     const assignment = buildAssignment();
     mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(assignment);
 
-    await usersService.unassignClient('agent-abc-123', 'user-abc-123');
+    await usersService.unassignClient("agent-abc-123", "user-abc-123");
 
-    expect(mockUserRepo.unassignClient).toHaveBeenCalledWith('assignment-abc-123');
+    expect(mockUserRepo.unassignClient).toHaveBeenCalledWith(
+      "assignment-abc-123",
+    );
   });
 
-  it('throws NotFoundException when no active assignment exists', async () => {
+  it("throws NotFoundException when no active assignment exists", async () => {
     mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(null);
-    await expect(usersService.unassignClient('agent-abc-123', 'user-abc-123')).rejects.toThrow("No active assignment association matches this structural relationship map.");
+    await expect(
+      usersService.unassignClient("agent-abc-123", "user-abc-123"),
+    ).rejects.toThrow(
+      "No active assignment association matches this structural relationship map.",
+    );
     expect(mockUserRepo.unassignClient).not.toHaveBeenCalled();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// getClient
+// ═══════════════════════════════════════════════════════════════════════════════
+describe("UsersService.getAgentClient", () => {
+  it("return agent clients", async () => {
+    const assignment = buildAssignment();
+    mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(assignment);
+    mockUserRepo.findPrivateById.mockResolvedValue(buildAgent());
+
+    await usersService.getAgentClients("agent-abc-123", { page: 0, limit: 20 });
+
+    expect(mockUserRepo.findAgentClients).toHaveBeenCalled();
+  });
+
+  it('throws "User profile not found." when client is not in this agent\'s list', async () => {
+    mockUserRepo.findPrivateById.mockResolvedValue(null);
+    await expect(
+      usersService.getAgentClients("agent-abc", { page: 0, limit: 20 }),
+    ).rejects.toThrow("User profile not found.");
   });
 });
