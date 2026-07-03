@@ -1,5 +1,5 @@
 import { Redirect } from "expo-router";
-import { useAuthStore } from "@shared/stores/auth.store";
+import { useAuthStore } from "@vegelink/shared";
 
 export default function Index() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);

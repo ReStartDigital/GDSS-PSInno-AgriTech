@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { useAuthStore } from "@shared/stores/auth.store";
+import { useAuthStore } from "@vegelink/shared";
 
 export default function TabLayout() {
   const user = useAuthStore((s) => s.user);

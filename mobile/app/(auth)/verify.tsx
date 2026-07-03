@@ -1,6 +1,6 @@
 import { View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
-import { useAuthStore } from "@shared/stores/auth.store";
+import { useAuthStore } from "@vegelink/shared";
 
 export default function VerifyScreen() {
   const router = useRouter();
