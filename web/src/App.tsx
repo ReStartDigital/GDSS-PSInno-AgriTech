@@ -77,12 +77,9 @@ function Layout({ children }: { children: React.ReactNode }) {
       <main className="content" id="main">
         <header className="topbar">
           <div>
-            <p className="eyebrow">Design system aligned</p>
             <h2>{getPageTitle(location.pathname)}</h2>
           </div>
           <div className="topbar-actions">
-            <button type="button" className="icon-button" aria-label="Search"><Icon name="spark" /></button>
-            <button type="button" className="icon-button" aria-label="Notifications"><Icon name="shield" /></button>
             <div className="avatar" aria-hidden="true">{user?.phone?.slice(-2) ?? 'VG'}</div>
           </div>
         </header>
