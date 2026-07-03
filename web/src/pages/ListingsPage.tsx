@@ -64,7 +64,7 @@ export default function ListingsPage() {
             ].map((item) => (
               <div key={item.s} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <StatusBadge status={item.s} />
-                <span style={{ color: '#4b5563', fontSize: '0.9rem' }}>{item.d}</span>
+                <span style={{ color: '#374151', fontSize: '0.9rem' }}>{item.d}</span>
               </div>
             ))}
           </div>
@@ -94,7 +94,7 @@ function ListingCard({ listing }: { listing: any }) {
       )}
       <button type="button" className="secondary-button" disabled={isPending}
         onClick={() => { if (confirm('Delete this listing?')) deleteListing(listing.id) }}
-        style={{ marginTop: 12, width: '100%', justifyContent: 'center', color: '#dc2626', borderColor: 'rgba(220,38,38,0.2)' }}>
+        style={{ marginTop: 12, width: '100%', justifyContent: 'center', color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)' }}>
         {isPending ? 'Deleting…' : 'Delete'}
       </button>
     </article>

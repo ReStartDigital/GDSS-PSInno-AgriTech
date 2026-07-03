@@ -17,7 +17,7 @@ export default function ProfilePage() {
           <h2>Your account and session.</h2>
           <p>Manage your identity, role, and security settings.</p>
         </div>
-        <Link to="/" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px', borderRadius: 18 }}>
+        <Link to="/" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px' }}>
           Back home
         </Link>
       </section>
@@ -84,11 +84,11 @@ export default function ProfilePage() {
             <button type="button" className="secondary-button logout-button"
               onClick={() => logout()}
               disabled={isPending}
-              style={{ color: '#dc2626', borderColor: 'rgba(220,38,38,0.2)', width: '100%', justifyContent: 'center' }}>
+              style={{ color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)', width: '100%', justifyContent: 'center' }}>
               {isPending ? 'Logging out…' : 'Log Out'}
             </button>
           ) : (
-            <Link to="/auth/login" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', width: '100%', justifyContent: 'center', minHeight: 48, borderRadius: 18 }}>
+            <Link to="/auth/login" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', width: '100%', justifyContent: 'center', minHeight: 48 }}>
               Log In
             </Link>
           )}

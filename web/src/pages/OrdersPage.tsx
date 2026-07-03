@@ -81,7 +81,7 @@ function OrderDetail({ order, onClose }: { order: any; onClose: () => void }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ background: '#fff', borderRadius: 28, padding: 28, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto' }}>
+      <div style={{ background: '#fff', borderRadius: 12, padding: 28, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <div>
             <p style={{ color: '#6b7280', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Order Detail</p>
@@ -106,9 +106,9 @@ function OrderDetail({ order, onClose }: { order: any; onClose: () => void }) {
         </div>
 
         {order.delivery_address && (
-          <div style={{ padding: '12px 16px', borderRadius: 16, background: 'rgba(214,255,205,0.3)', marginBottom: 16 }}>
+          <div style={{ padding: '12px 16px', borderRadius: 12, background: 'rgba(214,255,205,0.3)', marginBottom: 16 }}>
             <strong style={{ fontSize: '0.8rem', color: '#264123', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Delivery Address</strong>
-            <p style={{ margin: '4px 0 0', color: '#4b5563' }}>{order.delivery_address}</p>
+            <p style={{ margin: '4px 0 0', color: '#374151' }}>{order.delivery_address}</p>
           </div>
         )}
 
@@ -123,7 +123,7 @@ function OrderDetail({ order, onClose }: { order: any; onClose: () => void }) {
           {canCancel && (
             <button type="button" className="secondary-button" disabled={cancelling}
               onClick={() => cancel({ id: order.id, reason: 'Cancelled by user' }, { onSuccess: onClose })}
-              style={{ flex: 1, justifyContent: 'center', color: '#dc2626' }}>
+              style={{ flex: 1, justifyContent: 'center', color: '#ef4444' }}>
               {cancelling ? 'Cancelling…' : 'Cancel Order'}
             </button>
           )}

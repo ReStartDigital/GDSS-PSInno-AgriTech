@@ -94,12 +94,12 @@ function OrderModal({ listing, onClose }: { listing: any; onClose: () => void })
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ background: '#fff', borderRadius: 28, padding: 28, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}>
+      <div style={{ background: '#fff', borderRadius: 12, padding: 28, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div>
             <p style={{ color: '#6b7280', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Place Order</p>
             <h3 style={{ margin: 0, color: '#264123' }}>{listing.vegetable_type ?? listing.cropName}</h3>
-            <p style={{ margin: '4px 0 0', color: '#4b5563' }}>GH₵ {listing.price_per_kg_ghs ?? listing.pricePerUnit}/kg</p>
+            <p style={{ margin: '4px 0 0', color: '#374151' }}>GH₵ {listing.price_per_kg_ghs ?? listing.pricePerUnit}/kg</p>
           </div>
           <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#6b7280' }}>×</button>
         </div>
@@ -114,7 +114,7 @@ function OrderModal({ listing, onClose }: { listing: any; onClose: () => void })
             <Field label="Quantity (kg)" type="number" min="1" placeholder="e.g. 50" error={errors.quantity_kg} {...register('quantity_kg')} />
             <Field label="Delivery Address" placeholder="e.g. Madina Market, Accra" error={errors.delivery_address} {...register('delivery_address')} />
             <div>
-              <span style={{ color: '#4b5563', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8 }}>Fulfillment</span>
+              <span style={{ color: '#374151', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8 }}>Fulfillment</span>
               <div style={{ display: 'flex', gap: 10 }}>
                 {(['delivery', 'pickup'] as const).map((m) => (
                   <label key={m} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
