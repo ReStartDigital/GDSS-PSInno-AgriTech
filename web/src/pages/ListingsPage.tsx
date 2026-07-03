@@ -1,77 +1,142 @@
+import { useState } from 'react'
+import { useMyListings, useCreateListing, useDeleteListing } from '../hooks/useListings'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { createListingSchema, type CreateListingFormData } from '../schemas'
 import { Icon } from '../components/Icon'
-import { farmerListings, type PageKey } from '../content'
+import { Spinner, ErrorAlert, EmptyState, StatusBadge } from '../components/ui/Feedback'
+import { Field } from '../components/ui/Field'
 
-export default function ListingsPage({ navigate }: { navigate: (page: PageKey) => void }) {
+export default function ListingsPage() {
+  const [showForm, setShowForm] = useState(false)
+  const { data, isLoading, error } = useMyListings()
+  const listings = Array.isArray(data) ? data : []
+
   return (
     <div className="page-stack">
       <section className="page-hero">
         <div>
           <p className="eyebrow">My Listings</p>
-          <h2>Farmer inventory with GPS-aware status and quick management.</h2>
-          <p>
-            Listings stay compact on web while still surfacing price, availability, and
-            the next required action.
-          </p>
+          <h2>Your produce inventory.</h2>
+          <p>Manage your active listings, prices, and availability.</p>
         </div>
-        <button type="button" className="primary-button" onClick={() => navigate('auth')}>
-          Create new listing
+        <button type="button" className="primary-button" onClick={() => setShowForm(true)}>
+          + New Listing
         </button>
       </section>
 
-      <section className="listing-grid">
-        {farmerListings.map((item) => (
-          <article className="listing-card wide" key={item.title}>
-            <div className="listing-top">
-              <span className="listing-badge">{item.status}</span>
-              <Icon name="leaf" />
-            </div>
-            <h3>{item.title}</h3>
-            <p>{item.note}</p>
-            <div className="listing-meta">
-              <span>{item.price}</span>
-              <span>{item.location}</span>
-            </div>
-          </article>
-        ))}
-      </section>
+      {showForm && <CreateListingForm onClose={() => setShowForm(false)} />}
+
+      {isLoading && <Spinner />}
+      {error && <ErrorAlert message="Could not load your listings." />}
+      {!isLoading && !error && listings.length === 0 && (
+        <EmptyState message="You have no listings yet. Create your first one above." />
+      )}
+
+      {listings.length > 0 && (
+        <section className="listing-grid">
+          {listings.map((listing: any) => (
+            <ListingCard key={listing.id} listing={listing} />
+          ))}
+        </section>
+      )}
 
       <section className="panel-grid">
         <div className="section-card">
           <div className="section-heading">
-            <div>
-              <p className="eyebrow">Creation</p>
-              <h3>Camera and GPS ready.</h3>
-            </div>
-          </div>
-          <div className="detail-grid">
-            <div className="detail-card">
-              <Icon name="map" />
-              <strong>Auto location</strong>
-              <p>Capture the field position before publishing.</p>
-            </div>
-            <div className="detail-card">
-              <Icon name="phone" />
-              <strong>Photo upload</strong>
-              <p>Show one produce image per listing to keep browsing fast.</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="section-card">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Publishing</p>
-              <h3>Lifecycle notes.</h3>
-            </div>
+            <div><p className="eyebrow">Tips</p><h3>Listing lifecycle.</h3></div>
           </div>
           <div className="timeline">
-            <div className="timeline-item">Draft listing</div>
-            <div className="timeline-item">Upload image</div>
-            <div className="timeline-item">Pin location</div>
-            <div className="timeline-item">Publish live</div>
+            {['Create listing', 'Buyer places order', 'Confirm order', 'Transport assigned', 'Delivery complete', 'Payment received'].map((s) => (
+              <div key={s} className="timeline-item">{s}</div>
+            ))}
+          </div>
+        </div>
+        <div className="section-card">
+          <div className="section-heading">
+            <div><p className="eyebrow">Status guide</p><h3>What each status means.</h3></div>
+          </div>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {[
+              { s: 'active', d: 'Visible to buyers in the marketplace.' },
+              { s: 'sold', d: 'All quantity has been ordered and confirmed.' },
+              { s: 'cancelled', d: 'Listing removed from marketplace.' },
+            ].map((item) => (
+              <div key={item.s} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <StatusBadge status={item.s} />
+                <span style={{ color: '#4b5563', fontSize: '0.9rem' }}>{item.d}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
     </div>
+  )
+}
+
+function ListingCard({ listing }: { listing: any }) {
+  const { mutate: deleteListing, isPending } = useDeleteListing()
+  return (
+    <article className="listing-card wide">
+      <div className="listing-top">
+        <StatusBadge status={listing.status ?? 'active'} />
+        <Icon name="leaf" />
+      </div>
+      <h3>{listing.vegetable_type ?? listing.cropName}</h3>
+      <div className="listing-meta">
+        <span style={{ fontWeight: 700, color: '#264123' }}>GH₵ {listing.price_per_kg_ghs ?? listing.pricePerUnit}/kg</span>
+        <span>{listing.quantity_kg ?? listing.availableQuantity} kg</span>
+      </div>
+      {listing.harvest_date && (
+        <p style={{ color: '#6b7280', fontSize: '0.85rem', margin: '8px 0 0' }}>
+          Harvest: {new Date(listing.harvest_date).toLocaleDateString()}
+        </p>
+      )}
+      <button type="button" className="secondary-button" disabled={isPending}
+        onClick={() => { if (confirm('Delete this listing?')) deleteListing(listing.id) }}
+        style={{ marginTop: 12, width: '100%', justifyContent: 'center', color: '#dc2626', borderColor: 'rgba(220,38,38,0.2)' }}>
+        {isPending ? 'Deleting…' : 'Delete'}
+      </button>
+    </article>
+  )
+}
+
+function CreateListingForm({ onClose }: { onClose: () => void }) {
+  const { mutate, isPending, error, isSuccess } = useCreateListing()
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateListingFormData>({
+    resolver: zodResolver(createListingSchema),
+  })
+
+  const onSubmit = (data: CreateListingFormData) => {
+    mutate(data, {
+      onSuccess: () => { reset(); onClose() },
+    })
+  }
+
+  const apiError = error && (error as any).response?.data?.error?.message
+
+  return (
+    <section className="section-card accent-card">
+      <div className="section-heading">
+        <div><p className="eyebrow">New Listing</p><h3>Add produce to the marketplace.</h3></div>
+        <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', color: '#f8faf5', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
+      </div>
+      <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'grid', gap: 14 }}>
+        <div className="form-grid">
+          <Field label="Crop Type" dark placeholder="e.g. Tomatoes" error={errors.vegetable_type} {...register('vegetable_type')} />
+          <Field label="Quantity (kg)" dark type="number" min="1" placeholder="e.g. 200" error={errors.quantity_kg} {...register('quantity_kg')} />
+          <Field label="Price per kg (GH₵)" dark type="number" step="0.01" min="0.01" placeholder="e.g. 4.50" error={errors.price_per_kg_ghs} {...register('price_per_kg_ghs')} />
+          <Field label="Harvest Date" dark type="date" error={errors.harvest_date} {...register('harvest_date')} />
+        </div>
+        {apiError && <ErrorAlert message={apiError} />}
+        {isSuccess && <div style={{ color: '#d6ffcd', fontWeight: 600 }}>Listing created ✓</div>}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button type="button" className="secondary-button" onClick={onClose} style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
+          <button type="submit" className="primary-button" disabled={isPending} style={{ flex: 1, justifyContent: 'center' }}>
+            {isPending ? 'Creating…' : 'Create Listing'}
+          </button>
+        </div>
+      </form>
+    </section>
   )
 }

@@ -1,132 +1,131 @@
+import { Link } from 'react-router-dom'
+import { useAuthStore } from '../store/auth.store'
+import { useMyOrders } from '../hooks/useOrders'
+import { useMyListings } from '../hooks/useListings'
 import { Icon } from '../components/Icon'
-import { platformStats, roles, workflows, type PageKey } from '../content'
+import { Spinner, StatusBadge } from '../components/ui/Feedback'
 
-export default function HomePage({ navigate }: { navigate: (page: PageKey) => void }) {
+export default function HomePage() {
+  const user = useAuthStore((s) => s.user)
+  const role = user?.role
+
   return (
     <div className="page-stack">
       <section className="hero-card">
         <div className="hero-copy">
-          <span className="status-pill">Forest Green / Poppins / Tailwind system</span>
-          <h2>A clean web shell for farmers, buyers, transporters, and agents.</h2>
-          <p>
-            The web pages follow the documented VegeLink Ghana system: warm, trustworthy,
-            and operationally clear, with the same role model used by the mobile app.
-          </p>
-
+          <span className="status-pill">{role ? `Logged in as ${role}` : 'VegeLink Ghana'}</span>
+          <h2>
+            {role === 'farmer' && 'Manage your listings and orders.'}
+            {role === 'buyer' && 'Browse fresh produce from local farms.'}
+            {role === 'transporter' && 'Find and accept delivery jobs.'}
+            {role === 'agent' && 'Manage your farmers and pending orders.'}
+            {!role && 'Fresh trade, built for the field.'}
+          </h2>
+          <p>Greater Accra Vegetable Belt — connecting farms to tables.</p>
           <div className="hero-actions">
-            <button type="button" className="primary-button" onClick={() => navigate('auth')}>
-              Start registration
-            </button>
-            <button type="button" className="secondary-button" onClick={() => navigate('marketplace')}>
-              Open marketplace
-            </button>
+            {role === 'farmer' && <Link to="/listings/new" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px', borderRadius: 18 }}>Create Listing</Link>}
+            {role === 'buyer' && <Link to="/marketplace" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px', borderRadius: 18 }}>Browse Marketplace</Link>}
+            {role === 'transporter' && <Link to="/orders" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px', borderRadius: 18 }}>View Jobs</Link>}
+            {!role && <Link to="/auth/login" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px', borderRadius: 18 }}>Get Started</Link>}
+            <Link to="/orders" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px', borderRadius: 18 }}>View Orders</Link>
           </div>
         </div>
-
         <div className="hero-visual" aria-hidden="true">
           <div className="device-card device-card-large">
-            <div className="device-header">
-              <span>Live marketplace</span>
-              <span className="dot" />
-            </div>
-            <div className="metric-row">
-              <strong>Fresh tomatoes</strong>
-              <span>GH₵ 28 / crate</span>
-            </div>
+            <div className="device-header"><span>Live marketplace</span><span className="dot" /></div>
+            <div className="metric-row"><strong>Fresh tomatoes</strong><span>GH₵ 28 / crate</span></div>
             <div className="visual-strip" />
           </div>
           <div className="device-card device-card-small">
-            <span className="mini-title">Today&apos;s state</span>
-            <strong>2 orders pending</strong>
-            <p>One buyer, one transporter confirmation.</p>
+            <span className="mini-title">Platform</span>
+            <strong>4 roles supported</strong>
+            <p>Farmer, buyer, transporter, agent.</p>
           </div>
         </div>
       </section>
 
-      <section className="stats-grid" aria-label="Platform highlights">
-        {platformStats.map((stat) => (
-          <article className="stat-card" key={stat.label}>
-            <strong>{stat.value}</strong>
-            <span>{stat.label}</span>
-          </article>
-        ))}
-      </section>
-
-      <section className="panel-grid">
-        <div className="section-card">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Role model</p>
-              <h3>Same app, different paths.</h3>
-            </div>
-            <span className="section-note">Mirrors mobile tab gating</span>
-          </div>
-
-          <div className="role-selector" role="list" aria-label="Platform roles">
-            {roles.map((role) => (
-              <span className="role-chip" key={role.id}>
-                {role.label}
-              </span>
-            ))}
-          </div>
-
-          <div className="two-column-card">
-            {roles.map((role) => (
-              <article className="mini-info-card" key={role.id}>
-                <span className="status-pill subtle">{role.accent}</span>
-                <h4>{role.label}</h4>
-                <p>{role.summary}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-
-        <div className="section-card">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Onboarding</p>
-              <h3>Backend-backed flow.</h3>
-            </div>
-            <span className="section-note">Register → verify → set PIN → login</span>
-          </div>
-
-          <div className="workflow-list">
-            {workflows.map((step, index) => (
-              <div className="workflow-step" key={step.title}>
-                <div className="step-index">0{index + 1}</div>
-                <div>
-                  <h4>{step.title}</h4>
-                  <p>{step.detail}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {role && <DashboardSummary role={role} />}
 
       <section className="section-card">
         <div className="section-heading">
-          <div>
-            <p className="eyebrow">Guided routes</p>
-            <h3>Jump into the main product pages.</h3>
-          </div>
+          <div><p className="eyebrow">Quick access</p><h3>Jump to a section.</h3></div>
         </div>
-
         <div className="quick-links">
-          <button type="button" className="quick-link" onClick={() => navigate('marketplace')}>
-            <Icon name="shopping" /> Marketplace
-          </button>
-          <button type="button" className="quick-link" onClick={() => navigate('listings')}>
-            <Icon name="bag" /> Listings
-          </button>
-          <button type="button" className="quick-link" onClick={() => navigate('orders')}>
-            <Icon name="truck" /> Orders
-          </button>
-          <button type="button" className="quick-link" onClick={() => navigate('profile')}>
-            <Icon name="user" /> Profile
-          </button>
+          <Link to="/marketplace" className="quick-link" style={{ textDecoration: 'none' }}><Icon name="shopping" /> Marketplace</Link>
+          <Link to="/listings" className="quick-link" style={{ textDecoration: 'none' }}><Icon name="bag" /> Listings</Link>
+          <Link to="/orders" className="quick-link" style={{ textDecoration: 'none' }}><Icon name="truck" /> Orders</Link>
+          <Link to="/profile" className="quick-link" style={{ textDecoration: 'none' }}><Icon name="user" /> Profile</Link>
         </div>
       </section>
     </div>
+  )
+}
+
+function DashboardSummary({ role }: { role: string }) {
+  const { data: orders, isLoading: ordersLoading } = useMyOrders()
+  const { data: listings, isLoading: listingsLoading } = useMyListings()
+
+  const recentOrders = Array.isArray(orders) ? orders.slice(0, 3) : []
+  const recentListings = Array.isArray(listings) ? listings.slice(0, 3) : []
+
+  return (
+    <section className="panel-grid">
+      {(role === 'farmer' || role === 'buyer') && (
+        <div className="section-card">
+          <div className="section-heading">
+            <div><p className="eyebrow">Recent</p><h3>Your orders.</h3></div>
+            <Link to="/orders" className="section-note" style={{ textDecoration: 'none' }}>View all</Link>
+          </div>
+          {ordersLoading ? <Spinner /> : recentOrders.length === 0 ? (
+            <p style={{ color: '#6b7280' }}>No orders yet.</p>
+          ) : (
+            <div style={{ display: 'grid', gap: 10 }}>
+              {recentOrders.map((o: any) => (
+                <Link to={`/orders/${o.id}`} key={o.id} style={{ textDecoration: 'none' }}>
+                  <div className="listing-card" style={{ padding: '14px 16px' }}>
+                    <div className="listing-top">
+                      <StatusBadge status={o.status} />
+                      <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>{o.id?.slice(0, 8)}…</span>
+                    </div>
+                    <div className="listing-meta" style={{ marginTop: 8 }}>
+                      <span style={{ fontWeight: 600 }}>GH₵ {o.total_ghs ?? o.totalAmount}</span>
+                      <span>{o.quantity_kg ?? o.quantityOrdered} kg</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {role === 'farmer' && (
+        <div className="section-card">
+          <div className="section-heading">
+            <div><p className="eyebrow">Inventory</p><h3>Your listings.</h3></div>
+            <Link to="/listings" className="section-note" style={{ textDecoration: 'none' }}>View all</Link>
+          </div>
+          {listingsLoading ? <Spinner /> : recentListings.length === 0 ? (
+            <p style={{ color: '#6b7280' }}>No listings yet. <Link to="/listings/new">Create one</Link></p>
+          ) : (
+            <div style={{ display: 'grid', gap: 10 }}>
+              {recentListings.map((l: any) => (
+                <div key={l.id} className="listing-card" style={{ padding: '14px 16px' }}>
+                  <div className="listing-top">
+                    <StatusBadge status={l.status} />
+                    <Icon name="leaf" />
+                  </div>
+                  <div style={{ fontWeight: 600, marginTop: 8 }}>{l.vegetable_type ?? l.cropName}</div>
+                  <div className="listing-meta">
+                    <span>GH₵ {l.price_per_kg_ghs ?? l.pricePerUnit}/kg</span>
+                    <span>{l.quantity_kg ?? l.availableQuantity} kg</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
   )
 }

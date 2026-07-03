@@ -1,41 +1,48 @@
+import { useAuthStore } from '../store/auth.store'
+import { useLogout } from '../hooks/useAuth'
 import { Icon } from '../components/Icon'
-import { profileSummary, type PageKey } from '../content'
+import { Link } from 'react-router-dom'
 
-export default function ProfilePage({ navigate }: { navigate: (page: PageKey) => void }) {
+export default function ProfilePage() {
+  const user = useAuthStore((s) => s.user)
+  const { mutate: logout, isPending } = useLogout()
+
+  const initials = user?.phone?.slice(-4) ?? 'VG'
+
   return (
     <div className="page-stack">
       <section className="page-hero">
         <div>
           <p className="eyebrow">Profile</p>
-          <h2>Simple identity, session, and support controls.</h2>
-          <p>
-            The profile page stays practical: show the user role, the live session state,
-            and a clean logout action.
-          </p>
+          <h2>Your account and session.</h2>
+          <p>Manage your identity, role, and security settings.</p>
         </div>
-        <button type="button" className="primary-button" onClick={() => navigate('home')}>
+        <Link to="/" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px', borderRadius: 18 }}>
           Back home
-        </button>
+        </Link>
       </section>
 
       <section className="panel-grid profile-grid">
         <div className="section-card">
           <div className="profile-header">
-            <div className="avatar avatar-large" aria-hidden="true">
-              VG
-            </div>
+            <div className="avatar avatar-large" aria-hidden="true">{initials}</div>
             <div>
-              <p className="eyebrow">Farmer account</p>
-              <h3>Abena Mensah</h3>
-              <p>Trusted seller on the Greater Accra vegetable belt.</p>
+              <p className="eyebrow">{user?.role ?? 'Guest'} account</p>
+              <h3 style={{ margin: '4px 0' }}>{user?.phone ?? 'Not logged in'}</h3>
+              <p style={{ margin: 0, color: '#6b7280' }}>VegeLink Ghana member</p>
             </div>
           </div>
 
-          <div className="detail-grid profile-summary">
-            {profileSummary.map((item) => (
-              <div className="detail-card" key={item.label}>
+          <div className="detail-grid profile-summary" style={{ marginTop: 20 }}>
+            {[
+              { label: 'Role', value: user?.role ?? '—' },
+              { label: 'Phone', value: user?.phone ?? '—' },
+              { label: 'Verification', value: 'SMS verified' },
+              { label: 'Session', value: user ? 'Active' : 'Not logged in' },
+            ].map((item) => (
+              <div key={item.label} className="detail-card">
                 <strong>{item.label}</strong>
-                <p>{item.value}</p>
+                <p style={{ textTransform: 'capitalize' }}>{item.value}</p>
               </div>
             ))}
           </div>
@@ -43,12 +50,10 @@ export default function ProfilePage({ navigate }: { navigate: (page: PageKey) =>
 
         <div className="section-card">
           <div className="section-heading">
-            <div>
-              <p className="eyebrow">Support</p>
-              <h3>Account tools.</h3>
-            </div>
+            <div><p className="eyebrow">Account</p><h3>Tools and actions.</h3></div>
           </div>
-          <div className="quick-links">
+
+          <div className="quick-links" style={{ marginBottom: 20 }}>
             <button type="button" className="quick-link">
               <Icon name="shield" /> Reset PIN
             </button>
@@ -60,9 +65,33 @@ export default function ProfilePage({ navigate }: { navigate: (page: PageKey) =>
             </button>
           </div>
 
-          <button type="button" className="secondary-button auth-button logout-button">
-            Logout
-          </button>
+          {user?.role === 'farmer' && (
+            <div style={{ marginBottom: 16 }}>
+              <Link to="/listings" className="quick-link" style={{ textDecoration: 'none', display: 'inline-flex', width: '100%', justifyContent: 'flex-start' }}>
+                <Icon name="bag" /> My Listings
+              </Link>
+            </div>
+          )}
+          {user?.role === 'buyer' && (
+            <div style={{ marginBottom: 16 }}>
+              <Link to="/marketplace" className="quick-link" style={{ textDecoration: 'none', display: 'inline-flex', width: '100%', justifyContent: 'flex-start' }}>
+                <Icon name="shopping" /> Marketplace
+              </Link>
+            </div>
+          )}
+
+          {user ? (
+            <button type="button" className="secondary-button logout-button"
+              onClick={() => logout()}
+              disabled={isPending}
+              style={{ color: '#dc2626', borderColor: 'rgba(220,38,38,0.2)', width: '100%', justifyContent: 'center' }}>
+              {isPending ? 'Logging out…' : 'Log Out'}
+            </button>
+          ) : (
+            <Link to="/auth/login" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', width: '100%', justifyContent: 'center', minHeight: 48, borderRadius: 18 }}>
+              Log In
+            </Link>
+          )}
         </div>
       </section>
     </div>
