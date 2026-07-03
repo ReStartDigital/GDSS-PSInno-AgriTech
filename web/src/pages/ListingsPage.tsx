@@ -103,8 +103,8 @@ function ListingCard({ listing }: { listing: any }) {
 
 function CreateListingForm({ onClose }: { onClose: () => void }) {
   const { mutate, isPending, error, isSuccess } = useCreateListing()
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateListingFormData>({
-    resolver: zodResolver(createListingSchema),
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateListingFormData, unknown, CreateListingFormData>({
+    resolver: zodResolver(createListingSchema) as any,
   })
 
   const onSubmit = (data: CreateListingFormData) => {

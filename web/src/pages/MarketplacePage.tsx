@@ -81,8 +81,8 @@ export default function MarketplacePage() {
 
 function OrderModal({ listing, onClose }: { listing: any; onClose: () => void }) {
   const { mutate, isPending, error, isSuccess } = usePlaceOrder(listing.id)
-  const { register, handleSubmit, formState: { errors } } = useForm<PlaceOrderFormData>({
-    resolver: zodResolver(placeOrderSchema),
+  const { register, handleSubmit, formState: { errors } } = useForm<PlaceOrderFormData, unknown, PlaceOrderFormData>({
+    resolver: zodResolver(placeOrderSchema) as any,
     defaultValues: { mode: 'delivery' },
   })
 
