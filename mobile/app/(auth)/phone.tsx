@@ -28,6 +28,15 @@ export default function PhoneScreen() {
     setPhone(value.replace(/\D/g, "").slice(0, 9));
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/(auth)/register");
+  };
+
   const handleContinue = () => {
     if (!canContinue) {
       return;
@@ -49,7 +58,7 @@ export default function PhoneScreen() {
           <Pressable
             accessibilityLabel="Go back"
             className="h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 active:bg-gray-200"
-            onPress={() => router.back()}
+            onPress={handleBack}
           >
             <Text className="text-3xl font-black text-gray-950">‹</Text>
           </Pressable>
@@ -109,7 +118,7 @@ export default function PhoneScreen() {
               <Text className="text-sm font-black text-gray-950">
                 Registering as {roleLabels[safeRole]}
               </Text>
-              <Pressable onPress={() => router.back()}>
+              <Pressable onPress={handleBack}>
                 <Text className="mt-1 text-xs font-black text-gray-500 underline">
                   Change role
                 </Text>

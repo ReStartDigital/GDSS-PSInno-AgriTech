@@ -24,6 +24,21 @@ export default function DetailsScreen() {
   const safePhone = phone?.trim() || "+233059983273";
   const canCreate = first.trim().length >= 2 && last.trim().length >= 2;
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace({
+      pathname: "/(auth)/verify",
+      params: {
+        phone: safePhone,
+        role: safeRole,
+      },
+    });
+  };
+
   const handleCreateAccount = () => {
     if (!canCreate) {
       return;
@@ -47,7 +62,7 @@ export default function DetailsScreen() {
           <Pressable
             accessibilityLabel="Go back"
             className="h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 active:bg-gray-200"
-            onPress={() => router.back()}
+            onPress={handleBack}
           >
             <Text className="text-3xl font-black text-gray-950">‹</Text>
           </Pressable>

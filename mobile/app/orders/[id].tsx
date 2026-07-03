@@ -15,6 +15,15 @@ export default function OrderDetailScreen() {
   const role = useAuthStore((state) => state.user?.role);
   const order = findMobileOrder(id);
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/(tabs)/orders");
+  };
+
   if (!order) {
     return (
       <View className="flex-1 bg-white">
@@ -28,7 +37,7 @@ export default function OrderDetailScreen() {
           </Text>
           <Pressable
             className="mt-6 rounded-lg bg-green-800 px-5 py-3"
-            onPress={() => router.back()}
+            onPress={handleBack}
           >
             <Text className="font-semibold text-white">Go Back</Text>
           </Pressable>
@@ -124,7 +133,7 @@ export default function OrderDetailScreen() {
 
         <Pressable
           className="mt-3 rounded-lg border border-gray-300 py-4"
-          onPress={() => router.back()}
+          onPress={handleBack}
         >
           <Text className="text-center font-semibold text-gray-800">
             Back to Orders

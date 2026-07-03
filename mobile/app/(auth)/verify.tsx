@@ -41,6 +41,18 @@ export default function VerifyScreen() {
     Alert.alert("Code sent", `A new code was sent to ${safePhone}.`);
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace({
+      pathname: "/(auth)/phone",
+      params: { role: safeRole },
+    });
+  };
+
   return (
     <View className={vlClassNames.screen}>
       <View className="flex-1 px-6 pb-10 pt-9">
@@ -56,7 +68,7 @@ export default function VerifyScreen() {
               shadowRadius: 8,
               shadowOffset: { width: 0, height: 4 },
             }}
-            onPress={() => router.back()}
+            onPress={handleBack}
           >
             <Text className="text-3xl font-black text-gray-950">‹</Text>
           </Pressable>

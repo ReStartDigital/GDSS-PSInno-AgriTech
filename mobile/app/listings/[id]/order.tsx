@@ -18,6 +18,15 @@ export default function ListingOrderScreen() {
     return Math.max(1, Math.round(listing.distanceKm / 12));
   }, [listing]);
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/(tabs)/marketplace");
+  };
+
   if (!listing) {
     return (
       <View className="flex-1 bg-white px-6">
@@ -30,7 +39,7 @@ export default function ListingOrderScreen() {
           </Text>
           <Pressable
             className="mt-6 rounded-2xl bg-green-800 px-6 py-4"
-            onPress={() => router.back()}
+            onPress={handleBack}
           >
             <Text className="font-black text-white">Go Back</Text>
           </Pressable>
