@@ -1,120 +1,39 @@
 import { Link } from "expo-router";
-import { Pressable, ScrollView, Text, View } from "react-native";
-import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { useAuthStore } from "@vegelink/shared";
-import {
-  getConfirmationLabel,
-  getOrdersForRole,
-  getStatusLabel,
-  MobileOrder,
-  OrderStatus,
-} from "@/lib/orders-data";
+import { Pressable, Text, View } from "react-native";
+import { vlClassNames } from "@/lib/design-system";
 
 export default function OrdersScreen() {
-  const role = useAuthStore((state) => state.user?.role);
-  const orders = getOrdersForRole(role);
-  const openOrders = orders.filter((order) => order.status !== "completed").length;
-  const totalValue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-
   return (
-    <View className="flex-1 bg-white">
-      <ScreenHeader title="Orders" />
-      <ScrollView contentContainerClassName="px-4 pb-8 pt-4">
-        <View className="rounded-lg border border-green-100 bg-green-50 p-4">
-          <Text className="text-sm font-semibold uppercase text-green-700">
-            Order lifecycle
-          </Text>
-          <Text className="mt-2 text-3xl font-black text-green-950">
-            Track every step
-          </Text>
-          <Text className="mt-2 text-base leading-6 text-green-900">
-            Follow confirmation, Paystack payment, transport assignment, and
-            delivery OTP status from one place.
-          </Text>
-        </View>
-
-        <View className="mt-4 flex-row gap-2">
-          <SummaryTile label="Orders" value={String(orders.length)} />
-          <SummaryTile label="Open" value={String(openOrders)} />
-          <SummaryTile label="Value" value={`GHS ${totalValue.toFixed(0)}`} />
-        </View>
-
-        <View className="mt-5 gap-3">
-          {orders.map((order) => (
-            <OrderCard key={order.id} order={order} />
-          ))}
-        </View>
-      </ScrollView>
-    </View>
-  );
-}
-
-function SummaryTile({ label, value }: { label: string; value: string }) {
-  return (
-    <View className="flex-1 rounded-lg border border-gray-200 bg-white p-3">
-      <Text className="text-xs font-semibold text-gray-500">{label}</Text>
-      <Text className="mt-1 text-base font-black text-gray-950">{value}</Text>
-    </View>
-  );
-}
-
-function OrderCard({ order }: { order: MobileOrder }) {
-  return (
-    <Link href={`/orders/${order.id}`} asChild>
-      <Pressable className="rounded-lg border border-gray-200 bg-white p-4 active:bg-green-50">
-        <View className="flex-row items-start justify-between gap-3">
-          <View className="flex-1">
-            <Text className="text-lg font-black text-green-950">
-              {order.cropName}
-            </Text>
-            <Text className="mt-1 text-sm text-gray-600">
-              {order.quantityOrdered} {order.unitOfMeasure} - {order.buyerName}
-            </Text>
-          </View>
-          <StatusBadge status={order.status} />
-        </View>
-
-        <View className="mt-4 flex-row items-center justify-between border-t border-gray-100 pt-3">
-          <View>
-            <Text className="text-xs font-semibold text-gray-500">Total</Text>
-            <Text className="mt-1 font-black text-gray-950">
-              GHS {order.totalAmount.toFixed(2)}
-            </Text>
-          </View>
-          <View className="items-end">
-            <Text className="text-xs font-semibold text-gray-500">
-              Confirmation
-            </Text>
-            <Text className="mt-1 font-semibold text-green-800">
-              {getConfirmationLabel(order.confirmationMode)}
-            </Text>
-          </View>
-        </View>
-
-        <Text className="mt-3 text-sm text-gray-600">
-          Updated {order.updatedAtLabel}
+    <View className="flex-1 bg-gray-50">
+      <View className="bg-white px-5 pb-5 pt-12 shadow-sm">
+        <Text className="text-3xl font-black text-gray-950">My Orders</Text>
+        <Text className="mt-1 text-sm font-black text-gray-400">
+          Track your produce deliveries
         </Text>
-      </Pressable>
-    </Link>
-  );
-}
+      </View>
 
-function StatusBadge({ status }: { status: OrderStatus }) {
-  const tone = {
-    pending_payment: "bg-amber-50 text-amber-800",
-    paid: "bg-green-50 text-green-800",
-    in_transit: "bg-blue-50 text-blue-800",
-    completed: "bg-gray-100 text-gray-700",
-    cancelled: "bg-red-50 text-red-800",
-  }[status];
+      <View className="flex-1 items-center px-8 pt-20">
+        <View className="h-24 w-24 items-center justify-center rounded-3xl bg-green-50">
+          <View className="h-12 w-12 items-center justify-center rounded-xl border-2 border-green-800">
+            <View className="h-5 w-8 border-b-2 border-green-800" />
+            <Text className="absolute text-base font-black text-green-800">[]</Text>
+          </View>
+        </View>
 
-  const [containerClassName, textClassName] = tone.split(" ");
+        <Text className="mt-6 text-center text-xl font-black text-gray-950">
+          No orders yet
+        </Text>
+        <Text className="mt-3 max-w-xs text-center text-base leading-7 text-gray-400">
+          Your produce orders will appear here. Start browsing to place your first
+          order.
+        </Text>
 
-  return (
-    <View className={`rounded-full px-3 py-1 ${containerClassName}`}>
-      <Text className={`text-xs font-bold ${textClassName}`}>
-        {getStatusLabel(status)}
-      </Text>
+        <Link href="/(tabs)/marketplace" asChild>
+          <Pressable className="mt-7 h-14 w-56 items-center justify-center rounded-2xl bg-green-800 shadow-lg active:bg-green-900">
+            <Text className={vlClassNames.primaryButtonText}>[] Browse Produce</Text>
+          </Pressable>
+        </Link>
+      </View>
     </View>
   );
 }
