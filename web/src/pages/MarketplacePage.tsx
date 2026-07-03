@@ -25,7 +25,7 @@ export default function MarketplacePage() {
       <section className="page-hero">
         <div>
           <p className="eyebrow">Marketplace</p>
-          <h2>Fresh produce from Greater Accra farms.</h2>
+          <h2>Fresh produce from Kumasi farms.</h2>
           <p>Browse available listings, check prices, and place orders directly with farmers.</p>
         </div>
       </section>

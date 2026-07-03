@@ -70,13 +70,13 @@ export default function HomePage() {
       <section className="overview-hero">
         <div className="overview-hero-copy">
           <span className="status-pill" style={{ alignSelf: 'flex-start' }}>
-            {role ? `Signed in as ${role}` : 'Greater Accra Vegetable Belt'}
+            {role ? `Signed in as ${role}` : 'Kumasi Vegetable Belt'}
           </span>
           <h2 className="overview-hero-title">
             VegeLink Ghana
           </h2>
           <p className="overview-hero-sub">
-            A farmer-to-buyer digital marketplace for the Greater Accra Vegetable Belt.
+            A farmer-to-buyer digital marketplace for the Kumasi Vegetable Belt.
             Direct connections, smart logistics, mobile money payments — built for the field.
           </p>
           <div className="hero-actions">
@@ -231,9 +231,9 @@ export default function HomePage() {
 
         <div className="section-card" style={{ background: 'rgba(214,255,205,0.25)' }}>
           <p className="eyebrow" style={{ color: '#6b7280', marginBottom: 8 }}>Coverage</p>
-          <h3 style={{ margin: '0 0 8px', color: '#264123', fontFamily: 'Poppins, sans-serif' }}>Greater Accra Belt</h3>
+          <h3 style={{ margin: '0 0 8px', color: '#264123', fontFamily: 'Poppins, sans-serif' }}>Kumasi Belt</h3>
           <p style={{ margin: '0 0 16px', color: '#374151', fontSize: '0.9rem' }}>
-            Dawhenya · Afienya · Dodowa · Madina · Tema West · Shai Osudoku
+            Kumasi · Ejisu · Asante Mampong · Offinso · Kwabre East · Bosomtwe
           </p>
           <div className="mini-badges" style={{ marginTop: 0 }}>
             <span>MTN MoMo</span>
@@ -324,7 +324,7 @@ function DashboardSummary({ role }: { role: string }) {
           <div className="dashboard-panel">
             <p className="dashboard-panel-label">Marketplace</p>
             <p style={{ color: '#374151', fontSize: '0.9rem', margin: '0 0 16px' }}>
-              Browse fresh produce from farmers across the Greater Accra Vegetable Belt.
+              Browse fresh produce from farmers across the Kumasi Vegetable Belt.
             </p>
             <Link to="/marketplace" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '0 16px', fontSize: '0.85rem' }}>
               Browse now
