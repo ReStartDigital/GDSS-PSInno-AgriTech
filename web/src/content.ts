@@ -34,7 +34,7 @@ export const workflows = [
 ] as const
 
 export const marketplaceListings = [
-  { name: 'Fresh tomatoes', price: 'GH₵ 28 / crate', farm: 'Amasaman Growers', location: 'Greater Accra', freshness: 'High', icon: 'pin' as const },
+  { name: 'Fresh tomatoes', price: 'GH₵ 28 / crate', farm: 'Amasaman Growers', location: 'Kumasi', freshness: 'High', icon: 'pin' as const },
   { name: 'Garden eggs', price: 'GH₵ 18 / basket', farm: 'Tema Coastal Farms', location: 'Tema West', freshness: 'Medium', icon: 'clock' as const },
   { name: 'Onions', price: 'GH₵ 36 / sack', farm: 'Dodowa Valley', location: 'Shai Osudoku', freshness: 'High', icon: 'map' as const },
   { name: 'Pepper mix', price: 'GH₵ 24 / crate', farm: 'Madina Fields', location: 'Madina', freshness: 'Urgent', icon: 'shopping' as const },
