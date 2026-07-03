@@ -1,168 +1,275 @@
+import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { findMarketplaceListing } from "@/lib/marketplace-data";
+import { findMarketplaceListing, MarketplaceListing } from "@/lib/marketplace-data";
+import { vlClassNames } from "@/lib/design-system";
 
 export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const listing = findMarketplaceListing(id);
+  const [quantity, setQuantity] = useState(1);
+
+  const transportFee = useMemo(() => {
+    if (!listing) {
+      return 0;
+    }
+
+    return Math.max(1, Math.round(listing.distanceKm / 12));
+  }, [listing]);
 
   if (!listing) {
     return (
-      <View className="flex-1 bg-white">
-        <ScreenHeader title="Listing Details" />
-        <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-center text-lg font-semibold text-gray-900">
+      <View className="flex-1 bg-white px-6">
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-center text-xl font-black text-gray-950">
             Listing not found
           </Text>
-          <Text className="mt-2 text-center text-gray-600">
+          <Text className="mt-2 text-center text-gray-500">
             This produce listing may have been sold or removed.
           </Text>
           <Pressable
-            className="mt-6 rounded-lg bg-green-800 px-5 py-3"
+            className="mt-6 rounded-2xl bg-green-800 px-6 py-4"
             onPress={() => router.back()}
           >
-            <Text className="font-semibold text-white">Go Back</Text>
+            <Text className="font-black text-white">Go Back</Text>
           </Pressable>
         </View>
       </View>
     );
   }
 
-  const estimatedTotal = listing.pricePerUnit * 10;
-  const pickupCoordinates = listing.pickupLocation.coordinates;
+  const subtotal = listing.pricePerUnit * quantity;
+  const total = subtotal + transportFee * quantity;
+
+  const decrement = () => setQuantity((current) => Math.max(1, current - 1));
+  const increment = () =>
+    setQuantity((current) => Math.min(listing.availableQuantity, current + 1));
 
   return (
     <View className="flex-1 bg-white">
-      <ScreenHeader title="Listing Details" />
-      <ScrollView contentContainerClassName="px-4 pb-8 pt-4">
-        <View className="rounded-lg border border-gray-200 bg-white p-4">
-          <View
-            className="h-44 items-center justify-center rounded-lg"
-            style={{ backgroundColor: listing.tintColor }}
-          >
-            <Text
-              className="text-5xl font-black"
-              style={{ color: listing.accentColor }}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerClassName="pb-36"
+      >
+        <View className="relative min-h-72 overflow-hidden bg-green-50 px-5 pt-11">
+          <View className="absolute -right-10 -top-12 h-44 w-44 rounded-full bg-green-200" />
+          <View className="absolute -left-9 bottom-0 h-20 w-20 rounded-full bg-green-100" />
+
+          <View className="flex-row items-center justify-between">
+            <Pressable
+              accessibilityLabel="Go back"
+              className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm"
+              onPress={() => router.back()}
             >
-              {listing.cropName
-                .split(" ")
-                .map((word) => word[0])
-                .join("")
-                .slice(0, 2)}
-            </Text>
+              <Text className="text-3xl font-black text-gray-950">‹</Text>
+            </Pressable>
+            <View className="flex-row gap-3">
+              <Pressable className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
+                <Text className="text-2xl font-black text-gray-500">♡</Text>
+              </Pressable>
+              <Pressable className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
+                <Text className="text-xl font-black text-gray-500">⌯</Text>
+              </Pressable>
+            </View>
           </View>
 
-          <View className="mt-5 flex-row items-start justify-between gap-4">
+          <View className="items-center">
+            <ProduceHero listing={listing} />
+          </View>
+
+          <View className="mb-5 flex-row items-center justify-between">
+            <Pill label={listing.freshnessTag} tone="green" />
+            <Pill
+              label={`${listing.availableQuantity} ${listing.unitOfMeasure} available`}
+              tone="green"
+              dot
+            />
+          </View>
+        </View>
+
+        <View className="px-5 pt-4">
+          <View className="flex-row items-start justify-between gap-4">
             <View className="flex-1">
-              <Text className="text-3xl font-black text-green-950">
+              <Text className="text-3xl font-black text-gray-950">
                 {listing.cropName}
               </Text>
-              <Text className="mt-2 text-gray-600">{listing.description}</Text>
+              <View className="mt-2 flex-row items-baseline gap-2">
+                <Text className="text-3xl font-black text-green-700">
+                  GHC{listing.pricePerUnit}
+                </Text>
+                <Text className="text-base font-black text-gray-400">
+                  /{listing.unitOfMeasure}
+                </Text>
+                <Text className="text-base font-black text-amber-500">
+                  ★ {listing.farmer.rating.toFixed(1)}
+                </Text>
+              </View>
             </View>
-            <View className="items-end">
-              <Text className="text-2xl font-black text-green-900">
-                GHS {listing.pricePerUnit}
-              </Text>
-              <Text className="text-sm text-gray-500">
-                per {listing.unitOfMeasure}
+            <View className="rounded-2xl bg-gray-100 px-4 py-3">
+              <Text className="text-sm font-black text-gray-600">
+                {listing.category}
               </Text>
             </View>
           </View>
 
-          <View className="mt-5 flex-row flex-wrap gap-2">
-            <DetailPill label={listing.freshnessTag} />
-            <DetailPill label={listing.harvestLabel} />
-            <DetailPill label={`${listing.distanceKm} km away`} />
-          </View>
-        </View>
-
-        <View className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
-          <Text className="text-lg font-bold text-green-950">Farmer</Text>
-          <View className="mt-3 flex-row items-center gap-3">
-            <View className="h-12 w-12 items-center justify-center rounded-full bg-green-900">
-              <Text className="font-black text-white">
-                {listing.farmer.fullName
-                  .split(" ")
-                  .map((word) => word[0])
-                  .join("")
-                  .slice(0, 2)}
-              </Text>
-            </View>
-            <View className="flex-1">
-              <Text className="font-semibold text-gray-950">
-                {listing.farmer.fullName}
-              </Text>
-              <Text className="mt-1 text-sm text-gray-600">
-                {listing.farmer.locationLabel}
-              </Text>
-            </View>
-            <Text className="font-semibold text-amber-700">
-              {listing.farmer.rating.toFixed(1)}/5
+          <View className="mt-5 flex-row items-center gap-4">
+            <Text className="text-sm font-black text-gray-600">
+              ⌖ {listing.farmer.locationLabel}
+            </Text>
+            <Text className="text-sm font-black text-gray-300">·</Text>
+            <Text className="text-sm font-black text-gray-500">
+              {listing.distanceKm} km away
             </Text>
           </View>
-        </View>
 
-        <View className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
-          <Text className="text-lg font-bold text-green-950">
-            Order readiness
+          <View className="mt-5 rounded-2xl border border-gray-100 bg-white p-4">
+            <View className="flex-row items-center">
+              <View className="h-14 w-14 items-center justify-center rounded-2xl bg-green-600">
+                <Text className="text-lg font-black text-white">
+                  {initials(listing.farmer.fullName)}
+                </Text>
+              </View>
+              <View className="ml-4 flex-1">
+                <View className="flex-row items-center gap-2">
+                  <Text className="text-base font-black text-gray-950">
+                    {listing.farmer.fullName}
+                  </Text>
+                  <Text className="text-base font-black text-green-700">✓</Text>
+                </View>
+                <Text className="mt-1 text-xs font-black text-amber-500">
+                  ★ {listing.farmer.rating.toFixed(1)}
+                  <Text className="text-gray-400">  Verified Seller</Text>
+                </Text>
+              </View>
+              <Pressable className="h-12 w-12 items-center justify-center rounded-2xl bg-green-50">
+                <Text className="text-xl font-black text-green-800">☎</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          <Text className="mt-6 text-sm font-black uppercase text-gray-500">
+            About this produce
           </Text>
-          <MetricRow
-            label="Available quantity"
-            value={`${listing.availableQuantity} ${listing.unitOfMeasure}`}
-          />
-          <MetricRow label="Packaging" value={listing.packagingRecommendation} />
-          <MetricRow label="Delivery estimate" value={listing.deliveryEstimate} />
-          <MetricRow
-            label="Pickup coordinates"
-            value={`${pickupCoordinates[1].toFixed(4)}, ${pickupCoordinates[0].toFixed(4)}`}
-          />
-          <View className="mt-4 rounded-lg bg-amber-50 p-3">
-            <Text className="font-semibold text-amber-900">Sample order</Text>
-            <Text className="mt-1 text-sm text-amber-900">
-              10 {listing.unitOfMeasure} would cost about GHS {estimatedTotal}
-              before packaging, transport, and Paystack checkout.
+          <Text className="mt-3 text-base leading-7 text-gray-700">
+            {listing.description}
+          </Text>
+
+          <View className="mt-6 rounded-3xl border border-dashed border-gray-300 p-4">
+            <View className="flex-row items-center gap-2">
+              <Text className="text-base font-black text-blue-600">▱</Text>
+              <Text className="text-sm font-black text-gray-700">
+                Transport Estimate
+              </Text>
+            </View>
+            <View className="mt-4 flex-row gap-3">
+              <EstimateTile value={listing.deliveryEstimate} label="Delivery" />
+              <EstimateTile value={`${listing.distanceKm} km`} label="Distance" />
+              <EstimateTile
+                value={`GHC${transportFee}/${listing.unitOfMeasure}`}
+                label="Transport fee"
+              />
+            </View>
+          </View>
+
+          <Text className="mt-6 text-sm font-black uppercase text-gray-500">
+            Quantity ({listing.unitOfMeasure}s)
+          </Text>
+          <View className="mt-4 flex-row items-center gap-4">
+            <Pressable
+              className="h-12 w-12 items-center justify-center rounded-2xl bg-gray-100"
+              onPress={decrement}
+            >
+              <Text className="text-2xl font-black text-gray-500">−</Text>
+            </Pressable>
+            <View className="h-12 flex-1 items-center justify-center rounded-2xl border border-green-200 bg-green-50">
+              <Text className="text-xl font-black text-green-800">{quantity}</Text>
+            </View>
+            <Pressable
+              className="h-12 w-12 items-center justify-center rounded-2xl bg-green-800 shadow-sm"
+              onPress={increment}
+            >
+              <Text className="text-2xl font-black text-white">+</Text>
+            </Pressable>
+          </View>
+
+          <View className="mt-4 flex-row items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
+            <Text className="text-xs font-black text-gray-500">
+              GHC{listing.pricePerUnit} x {quantity} {listing.unitOfMeasure} + GHC
+              {transportFee} transport
             </Text>
+            <Text className="text-lg font-black text-gray-950">GHC{total}</Text>
           </View>
         </View>
+      </ScrollView>
 
+      <View className="absolute bottom-0 left-0 right-0 bg-white px-5 pb-7 pt-4 shadow-2xl">
         <Link href={`/listings/${listing.id}/order`} asChild>
-          <Pressable className="mt-5 rounded-lg bg-green-800 py-4 active:bg-green-900">
-            <Text className="text-center text-base font-bold text-white">
-              Start Order
+          <Pressable className={vlClassNames.primaryButton}>
+            <Text className={vlClassNames.primaryButtonText}>
+              Order · GHC{total}
             </Text>
           </Pressable>
         </Link>
-
-        <Pressable
-          className="mt-3 rounded-lg border border-gray-300 py-4"
-          onPress={() => router.back()}
-        >
-          <Text className="text-center font-semibold text-gray-800">
-            Back to Marketplace
-          </Text>
-        </Pressable>
-      </ScrollView>
+      </View>
     </View>
   );
 }
 
-function DetailPill({ label }: { label: string }) {
+function ProduceHero({ listing }: { listing: MarketplaceListing }) {
   return (
-    <View className="rounded-full bg-green-50 px-3 py-1.5">
-      <Text className="text-xs font-semibold text-green-800">{label}</Text>
+    <View className="h-40 w-40 items-center justify-center">
+      <View
+        className="h-28 w-28 items-center justify-center rounded-full"
+        style={{
+          backgroundColor: listing.accentColor,
+          shadowColor: listing.accentColor,
+          shadowOpacity: 0.24,
+          shadowRadius: 20,
+          shadowOffset: { width: 0, height: 12 },
+        }}
+      >
+        <View className="absolute -right-2 top-2 h-10 w-14 rotate-45 rounded-full bg-white/35" />
+        <Text className="text-3xl font-black text-white">
+          {initials(listing.cropName)}
+        </Text>
+      </View>
     </View>
   );
 }
 
-function MetricRow({ label, value }: { label: string; value: string }) {
+function Pill({
+  label,
+  tone,
+  dot = false,
+}: {
+  label: string;
+  tone: "green";
+  dot?: boolean;
+}) {
   return (
-    <View className="mt-4 flex-row items-start justify-between gap-4 border-t border-gray-100 pt-4">
-      <Text className="flex-1 text-sm text-gray-600">{label}</Text>
-      <Text className="flex-1 text-right text-sm font-semibold text-gray-950">
+    <View className="flex-row items-center rounded-full bg-green-50 px-3 py-1.5">
+      {dot ? <View className="mr-2 h-2 w-2 rounded-full bg-green-700" /> : null}
+      <Text className="text-[11px] font-black text-green-800">{label}</Text>
+    </View>
+  );
+}
+
+function EstimateTile({ value, label }: { value: string; label: string }) {
+  return (
+    <View className="min-h-20 flex-1 items-center justify-center rounded-2xl bg-blue-50 px-2">
+      <Text className="text-xs font-black text-blue-700" numberOfLines={1}>
         {value}
       </Text>
+      <Text className="mt-1 text-[10px] font-semibold text-gray-500">{label}</Text>
     </View>
   );
+}
+
+function initials(value: string) {
+  return value
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 2);
 }
