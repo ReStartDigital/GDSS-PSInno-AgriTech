@@ -8,6 +8,7 @@ import { UserRepository } from "../user.repository.js";
 // import { arkeselClient } from "../../../infrastructure/arkesel/arkesel.client.js";
 import { hashSecret } from "../../../common/utils/hash.util.js";
 import { buildFarmer } from "./fixtures.js";
+import { UserRole } from "../../../common/constants/roles.enums.js";
 
 // ── 1. Mock all external dependencies ────────────────────────────────────────────
 jest.mock("../user.repository.js", () => {
@@ -196,5 +197,41 @@ describe("UsersService.changePin", () => {
         new_pin: "5678",
       }),
     ).rejects.toThrow();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// getPublicProfile
+// ═══════════════════════════════════════════════════════════════════════════════
+describe("UsersService.getPublicProfile", () => {
+  it("returns public profile without sensitive fields", async () => {
+    const publicUser = {
+      id: "user-abc-123",
+      firstName: "Abena",
+      lastName: "Mensah",
+      role: UserRole.FARMER,
+      profilePhotoUrl: null,
+      location: null,
+      isActive: true,
+      createdAt: new Date(),
+    };
+    mockUserRepo.findPublicById.mockResolvedValue(publicUser);
+
+    const result = await usersService.getPublicProfile("user-abc-123");
+
+    expect(result).toMatchObject({
+      firstName: "Abena",
+      lastName: "Mensah",
+      role: UserRole.FARMER,
+    });
+    expect(result).not.toHaveProperty("phone");
+    expect(result).not.toHaveProperty("pinHash");
+  });
+
+  it("throws NotFoundException for nonexistent or inactive user", async () => {
+    mockUserRepo.findPublicById.mockResolvedValue(null);
+    await expect(usersService.getPublicProfile("nonexistent")).rejects.toThrow(
+      "Active public user profile not found.",
+    );
   });
 });
