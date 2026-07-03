@@ -3,8 +3,9 @@ import { Alert, Pressable, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthUser, UserRole, useAuthStore } from "@vegelink/shared";
 import { OTPInput } from "@/components/common/OTPInput";
+import { vlClassNames } from "@/lib/design-system";
 
-const demoOtp = "123456";
+const otpLength = 6;
 
 export default function VerifyScreen() {
   const router = useRouter();
@@ -17,16 +18,15 @@ export default function VerifyScreen() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const [otp, setOtp] = useState("");
 
-  const safeFirstName = firstName?.trim() || "Demo";
-  const safeLastName = lastName?.trim() || "User";
-  const safePhone = phone?.trim() || "+233000000000";
-  const safeRole: UserRole = role ?? "buyer";
+  const safeFirstName = firstName?.trim() || "Kofi";
+  const safeLastName = lastName?.trim() || "Mensah";
+  const safePhone = phone?.trim() || "+233059983273";
+  const safeRole: UserRole = role ?? "farmer";
   const fullName = `${safeFirstName} ${safeLastName}`;
-  const isOtpReady = otp.length === demoOtp.length;
+  const isOtpReady = otp.length === otpLength;
 
   const handleVerify = () => {
-    if (otp !== demoOtp) {
-      Alert.alert("Invalid code", "Use 123456 for this prototype verification.");
+    if (!isOtpReady) {
       return;
     }
 
@@ -42,61 +42,93 @@ export default function VerifyScreen() {
   };
 
   const handleResend = () => {
-    Alert.alert("OTP sent", `A new code was sent to ${safePhone}.`);
-  };
-
-  const handleDemoFill = () => {
-    setOtp(demoOtp);
+    Alert.alert("Code sent", `A new code was sent to ${safePhone}.`);
   };
 
   return (
-    <View className="flex-1 justify-center bg-white px-6">
-      <Text className="text-sm font-semibold uppercase text-green-700">
-        Phone verification
-      </Text>
-      <Text className="mt-2 text-3xl font-black text-green-950">
-        Enter your OTP
-      </Text>
-      <Text className="mt-2 text-base leading-6 text-gray-600">
-        We sent a 6-digit code to {safePhone}. This keeps payments and order
-        updates tied to the right person.
-      </Text>
+    <View className={vlClassNames.screen}>
+      <View className="flex-1 px-6 pb-10 pt-9">
+        <View className="flex-row items-center gap-3">
+          <Pressable
+            accessibilityLabel="Go back"
+            className="h-12 w-12 items-center justify-center rounded-2xl bg-white active:bg-gray-100"
+            style={{
+              borderColor: "#111827",
+              borderWidth: 2,
+              shadowColor: "#111827",
+              shadowOpacity: 0.05,
+              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 4 },
+            }}
+            onPress={() => router.back()}
+          >
+            <Text className="text-3xl font-black text-gray-950">‹</Text>
+          </Pressable>
+          <View className="flex-1 gap-2">
+            <View className="flex-row gap-2">
+              <ProgressStep active />
+              <ProgressStep active />
+              <ProgressStep />
+            </View>
+            <Text className="text-xs font-black text-gray-400">Step 2 of 3</Text>
+          </View>
+        </View>
 
-      <View className="mt-8 rounded-lg border border-green-100 bg-green-50 p-4">
-        <Text className="font-bold text-green-950">{fullName}</Text>
-        <Text className="mt-1 capitalize text-green-900">{safeRole}</Text>
+        <Text className="mt-8 text-4xl font-black leading-tight text-gray-950">
+          Enter the code
+        </Text>
+        <Text className="mt-3 text-base leading-6 text-gray-600">
+          Sent to <Text className="font-black text-gray-950">{safePhone}</Text>
+        </Text>
+
+        <View className="mt-9">
+          <OTPInput value={otp} onChange={setOtp} length={otpLength} />
+        </View>
+
+        <View className="mt-10 items-center">
+          <Pressable className="flex-row items-center" onPress={handleResend}>
+            <View className="h-11 w-11 items-center justify-center rounded-full bg-gray-100">
+              <View className="h-8 w-8 items-center justify-center rounded-full border-4 border-gray-200">
+                <Text className="text-xs font-black text-gray-700">26</Text>
+              </View>
+            </View>
+            <Text className="ml-3 text-sm font-black text-gray-400">
+              Resend in 26s
+            </Text>
+          </Pressable>
+
+          <Text className="mt-5 max-w-xs text-center text-xs font-semibold leading-5 text-gray-400">
+            Did not receive the code? Check your network and try again.
+          </Text>
+        </View>
+
+        <View className="mt-auto">
+          <Pressable
+            className={isOtpReady ? vlClassNames.primaryButton : vlClassNames.mutedButton}
+            onPress={handleVerify}
+          >
+            <Text
+              className={
+                isOtpReady
+                  ? vlClassNames.primaryButtonText
+                  : vlClassNames.mutedButtonText
+              }
+            >
+              Verify  -&gt;
+            </Text>
+          </Pressable>
+        </View>
       </View>
-
-      <View className="mt-8">
-        <OTPInput value={otp} onChange={setOtp} />
-      </View>
-
-      <Pressable className="mt-4 py-3" onPress={handleDemoFill}>
-        <Text className="text-center font-semibold text-green-800">
-          Use prototype code 123456
-        </Text>
-      </Pressable>
-
-      <Pressable
-        className={`mt-5 rounded-lg py-4 ${
-          isOtpReady ? "bg-green-800 active:bg-green-900" : "bg-gray-300"
-        }`}
-        onPress={handleVerify}
-      >
-        <Text
-          className={`text-center text-base font-bold ${
-            isOtpReady ? "text-white" : "text-gray-600"
-          }`}
-        >
-          Verify Phone
-        </Text>
-      </Pressable>
-
-      <Pressable className="mt-4 py-3" onPress={handleResend}>
-        <Text className="text-center font-semibold text-gray-700">
-          Resend code
-        </Text>
-      </Pressable>
     </View>
+  );
+}
+
+function ProgressStep({ active = false }: { active?: boolean }) {
+  return (
+    <View
+      className={`h-1.5 flex-1 rounded-full ${
+        active ? "bg-green-800" : "bg-gray-100"
+      }`}
+    />
   );
 }
