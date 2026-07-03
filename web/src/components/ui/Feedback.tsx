@@ -15,9 +15,9 @@ export function Spinner() {
 export function ErrorAlert({ message }: { message: string }) {
   return (
     <div style={{
-      padding: '12px 16px', borderRadius: 16,
-      background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)',
-      color: '#dc2626', fontSize: '0.9rem',
+      padding: '12px 16px', borderRadius: 6,
+      background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+      color: '#ef4444', fontSize: '0.9rem',
     }}>
       {message}
     </div>
@@ -28,8 +28,8 @@ export function EmptyState({ message }: { message: string }) {
   return (
     <div style={{
       padding: 40, textAlign: 'center', color: '#6b7280',
-      background: 'rgba(255,255,255,0.6)', borderRadius: 24,
-      border: '1px dashed rgba(38,65,35,0.2)',
+      background: '#ffffff', borderRadius: 12,
+      border: '1px dashed #e5e7eb',
     }}>
       {message}
     </div>
@@ -40,11 +40,11 @@ export function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, { bg: string; color: string }> = {
     active: { bg: 'rgba(214,255,205,0.8)', color: '#264123' },
     live: { bg: 'rgba(214,255,205,0.8)', color: '#264123' },
-    pending: { bg: 'rgba(251,191,36,0.2)', color: '#92400e' },
-    confirmed: { bg: 'rgba(59,130,246,0.15)', color: '#1e40af' },
-    in_transit: { bg: 'rgba(139,92,246,0.15)', color: '#5b21b6' },
+    pending: { bg: 'rgba(245,158,11,0.15)', color: '#92400e' },
+    confirmed: { bg: 'rgba(214,255,205,0.6)', color: '#264123' },
+    in_transit: { bg: 'rgba(143,188,143,0.25)', color: '#264123' },
     delivered: { bg: 'rgba(214,255,205,0.8)', color: '#264123' },
-    cancelled: { bg: 'rgba(220,38,38,0.1)', color: '#dc2626' },
+    cancelled: { bg: 'rgba(239,68,68,0.1)', color: '#ef4444' },
     sold: { bg: 'rgba(107,114,128,0.15)', color: '#374151' },
     draft: { bg: 'rgba(107,114,128,0.15)', color: '#374151' },
   }

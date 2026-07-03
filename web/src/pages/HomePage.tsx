@@ -232,7 +232,7 @@ export default function HomePage() {
         <div className="section-card" style={{ background: 'rgba(214,255,205,0.25)' }}>
           <p className="eyebrow" style={{ color: '#6b7280', marginBottom: 8 }}>Coverage</p>
           <h3 style={{ margin: '0 0 8px', color: '#264123', fontFamily: 'Poppins, sans-serif' }}>Greater Accra Belt</h3>
-          <p style={{ margin: '0 0 16px', color: '#4b5563', fontSize: '0.9rem' }}>
+          <p style={{ margin: '0 0 16px', color: '#374151', fontSize: '0.9rem' }}>
             Dawhenya · Afienya · Dodowa · Madina · Tema West · Shai Osudoku
           </p>
           <div className="mini-badges" style={{ marginTop: 0 }}>
@@ -255,7 +255,7 @@ function DashboardSummary({ role }: { role: string }) {
   const recentListings = Array.isArray(listings) ? listings.slice(0, 3) : []
 
   return (
-    <section className="section-card" style={{ background: 'linear-gradient(135deg, rgba(38,65,35,0.04), rgba(255,255,255,0.95))' }}>
+    <section className="section-card">
       <div className="section-heading">
         <div>
           <p className="eyebrow" style={{ color: '#6b7280' }}>Your activity</p>
@@ -323,7 +323,7 @@ function DashboardSummary({ role }: { role: string }) {
         {role === 'buyer' && (
           <div className="dashboard-panel">
             <p className="dashboard-panel-label">Marketplace</p>
-            <p style={{ color: '#4b5563', fontSize: '0.9rem', margin: '0 0 16px' }}>
+            <p style={{ color: '#374151', fontSize: '0.9rem', margin: '0 0 16px' }}>
               Browse fresh produce from farmers across the Greater Accra Vegetable Belt.
             </p>
             <Link to="/marketplace" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '0 16px', fontSize: '0.85rem' }}>

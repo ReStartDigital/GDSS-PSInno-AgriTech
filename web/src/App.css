@@ -112,7 +112,7 @@
   text-decoration: none;
   padding: 12px 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
+  border-radius: 6px;
   background: rgba(255, 255, 255, 0.04);
   transition: transform 180ms ease, background-color 180ms ease;
 }
@@ -237,7 +237,7 @@
   width: 48px;
   background: #ffffff;
   color: #264123;
-  box-shadow: 0 8px 24px rgba(38, 65, 35, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .icon-button:hover,
@@ -255,7 +255,7 @@
 .avatar {
   min-width: 48px;
   padding: 0 12px;
-  border-radius: 16px;
+  border-radius: 6px;
   background: #264123;
   color: #f8faf5;
   font-weight: 700;
@@ -280,8 +280,7 @@
 
 .hero-card,
 .section-card {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(14px);
+  background: #ffffff;
 }
 
 .hero-card {
@@ -684,7 +683,7 @@
 }
 
 .listing-meta {
-  color: #4b5563;
+  color: #374151;
   font-size: 0.92rem;
 }
 
@@ -1021,8 +1020,8 @@
 }
 
 .mockup-badge.blue {
-  background: rgba(59, 130, 246, 0.12);
-  color: #1e40af;
+  background: rgba(143, 188, 143, 0.3);
+  color: #264123;
 }
 
 .mockup-divider {
