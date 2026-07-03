@@ -4,11 +4,12 @@ import * as HashUtil from "../../../common/utils/hash.util.js";
 import { UsersService } from "../users.service.js";
 import { UserRepository } from "../user.repository.js";
 // import { cloudinaryClient } from "../../../infrastructure/cloudinary/cloudinary.client.js";
-// import { paystackClient } from "../../../infrastructure/paystack/paystack.client.js";
+import { paystackClient } from "../../../infrastructure/paystack/paystack.client.js";
 // import { arkeselClient } from "../../../infrastructure/arkesel/arkesel.client.js";
 import { hashSecret } from "../../../common/utils/hash.util.js";
 import { buildFarmer } from "./fixtures.js";
 import { UserRole } from "../../../common/constants/roles.enums.js";
+// import { ForbiddenException, UnprocessableException, NotFoundException } from "../../../common/exceptions/index.js";
 
 // ── 1. Mock all external dependencies ────────────────────────────────────────────
 jest.mock("../user.repository.js", () => {
@@ -41,7 +42,6 @@ jest.mock("../user.repository.js", () => {
 });
 
 jest.mock("../../../infrastructure/cloudinary/cloudinary.client.js");
-jest.mock("../../../infrastructure/paystack/paystack.client.js");
 jest.mock("../../../infrastructure/arkesel/arkesel.client.js");
 jest.mock("../../../common/utils/hash.util.js", () => ({
   hashSecret: jest.fn(),
@@ -56,7 +56,7 @@ const usersService = new UsersService();
 // Define a type-safe object pointing directly to our auto-mocked methods
 // Properly cast the infrastructure mocks so they're in scope for your assertions
 // const mockCloudinary = cloudinaryClient as jest.Mocked<typeof cloudinaryClient>;
-// const mockPaystack = paystackClient as jest.Mocked<typeof paystackClient>;
+// const mockPaystack = paystackClient;
 // const mockArkesel = arkeselClient as jest.Mocked<typeof arkeselClient>;
 // let mockVerifySecret = jest.mocked(HashUtil.verifySecret);
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -78,7 +78,26 @@ beforeEach(() => {
     .fn<any>()
     .mockResolvedValue(buildFarmer() as any);
   mockUserRepo.updatePinHash = jest.fn<any>().mockResolvedValue(undefined);
+  mockUserRepo.updatePaymentDetails = jest
+    .fn<any>()
+    .mockResolvedValue(undefined);
+
   mockHashSecret = jest.fn<any>().mockResolvedValue("hashed-pin-string");
+
+  // Reset Paystack mock methods cleanly
+  jest.spyOn(paystackClient, "createSubaccount").mockImplementation(
+    jest.fn<any>().mockResolvedValue({
+      success: true,
+      subaccountCode: "ACCT_default",
+    }),
+  );
+
+  jest.spyOn(paystackClient, "updateSubaccount").mockImplementation(
+    jest.fn<any>().mockResolvedValue({
+      success: true,
+      subaccountCode: "ACCT_default",
+    }),
+  );
 });
 
 // ── 3. Run Clean Tests ─────────────────────────────────────────────────────────
@@ -235,3 +254,87 @@ describe("UsersService.getPublicProfile", () => {
     );
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// setupPaymentDetails
+// ═══════════════════════════════════════════════════════════════════════════════
+// describe('UsersService.setupPaymentDetails', () => {
+//   const dto = { mobile_number: '+233244123456', mobile_network: 'mtn' };
+
+//   it('creates a new Paystack subaccount for a farmer with no existing payment details', async () => {
+//     mockUserRepo.findPrivateById.mockResolvedValue(buildFarmer({ paystackSubaccountCode: null }));
+//     jest.mocked(mockPaystack.createSubaccount).mockResolvedValue({
+//       subaccountCode: 'ACCT_new123'
+//     });
+
+//     await usersService.setupPaymentDetails('user-abc-123', dto);
+
+//     expect(mockPaystack.createSubaccount).toHaveBeenCalledTimes(1);
+//     expect(mockPaystack.updateSubaccount).not.toHaveBeenCalled();
+//     expect(mockUserRepo.updatePaymentDetails).toHaveBeenCalledWith('user-abc-123', {
+//       mobileMoneyNumber: '+233244123456',
+//       mobileMoneyNetwork: 'mtn',
+//       paystackSubaccountCode: 'ACCT_new123',
+//     });
+//   });
+
+//   it('updates existing Paystack subaccount when payment details already set', async () => {
+//     mockUserRepo.findPrivateById.mockResolvedValue(
+//       buildFarmerWithPayment({ paystackSubaccountCode: 'ACCT_existing456' }),
+//     );
+//     jest.mocked(mockPaystack.updateSubaccount).mockResolvedValue({
+//       subaccountCode: 'ACCT_existing456'
+//     });
+//     await usersService.setupPaymentDetails('user-abc-123', {
+//       mobile_number: '+233244999888',
+//       mobile_network: 'vodafone',
+//     });
+
+//     expect(mockPaystack.updateSubaccount).toHaveBeenCalledWith('ACCT_existing456', {
+//       mobileNetwork: 'vodafone',
+//       mobileNumber: '+233244999888',
+//     });
+//     expect(mockPaystack.createSubaccount).not.toHaveBeenCalled();
+//   });
+
+//   it('throws ForbiddenException for buyer role — only farmers and transporters can set payment details', async () => {
+//     mockUserRepo.findPrivateById.mockResolvedValue(buildBuyer());
+
+//     await expect(usersService.setupPaymentDetails('buyer-abc-123', dto)).rejects.toBeInstanceOf(
+//       ForbiddenException,
+//     );
+//     expect(mockPaystack.createSubaccount).not.toHaveBeenCalled();
+//   });
+
+//   it('throws ForbiddenException for agent role', async () => {
+//     mockUserRepo.findPrivateById.mockResolvedValue(buildAgent());
+//     await expect(usersService.setupPaymentDetails('agent-abc-123', dto)).rejects.toBeInstanceOf(
+//       ForbiddenException,
+//     );
+//   });
+
+//   // it('throws UnprocessableException when Paystack rejects the mobile number', async () => {
+//   //   mockUserRepo.findPrivateById.mockResolvedValue(buildFarmer({ paystackSubaccountCode: null }));
+//   //   mockPaystack.createSubaccount.mockResolvedValue({ success: false, errorReason: 'INVALID_ACCOUNT' });
+
+//   //   await expect(usersService.setupPaymentDetails('user-abc-123', dto)).rejects.toBeInstanceOf(
+//   //     UnprocessableException,
+//   //   );
+//   //   expect(mockUserRepo.updatePaymentDetails).not.toHaveBeenCalled();
+//   // });
+
+//   // it('masks the mobile number in the response — never returns the raw number', async () => {
+//   //   mockUserRepo.findPrivateById.mockResolvedValue(buildFarmer({ paystackSubaccountCode: null }));
+//   //   mockPaystack.createSubaccount.mockResolvedValue({ success: true, subaccountCode: 'ACCT_abc' });
+
+//   //   const result = await usersService.setupPaymentDetails('user-abc-123', dto);
+
+//   //   expect(result.mobile_number).not.toBe('+233244123456');
+//   //   expect(result.mobile_number).toContain('***');
+//   // });
+
+//   // it('throws NotFoundException when user does not exist', async () => {
+//   //   mockUserRepo.findPrivateById.mockResolvedValue(null);
+//   //   await expect(usersService.setupPaymentDetails('nonexistent', dto)).rejects.toBeInstanceOf(NotFoundException);
+//   // });
+// });

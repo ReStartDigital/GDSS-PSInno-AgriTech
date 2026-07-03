@@ -109,9 +109,6 @@ export class UsersService {
       dto.current_pin,
       user.pinHash ?? "",
     );
-    console.log(
-      `User hash: ${user.pinHash}\nCurrent Hash: ${isVerified}\n${dto.current_pin}`,
-    );
     if (!isVerified) {
       throw new UnauthorizedException(
         "The current PIN entered is invalid.",
@@ -167,36 +164,52 @@ export class UsersService {
     }
 
     // 2. Prevent overriding existing setups
-    if (user.paymentDetailsSet) {
-      throw new ConflictException(
-        "Financial distribution channel records are already established for this profile.",
-        ErrorCode.PAYMENT_DETAILS_ALREADY_SET,
+    // if (user.paymentDetailsSet) {
+    //   throw new ConflictException(
+    //     "Financial distribution channel records are already established for this profile.",
+    //     ErrorCode.PAYMENT_DETAILS_ALREADY_SET,
+    //   );
+    // }
+
+    let subaccountCode: string = user.paystackSubaccountCode || "";
+
+    if (subaccountCode) {
+      // route to updateSubaccount infrastructure method
+      const updateResult = await this.paystack.updateSubaccount(
+        subaccountCode,
+        {
+          mobileNetwork: dto.mobile_network,
+          mobileNumber: dto.mobile_number,
+        },
       );
-    }
 
-    // Generate virtual fallback routing email identifier
-    const merchantEmail = user.email || `${user.id}@${VIRTUAL_EMAIL_DOMAIN}`;
-    const businessName = `${user.firstName} ${user.lastName} (${user.role.toUpperCase()})`;
+      subaccountCode = updateResult.subaccountCode ?? subaccountCode;
+    } else {
+      // Generate virtual fallback routing email identifier
+      const merchantEmail = user.email || `${user.id}@${VIRTUAL_EMAIL_DOMAIN}`;
+      const businessName = `${user.firstName} ${user.lastName} (${user.role.toUpperCase()})`;
 
-    // 3. Request Paystack infrastructure onboarding slot
-    const paystackResult = await this.paystack.createSubaccount({
-      business_name: businessName,
-      account_number: dto.mobile_number,
-      mobileNetwork: dto.mobile_network,
-      primary_contact_email: merchantEmail,
-    });
+      // 3. Request Paystack infrastructure onboarding slot
+      const paystackResult = await this.paystack.createSubaccount({
+        business_name: businessName,
+        account_number: dto.mobile_number,
+        mobileNetwork: dto.mobile_network,
+        primary_contact_email: merchantEmail,
+      });
 
-    if (!paystackResult.subaccountCode) {
-      throw new UnprocessableException(
-        "Paystack did not return a valid subaccount code configuration.",
-        ErrorCode.PAYMENT_INITIALIZATION_FAILED,
-      );
+      if (!paystackResult.subaccountCode) {
+        throw new UnprocessableException(
+          "Paystack did not return a valid subaccount code configuration.",
+          ErrorCode.PAYMENT_INITIALIZATION_FAILED,
+        );
+      }
+      subaccountCode = paystackResult.subaccountCode;
     }
     // 4. Update core local storage layer on successfully resolved payload configurations
     await this.repo.updatePaymentDetails(user.id, {
       mobileMoneyNumber: dto.mobile_number,
       mobileMoneyNetwork: dto.mobile_network,
-      paystackSubaccountCode: paystackResult.subaccountCode,
+      paystackSubaccountCode: subaccountCode,
     });
   }
 
