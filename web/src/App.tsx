@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import './App.css'
 import { Icon } from './components/Icon'
 import { appPages, siteNavItems, type PageKey } from './content'
 import AuthPage from './pages/AuthPage'

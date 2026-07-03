@@ -413,7 +413,8 @@
 }
 
 .panel-grid {
-  flex-direction: column;
+  display: grid;
+  gap: 20px;
 }
 
 .section-card {
@@ -594,6 +595,16 @@
   color: #264123;
 }
 
+.detail-card.dark {
+  background: rgba(38, 65, 35, 0.92);
+  border-color: rgba(214, 255, 205, 0.14);
+}
+
+.detail-card.dark strong,
+.detail-card.dark p {
+  color: #f8faf5;
+}
+
 .quick-links,
 .filter-row {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -700,6 +711,11 @@
   grid-template-columns: 1fr 1fr;
 }
 
+.profile-grid .section-card,
+.auth-grid .section-card {
+  min-width: 0;
+}
+
 .profile-header {
   justify-content: flex-start;
   margin-bottom: 18px;
@@ -751,6 +767,16 @@
 .field input:focus {
   outline: 2px solid #d6ffcd;
   outline-offset: 2px;
+}
+
+.field input:disabled,
+.quick-link:disabled,
+.filter-chip:disabled,
+.inline-button:disabled,
+.primary-button:disabled,
+.secondary-button:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
 }
 
 .auth-button,
