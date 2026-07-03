@@ -137,23 +137,38 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.sidebar-panel h2,
+.sidebar-panel h2 {
+  color: #f8faf5;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 4px 0 8px;
+}
+
+.sidebar-panel p {
+  color: rgba(248, 250, 245, 0.72);
+  line-height: 1.5;
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+.sidebar-panel .mini-badges span {
+  background: rgba(214, 255, 205, 0.15);
+  border-color: rgba(214, 255, 205, 0.25);
+  color: #d6ffcd;
+  font-size: 0.72rem;
+  padding: 4px 10px;
+}
+
 .content h2,
 .content h3,
 .content h4 {
   color: #1f2937;
 }
 
-.sidebar-panel h2,
 .section-card h3,
 .role-detail h4,
 .workflow-step h4 {
   color: #264123;
-}
-
-.sidebar-panel p {
-  color: rgba(248, 250, 245, 0.82);
-  line-height: 1.6;
 }
 
 .mini-badges {
@@ -307,7 +322,6 @@
 }
 
 .hero-copy p,
-.sidebar p,
 .role-detail p,
 .workflow-step p,
 .section-card p,
