@@ -1,18 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ordersApi } from '../lib/apiCalls'
 import type { PlaceOrderFormData } from '../schemas'
+import type { Order } from '../types/api'
 
 export function useMyOrders() {
-  return useQuery({
+  return useQuery<Order[]>({
     queryKey: ['orders'],
-    queryFn: () => ordersApi.getMyOrders().then((r) => r.data.data),
+    queryFn: () => ordersApi.getMyOrders().then((r) => r.data.data as Order[]),
   })
 }
 
 export function useOrder(id: string) {
-  return useQuery({
+  return useQuery<Order>({
     queryKey: ['orders', id],
-    queryFn: () => ordersApi.getById(id).then((r) => r.data.data),
+    queryFn: () => ordersApi.getById(id).then((r) => r.data.data as Order),
     enabled: !!id,
   })
 }

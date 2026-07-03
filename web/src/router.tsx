@@ -1,0 +1,35 @@
+import { Routes, Route } from 'react-router-dom'
+import { RequireAuth, RedirectIfAuth } from './components/RequireAuth'
+import { Layout } from './components/layout/Layout'
+
+import HomePage from './pages/HomePage'
+import MarketplacePage from './pages/MarketplacePage'
+import ListingsPage from './pages/ListingsPage'
+import OrdersPage from './pages/OrdersPage'
+import ProfilePage from './pages/ProfilePage'
+import LoginPage from './pages/auth/LoginPage'
+import RegisterPage from './pages/auth/RegisterPage'
+import VerifyPage from './pages/auth/VerifyPage'
+import SetPinPage from './pages/auth/SetPinPage'
+
+export function AppRouter() {
+  return (
+    <Routes>
+      <Route element={<RedirectIfAuth />}>
+        <Route path="/auth/login"    element={<Layout><LoginPage /></Layout>} />
+        <Route path="/auth/register" element={<Layout><RegisterPage /></Layout>} />
+        <Route path="/auth/verify"   element={<Layout><VerifyPage /></Layout>} />
+        <Route path="/auth/set-pin"  element={<Layout><SetPinPage /></Layout>} />
+      </Route>
+
+      <Route path="/"           element={<Layout><HomePage /></Layout>} />
+      <Route path="/marketplace" element={<Layout><MarketplacePage /></Layout>} />
+      <Route path="/profile"    element={<Layout><ProfilePage /></Layout>} />
+
+      <Route element={<RequireAuth />}>
+        <Route path="/listings" element={<Layout><ListingsPage /></Layout>} />
+        <Route path="/orders"   element={<Layout><OrdersPage /></Layout>} />
+      </Route>
+    </Routes>
+  )
+}
