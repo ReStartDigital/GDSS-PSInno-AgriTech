@@ -1,5 +1,5 @@
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { findMarketplaceListing } from "@/lib/marketplace-data";
 
@@ -127,19 +127,13 @@ export default function ListingDetailScreen() {
           </View>
         </View>
 
-        <Pressable
-          className="mt-5 rounded-lg bg-green-800 py-4"
-          onPress={() =>
-            Alert.alert(
-              "Start order",
-              "Next you will choose quantity, packaging, transport, and payment.",
-            )
-          }
-        >
-          <Text className="text-center text-base font-bold text-white">
-            Start Order
-          </Text>
-        </Pressable>
+        <Link href={`/listings/${listing.id}/order`} asChild>
+          <Pressable className="mt-5 rounded-lg bg-green-800 py-4 active:bg-green-900">
+            <Text className="text-center text-base font-bold text-white">
+              Start Order
+            </Text>
+          </Pressable>
+        </Link>
 
         <Pressable
           className="mt-3 rounded-lg border border-gray-300 py-4"
