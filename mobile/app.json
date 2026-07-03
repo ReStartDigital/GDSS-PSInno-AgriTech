@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "VegeLink Ghana",
+    "slug": "vegelink-ghana",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "vegelink",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2D5A0A"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.vegelink.ghana"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundColor": "#2D5A0A"
+      },
+      "package": "com.vegelink.ghana"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "VegeLink needs your location to show nearby farmers and transport jobs."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "VegeLink needs access to your photos to upload produce images."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#2D5A0A"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
