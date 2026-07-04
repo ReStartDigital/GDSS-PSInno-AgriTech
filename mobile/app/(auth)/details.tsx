@@ -165,6 +165,7 @@ export default function DetailsScreen() {
             </View>
           </Pressable>
         </View>
+        </View>
       </KeyboardAvoidingView>
     </View>
   );
