@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router";
 import { View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@vegelink/shared";
 import { vlColors } from "@/lib/design-system";
 import {
@@ -21,6 +22,7 @@ const tabIconMap: Record<string, React.ComponentType<{ color: string; width: num
 };
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const role = user?.role;
 
@@ -31,9 +33,9 @@ export default function TabLayout() {
         tabBarActiveTintColor: vlColors.brandGreen,
         tabBarInactiveTintColor: vlColors.textMuted,
         tabBarStyle: {
-          height: 72,
+          height: 64 + insets.bottom,
           paddingTop: 8,
-          paddingBottom: 8,
+          paddingBottom: Math.max(insets.bottom, 8),
           borderTopColor: "#F0F2F4",
           backgroundColor: "#FFFFFF",
           shadowColor: "#111827",

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthUser, UserRole, useAuthStore } from "@vegelink/shared";
 import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
@@ -61,7 +61,11 @@ export default function DetailsScreen() {
 
   return (
     <View className={vlClassNames.screen} style={{ paddingTop: insets.top }}>
-      <View className="flex-1 px-6 pb-10 pt-4">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+      >
+        <View className="flex-1 px-6 pb-10 pt-4">
         <View className="flex-row items-center gap-3">
           <Pressable
             accessibilityLabel="Go back"
@@ -161,7 +165,7 @@ export default function DetailsScreen() {
             </View>
           </Pressable>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }

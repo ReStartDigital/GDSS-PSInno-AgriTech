@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { CameraImagePicker } from "@/components/listings/CameraImagePicker";
 import { GPSLocationButton } from "@/components/listings/GPSLocationButton";
@@ -63,7 +63,11 @@ export default function NewListingScreen() {
   return (
     <View className="flex-1 bg-white">
       <ScreenHeader title="New Listing" subtitle="Publish your produce" />
-      <ScrollView contentContainerClassName="px-4 pb-8 pt-4">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+      >
+        <ScrollView contentContainerClassName="px-4 pb-8 pt-4">
         <View className="rounded-2xl border border-green-100 bg-green-50 p-4">
           <Text className="text-sm font-black uppercase text-green-700">
             Farmer listing
@@ -224,7 +228,8 @@ export default function NewListingScreen() {
           </Text>
         </Pressable>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
+  </View>
   );
 }
 
