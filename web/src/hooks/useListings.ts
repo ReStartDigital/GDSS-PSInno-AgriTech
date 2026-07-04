@@ -1,25 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { listingsApi } from '../lib/apiCalls'
 import type { CreateListingFormData } from '../schemas'
+import type { Listing } from '../types/api'
 
 export function useMyListings() {
-  return useQuery({
+  return useQuery<Listing[]>({
     queryKey: ['listings', 'mine'],
-    queryFn: () => listingsApi.getMyListings().then((r) => r.data.data),
+    queryFn: () => listingsApi.getMyListings().then((r) => r.data.data as Listing[]),
   })
 }
 
 export function useAllListings(params?: Record<string, string>) {
-  return useQuery({
+  return useQuery<Listing[]>({
     queryKey: ['listings', 'all', params],
-    queryFn: () => listingsApi.getAll(params).then((r) => r.data.data),
+    queryFn: () => listingsApi.getAll(params).then((r) => r.data.data as Listing[]),
   })
 }
 
 export function useListing(id: string) {
-  return useQuery({
+  return useQuery<Listing>({
     queryKey: ['listings', id],
-    queryFn: () => listingsApi.getById(id).then((r) => r.data.data),
+    queryFn: () => listingsApi.getById(id).then((r) => r.data.data as Listing),
     enabled: !!id,
   })
 }
