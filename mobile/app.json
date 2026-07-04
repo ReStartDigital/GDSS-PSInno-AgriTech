@@ -14,14 +14,14 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.vegelink.ghana"
+      "bundleIdentifier": "com.kalibip.vegelink"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundColor": "#2D5A0A"
       },
-      "package": "com.vegelink.ghana"
+      "package": "com.kalibip.vegelink"
     },
     "plugins": [
       "expo-router",
