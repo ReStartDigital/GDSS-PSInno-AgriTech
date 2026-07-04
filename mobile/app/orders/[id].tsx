@@ -36,10 +36,10 @@ export default function OrderDetailScreen() {
             Return to the Orders tab and choose a listed order.
           </Text>
           <Pressable
-            className="mt-6 rounded-lg bg-green-800 px-5 py-3"
+            className="mt-6 rounded-2xl bg-green-800 px-5 py-3"
             onPress={handleBack}
           >
-            <Text className="font-semibold text-white">Go Back</Text>
+            <Text className="font-black text-white">Go Back</Text>
           </Pressable>
         </View>
       </View>
@@ -52,8 +52,8 @@ export default function OrderDetailScreen() {
     <View className="flex-1 bg-white">
       <ScreenHeader title="Order Details" />
       <ScrollView contentContainerClassName="px-4 pb-8 pt-4">
-        <View className="rounded-lg border border-gray-200 bg-white p-4">
-          <Text className="text-sm font-semibold uppercase text-green-700">
+        <View className="rounded-2xl border border-gray-200 bg-white p-4">
+          <Text className="text-sm font-black uppercase text-green-700">
             {getStatusLabel(order.status)}
           </Text>
           <View className="mt-2 flex-row items-start justify-between gap-4">
@@ -74,8 +74,8 @@ export default function OrderDetailScreen() {
           </View>
         </View>
 
-        <View className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
-          <Text className="text-lg font-bold text-green-950">Parties</Text>
+        <View className="mt-4 rounded-2xl border border-gray-200 bg-white p-4">
+          <Text className="text-lg font-black text-green-950">Parties</Text>
           <InfoRow label="Buyer" value={order.buyerName} />
           <InfoRow label="Farmer" value={order.farmerName} />
           <InfoRow
@@ -85,8 +85,8 @@ export default function OrderDetailScreen() {
           <InfoRow label="Delivery" value={order.deliveryAddress} />
         </View>
 
-        <View className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
-          <Text className="text-lg font-bold text-green-950">Payment and handling</Text>
+        <View className="mt-4 rounded-2xl border border-gray-200 bg-white p-4">
+          <Text className="text-lg font-black text-green-950">Payment and handling</Text>
           <InfoRow label="Payment provider" value={order.paymentProvider} />
           <InfoRow label="Packaging" value={order.packaging} />
           <InfoRow
@@ -99,8 +99,8 @@ export default function OrderDetailScreen() {
           />
         </View>
 
-        <View className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
-          <Text className="text-lg font-bold text-green-950">Timeline</Text>
+        <View className="mt-4 rounded-2xl border border-gray-200 bg-white p-4">
+          <Text className="text-lg font-black text-green-950">Timeline</Text>
           <View className="mt-3 gap-4">
             {order.timeline.map((event) => (
               <View key={event.title} className="flex-row gap-3">
@@ -110,7 +110,7 @@ export default function OrderDetailScreen() {
                   }`}
                 />
                 <View className="flex-1">
-                  <Text className="font-bold text-gray-950">{event.title}</Text>
+                  <Text className="font-black text-gray-950">{event.title}</Text>
                   <Text className="mt-1 text-sm leading-5 text-gray-600">
                     {event.detail}
                   </Text>
@@ -122,20 +122,20 @@ export default function OrderDetailScreen() {
 
         {primaryAction ? (
           <Pressable
-            className="mt-5 rounded-lg bg-green-800 py-4 active:bg-green-900"
+            className="mt-5 rounded-2xl bg-green-800 py-4 active:bg-green-900"
             onPress={() => Alert.alert(primaryAction.title, primaryAction.message)}
           >
-            <Text className="text-center text-base font-bold text-white">
+            <Text className="text-center text-base font-black text-white">
               {primaryAction.label}
             </Text>
           </Pressable>
         ) : null}
 
         <Pressable
-          className="mt-3 rounded-lg border border-gray-300 py-4"
+          className="mt-3 rounded-2xl border border-gray-300 py-4"
           onPress={handleBack}
         >
-          <Text className="text-center font-semibold text-gray-800">
+          <Text className="text-center font-black text-gray-800">
             Back to Orders
           </Text>
         </Pressable>
@@ -147,8 +147,8 @@ export default function OrderDetailScreen() {
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <View className="mt-4 border-t border-gray-100 pt-4">
-      <Text className="text-sm font-semibold text-gray-500">{label}</Text>
-      <Text className="mt-1 text-base font-semibold text-gray-950">{value}</Text>
+      <Text className="text-sm font-black text-gray-500">{label}</Text>
+      <Text className="mt-1 text-base font-black text-gray-950">{value}</Text>
     </View>
   );
 }
