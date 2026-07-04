@@ -4,9 +4,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createListingSchema, type CreateListingFormData } from '../schemas'
 import type { Listing } from '../types/api'
+import { getApiErrorMessage } from '../lib/errors'
 import { Icon } from '../components/Icon'
 import { Spinner, ErrorAlert, EmptyState, StatusBadge } from '../components/ui/Feedback'
 import { Field } from '../components/ui/Field'
+import { PageHero } from '../components/ui/PageHero'
+import { FormActions } from '../components/ui/FormActions'
 
 export default function ListingsPage() {
   const [showForm, setShowForm] = useState(false)
@@ -15,16 +18,16 @@ export default function ListingsPage() {
 
   return (
     <div className="page-stack">
-      <section className="page-hero">
-        <div>
-          <p className="eyebrow">My Listings</p>
-          <h2>Your produce inventory.</h2>
-          <p>Manage your active listings, prices, and availability.</p>
-        </div>
-        <button type="button" className="primary-button" onClick={() => setShowForm(true)}>
-          + New Listing
-        </button>
-      </section>
+      <PageHero
+        eyebrow="My Listings"
+        title="Your produce inventory."
+        description="Manage your active listings, prices, and availability."
+        action={
+          <button type="button" className="primary-button" onClick={() => setShowForm(true)}>
+            + New Listing
+          </button>
+        }
+      />
 
       {showForm && <CreateListingForm onClose={() => setShowForm(false)} />}
 
@@ -116,7 +119,7 @@ function CreateListingForm({ onClose }: { onClose: () => void }) {
     mutate(data, { onSuccess: () => { reset(); onClose() } })
   }
 
-  const apiError = error && (error as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
+  const apiError = getApiErrorMessage(error)
 
   return (
     <section className="section-card accent-card">
@@ -133,12 +136,12 @@ function CreateListingForm({ onClose }: { onClose: () => void }) {
         </div>
         {apiError && <ErrorAlert message={apiError} />}
         {isSuccess && <div style={{ color: '#d6ffcd', fontWeight: 600 }}>Listing created ✓</div>}
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button type="button" className="secondary-button" onClick={onClose} style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
-          <button type="submit" className="primary-button" disabled={isPending} style={{ flex: 1, justifyContent: 'center' }}>
-            {isPending ? 'Creating…' : 'Create Listing'}
-          </button>
-        </div>
+        <FormActions
+          onCancel={onClose}
+          submitLabel="Create Listing"
+          pendingLabel="Creating…"
+          isPending={isPending}
+        />
       </form>
     </section>
   )
