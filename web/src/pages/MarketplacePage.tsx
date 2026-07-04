@@ -6,10 +6,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { placeOrderSchema, type PlaceOrderFormData } from '../schemas'
 import type { Listing } from '../types/api'
+import { getApiErrorMessage } from '../lib/errors'
 import { Icon } from '../components/Icon'
 import { Spinner, ErrorAlert, EmptyState, StatusBadge } from '../components/ui/Feedback'
 import { Field } from '../components/ui/Field'
 import { Modal } from '../components/ui/Modal'
+import { PageHero } from '../components/ui/PageHero'
+import { ModalHeader } from '../components/ui/ModalHeader'
+import { FormActions } from '../components/ui/FormActions'
 
 const FILTERS = ['All', 'Tomatoes', 'Pepper', 'Onions', 'Garden Eggs', 'Okra']
 
@@ -24,13 +28,11 @@ export default function MarketplacePage() {
 
   return (
     <div className="page-stack">
-      <section className="page-hero">
-        <div>
-          <p className="eyebrow">Marketplace</p>
-          <h2>Fresh produce from Kumasi farms.</h2>
-          <p>Browse available listings, check prices, and place orders directly with farmers.</p>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Marketplace"
+        title="Fresh produce from Kumasi farms."
+        description="Browse available listings, check prices, and place orders directly with farmers."
+      />
 
       <section className="section-card">
         <div className="section-heading">
@@ -96,18 +98,16 @@ function OrderModal({ listing, onClose }: { listing: Listing; onClose: () => voi
     mutate(data, { onSuccess: onClose })
   }
 
-  const apiError = error && (error as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
+  const apiError = getApiErrorMessage(error)
 
   return (
     <Modal onClose={onClose} maxWidth={480}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <div>
-          <p style={{ color: '#6b7280', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Place Order</p>
-          <h3 style={{ margin: '4px 0 0', color: '#264123' }}>{listing.vegetable_type}</h3>
-          <p style={{ margin: '4px 0 0', color: '#374151' }}>GH₵ {listing.price_per_kg_ghs}/kg</p>
-        </div>
-        <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#6b7280' }}>×</button>
-      </div>
+      <ModalHeader
+        eyebrow="Place Order"
+        title={listing.vegetable_type}
+        subtitle={<p style={{ margin: '4px 0 0', color: '#374151' }}>GH₵ {listing.price_per_kg_ghs}/kg</p>}
+        onClose={onClose}
+      />
 
       {isSuccess ? (
         <div style={{ textAlign: 'center', padding: 20 }}>
@@ -130,12 +130,12 @@ function OrderModal({ listing, onClose }: { listing: Listing; onClose: () => voi
             </div>
           </div>
           {apiError && <ErrorAlert message={apiError} />}
-          <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-            <button type="button" className="secondary-button" onClick={onClose} style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
-            <button type="submit" className="primary-button" disabled={isPending} style={{ flex: 1, justifyContent: 'center' }}>
-              {isPending ? 'Placing…' : 'Confirm Order'}
-            </button>
-          </div>
+          <FormActions
+            onCancel={onClose}
+            submitLabel="Confirm Order"
+            pendingLabel="Placing…"
+            isPending={isPending}
+          />
         </form>
       )}
     </Modal>
