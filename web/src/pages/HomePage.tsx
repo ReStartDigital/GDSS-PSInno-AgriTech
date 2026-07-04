@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/auth.store'
 import { useMyOrders } from '../hooks/useOrders'
 import { useMyListings } from '../hooks/useListings'
+import type { Order, Listing } from '../types/api'
 import { Icon } from '../components/Icon'
 import { Spinner, StatusBadge } from '../components/ui/Feedback'
 
@@ -274,16 +275,12 @@ function DashboardSummary({ role }: { role: string }) {
               <p style={{ color: '#9ca3af', fontSize: '0.9rem', padding: '12px 0' }}>No orders yet.</p>
             ) : (
               <div style={{ display: 'grid', gap: 8 }}>
-                {recentOrders.map((o: any) => (
+                {recentOrders.map((o: Order) => (
                   <Link to={`/orders/${o.id}`} key={o.id} style={{ textDecoration: 'none' }}>
                     <div className="dashboard-row">
                       <StatusBadge status={o.status} />
-                      <span style={{ color: '#374151', fontWeight: 600, fontSize: '0.88rem' }}>
-                        GH₵ {o.total_ghs ?? o.totalAmount}
-                      </span>
-                      <span style={{ color: '#9ca3af', fontSize: '0.8rem', marginLeft: 'auto' }}>
-                        {o.quantity_kg ?? o.quantityOrdered} kg
-                      </span>
+                      <span style={{ color: '#374151', fontWeight: 600, fontSize: '0.88rem' }}>GH₵ {o.total_ghs}</span>
+                      <span style={{ color: '#9ca3af', fontSize: '0.8rem', marginLeft: 'auto' }}>{o.quantity_kg} kg</span>
                     </div>
                   </Link>
                 ))}
@@ -304,15 +301,11 @@ function DashboardSummary({ role }: { role: string }) {
               </div>
             ) : (
               <div style={{ display: 'grid', gap: 8 }}>
-                {recentListings.map((l: any) => (
+                {recentListings.map((l: Listing) => (
                   <div key={l.id} className="dashboard-row">
-                    <StatusBadge status={l.status ?? 'active'} />
-                    <span style={{ color: '#374151', fontWeight: 600, fontSize: '0.88rem' }}>
-                      {l.vegetable_type ?? l.cropName}
-                    </span>
-                    <span style={{ color: '#9ca3af', fontSize: '0.8rem', marginLeft: 'auto' }}>
-                      GH₵ {l.price_per_kg_ghs ?? l.pricePerUnit}/kg
-                    </span>
+                    <StatusBadge status={l.status} />
+                    <span style={{ color: '#374151', fontWeight: 600, fontSize: '0.88rem' }}>{l.vegetable_type}</span>
+                    <span style={{ color: '#9ca3af', fontSize: '0.8rem', marginLeft: 'auto' }}>GH₵ {l.price_per_kg_ghs}/kg</span>
                   </div>
                 ))}
               </div>
