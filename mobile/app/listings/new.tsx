@@ -62,10 +62,10 @@ export default function NewListingScreen() {
 
   return (
     <View className="flex-1 bg-white">
-      <ScreenHeader title="New Listing" />
+      <ScreenHeader title="New Listing" subtitle="Publish your produce" />
       <ScrollView contentContainerClassName="px-4 pb-8 pt-4">
-        <View className="rounded-lg border border-green-100 bg-green-50 p-4">
-          <Text className="text-sm font-semibold uppercase text-green-700">
+        <View className="rounded-2xl border border-green-100 bg-green-50 p-4">
+          <Text className="text-sm font-black uppercase text-green-700">
             Farmer listing
           </Text>
           <Text className="mt-2 text-3xl font-black text-green-950">
@@ -77,8 +77,8 @@ export default function NewListingScreen() {
           </Text>
         </View>
 
-        <View className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
-          <Text className="text-lg font-bold text-green-950">Produce details</Text>
+        <View className="mt-4 rounded-2xl border border-gray-200 bg-white p-4">
+          <Text className="text-lg font-black text-green-950">Produce details</Text>
           <Field
             label="Crop name"
             value={cropName}
@@ -114,8 +114,8 @@ export default function NewListingScreen() {
           </View>
         </View>
 
-        <View className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
-          <Text className="text-lg font-bold text-green-950">Unit</Text>
+        <View className="mt-4 rounded-2xl border border-gray-200 bg-white p-4">
+          <Text className="text-lg font-black text-green-950">Unit</Text>
           <View className="mt-3 flex-row flex-wrap gap-2">
             {unitOptions.map((unit) => {
               const isActive = unitOfMeasure === unit;
@@ -131,7 +131,7 @@ export default function NewListingScreen() {
                   onPress={() => setUnitOfMeasure(unit)}
                 >
                   <Text
-                    className={`font-semibold ${
+                    className={`font-black ${
                       isActive ? "text-white" : "text-gray-700"
                     }`}
                   >
@@ -143,8 +143,8 @@ export default function NewListingScreen() {
           </View>
         </View>
 
-        <View className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
-          <Text className="text-lg font-bold text-green-950">Photo and pickup</Text>
+        <View className="mt-4 rounded-2xl border border-gray-200 bg-white p-4">
+          <Text className="text-lg font-black text-green-950">Photo and pickup</Text>
           <Text className="mb-3 mt-1 text-sm text-gray-600">
             Add a clear produce photo and capture the pickup location for
             nearby buyers and transporters.
@@ -153,8 +153,8 @@ export default function NewListingScreen() {
           <GPSLocationButton />
         </View>
 
-        <View className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <Text className="text-lg font-bold text-amber-950">
+        <View className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <Text className="text-lg font-black text-amber-950">
             Order confirmation settings
           </Text>
           <Text className="mt-1 text-sm leading-5 text-amber-950">
@@ -183,8 +183,8 @@ export default function NewListingScreen() {
           </View>
         </View>
 
-        <View className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4">
-          <Text className="text-lg font-bold text-green-950">Listing summary</Text>
+        <View className="mt-4 rounded-2xl border border-green-200 bg-green-50 p-4">
+          <Text className="text-lg font-black text-green-950">Listing summary</Text>
           <SummaryRow label="Crop" value={cropName.trim() || "Not set"} />
           <SummaryRow
             label="Price"
@@ -210,13 +210,13 @@ export default function NewListingScreen() {
         </View>
 
         <Pressable
-          className={`mt-5 rounded-lg py-4 ${
+          className={`mt-5 rounded-2xl py-4 ${
             hasValidListing ? "bg-green-800 active:bg-green-900" : "bg-gray-300"
           }`}
           onPress={handleSubmit}
         >
           <Text
-            className={`text-center text-base font-bold ${
+            className={`text-center text-base font-black ${
               hasValidListing ? "text-white" : "text-gray-600"
             }`}
           >
@@ -250,7 +250,7 @@ function Field({
 }) {
   return (
     <View className="mt-4">
-      <Text className="mb-2 text-sm font-semibold text-gray-700">{label}</Text>
+      <Text className="mb-2 text-sm font-black text-gray-700">{label}</Text>
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -259,7 +259,7 @@ function Field({
         keyboardType={keyboardType}
         multiline={multiline}
         textAlignVertical={multiline ? "top" : "center"}
-        className={`rounded-lg border border-gray-300 px-4 py-3 text-base text-gray-950 ${
+        className={`rounded-2xl border border-gray-300 px-4 py-3 text-base text-gray-950 ${
           multiline ? "min-h-24" : ""
         }`}
       />
@@ -271,7 +271,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <View className="mt-3 flex-row items-start justify-between gap-4">
       <Text className="flex-1 text-sm text-green-900">{label}</Text>
-      <Text className="flex-1 text-right text-sm font-semibold text-green-950">
+      <Text className="flex-1 text-right text-sm font-black text-green-950">
         {value}
       </Text>
     </View>

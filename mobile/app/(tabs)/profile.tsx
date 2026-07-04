@@ -10,6 +10,7 @@ import {
   Phone,
   LogOut,
   NavArrowRight,
+  Star,
 } from "iconoir-react-native";
 
 const roleLabels: Record<UserRole, string> = {
@@ -78,7 +79,13 @@ export default function ProfileScreen() {
           <View className="mt-6 flex-row gap-3">
             <StatTile value="0" label="Orders" />
             <StatTile value="0" label="Saved" />
-            <StatTile value="4.8 *" label="Rating" />
+            <View className="h-16 flex-1 items-center justify-center rounded-2xl bg-green-50">
+              <View className="flex-row items-center gap-1">
+                <Star color="#F59E0B" fill="#F59E0B" width={16} height={16} strokeWidth={2} />
+                <Text className="text-xl font-black text-green-800">4.8</Text>
+              </View>
+              <Text className="mt-1 text-xs font-semibold text-gray-500">Rating</Text>
+            </View>
           </View>
         </View>
 

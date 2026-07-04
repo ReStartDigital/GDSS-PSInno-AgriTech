@@ -341,7 +341,7 @@ function ProduceThumb({
   listing: MarketplaceListing;
   size: "sm" | "lg";
 }) {
-  const dimensions = size === "sm" ? "h-20 w-20" : "h-20 w-20";
+  const dimensions = size === "sm" ? "h-20 w-20" : "h-24 w-24";
   const cropInitials = listing.cropName
     .split(" ")
     .map((word) => word[0])
@@ -409,7 +409,7 @@ function FilterSheet({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View className="flex-1 justify-end bg-black/40">
-        <View className="rounded-t-3xl bg-white px-5 pb-7 pt-5">
+        <View className="rounded-t-3xl bg-white px-5 pt-5" style={{ paddingBottom: Math.max(28, 28) }}>
           <View className="flex-row items-center justify-between">
             <Text className="text-2xl font-black text-gray-950">Filter Produce</Text>
             <Pressable
