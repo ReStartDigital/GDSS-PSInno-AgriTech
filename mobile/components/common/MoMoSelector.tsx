@@ -1,4 +1,5 @@
 import { Pressable, Text, View } from "react-native";
+import { vlColors } from "@/lib/design-system";
 
 const MOMO_PROVIDERS = ["MTN MoMo", "Telecel Cash", "AT Money"] as const;
 
@@ -9,20 +10,31 @@ interface MoMoSelectorProps {
 
 export function MoMoSelector({ selected, onSelect }: MoMoSelectorProps) {
   return (
-    <View className="gap-2">
-      {MOMO_PROVIDERS.map((provider) => (
-        <Pressable
-          key={provider}
-          className={`rounded-lg border px-4 py-3 ${
-            selected === provider ? "border-green-800 bg-green-50" : "border-gray-300"
-          }`}
-          onPress={() => onSelect(provider)}
-        >
-          <Text className={selected === provider ? "font-semibold text-green-900" : "text-gray-700"}>
-            {provider}
-          </Text>
-        </Pressable>
-      ))}
+    <View className="gap-3">
+      {MOMO_PROVIDERS.map((provider) => {
+        const isActive = selected === provider;
+
+        return (
+          <Pressable
+            key={provider}
+            className={`rounded-2xl border-2 px-4 py-4 active:opacity-80 ${
+              isActive ? "bg-green-50" : "bg-white"
+            }`}
+            style={{
+              borderColor: isActive ? vlColors.brandGreen : vlColors.line,
+            }}
+            onPress={() => onSelect(provider)}
+          >
+            <Text
+              className={`text-base font-black ${
+                isActive ? "text-green-800" : "text-gray-700"
+              }`}
+            >
+              {provider}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }

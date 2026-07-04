@@ -14,14 +14,14 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.vegelink.ghana"
+      "bundleIdentifier": "com.kaliblip.vegelink"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundColor": "#2D5A0A"
       },
-      "package": "com.vegelink.ghana"
+      "package": "com.kaliblip.vegelink"
     },
     "plugins": [
       "expo-router",
@@ -44,7 +44,12 @@
           "icon": "./assets/images/icon.png",
           "color": "#2D5A0A"
         }
-      ]
+      ],
+      "expo-splash-screen",
+      "expo-font",
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
