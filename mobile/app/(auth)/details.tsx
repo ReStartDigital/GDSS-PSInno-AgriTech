@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthUser, UserRole, useAuthStore } from "@vegelink/shared";
-import { vlClassNames, vlColors } from "@/lib/design-system";
+import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
 import { NavArrowLeft, NavArrowDown } from "iconoir-react-native";
 
 const languages = ["EN", "TWI", "HAU", "EWE"] as const;
@@ -136,6 +136,7 @@ export default function DetailsScreen() {
         <View className="mt-auto">
           <Pressable
             className={canCreate ? vlClassNames.primaryButton : vlClassNames.mutedButton}
+            style={canCreate ? vlStyles.primaryButtonShadow : undefined}
             onPress={handleCreateAccount}
           >
             <Text

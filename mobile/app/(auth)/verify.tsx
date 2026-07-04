@@ -3,7 +3,7 @@ import { Alert, Pressable, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
 import { OTPInput } from "@/components/common/OTPInput";
-import { vlClassNames } from "@/lib/design-system";
+import { vlClassNames, vlStyles } from "@/lib/design-system";
 import { NavArrowLeft } from "iconoir-react-native";
 
 const otpLength = 6;
@@ -114,6 +114,7 @@ export default function VerifyScreen() {
         <View className="mt-auto">
           <Pressable
             className={isOtpReady ? vlClassNames.primaryButton : vlClassNames.mutedButton}
+            style={isOtpReady ? vlStyles.primaryButtonShadow : undefined}
             onPress={handleVerify}
           >
             <Text

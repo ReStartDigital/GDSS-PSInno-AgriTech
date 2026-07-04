@@ -1,7 +1,4 @@
-import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
-import { useRouter } from "expo-router";
-import { vlClassNames, vlColors } from "@/lib/design-system";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type OnboardingSlide = {
   role: "farmer" | "buyer" | "transporter";
@@ -37,6 +34,7 @@ const slides: OnboardingSlide[] = [
 
 export default function LoginScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [activeIndex, setActiveIndex] = useState(0);
   const slide = slides[activeIndex];
   const isLastSlide = activeIndex === slides.length - 1;
@@ -51,7 +49,10 @@ export default function LoginScreen() {
   };
 
   return (
-    <View className={`${vlClassNames.screen} ${vlClassNames.pagePadding} pb-10 pt-12`}>
+    <View
+      className={`${vlClassNames.screen} ${vlClassNames.pagePadding} pb-10`}
+      style={{ paddingTop: Math.max(insets.top, 16) }}
+    >
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center gap-3">
           <View className="h-7 w-7 items-center justify-center rounded-full bg-green-800">

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
-import { vlClassNames, vlColors } from "@/lib/design-system";
+import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
 import { NavArrowLeft } from "iconoir-react-native";
 
 const roleLabels: Record<UserRole, string> = {
@@ -131,6 +131,7 @@ export default function PhoneScreen() {
         <View className="mt-auto">
           <Pressable
             className={canContinue ? vlClassNames.primaryButton : vlClassNames.mutedButton}
+            style={canContinue ? vlStyles.primaryButtonShadow : undefined}
             onPress={handleContinue}
           >
             <Text

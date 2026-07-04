@@ -24,12 +24,22 @@ export const vlClassNames = {
   input:
     "rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-base font-bold text-gray-950",
   primaryButton:
-    "w-full rounded-2xl bg-green-800 py-4 active:bg-green-900 shadow-lg",
+    "w-full rounded-2xl bg-green-800 py-4 active:bg-green-900",
   primaryButtonText: "text-center text-base font-black text-white",
   mutedButton:
     "w-full rounded-2xl bg-gray-200 py-4 active:bg-gray-300",
   mutedButtonText: "text-center text-base font-black text-gray-500",
 } as const;
+
+export const vlStyles = {
+  primaryButtonShadow: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+};
 
 export const vlRadii = {
   sm: 12,
