@@ -21,7 +21,7 @@ export class AgentAssignment {
   agent: User;
 
   @Column({ type: "uuid", name: "user_id" })
-  farmerId: string;
+  userId: string;
 
   @ManyToOne(() => User, { onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
@@ -31,5 +31,5 @@ export class AgentAssignment {
   assignedAt: Date;
 
   @CreateDateColumn({ type: "timestamptz", name: "unassigned_at" })
-  unassignedAt: Date;
+  unassignedAt: Date | null;
 }

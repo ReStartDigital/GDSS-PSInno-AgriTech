@@ -15,6 +15,7 @@ import {
 import { checkDatabaseHealth } from "./config/database.config.js";
 import { redisService } from "./infrastructure/redis/redis.client.js";
 import { authRouter } from "./features/auth/auth.routes.js";
+import { usersRouter } from "./features/user/users.router.js";
 
 const API_PREFIX = process.env.API_PREFIX || "/api/v1";
 
@@ -71,6 +72,7 @@ export function createApp(): Application {
   });
 
   app.use(`${API_PREFIX}/auth`, authRouter);
+  app.use(`${API_PREFIX}/users`, usersRouter);
 
   // ── 404 + global error handler (must be registered last, in this order) ──
   app.use(notFoundMiddleware);
