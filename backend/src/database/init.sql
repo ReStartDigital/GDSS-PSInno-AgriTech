@@ -36,6 +36,12 @@ CREATE TABLE users (
  profile_photo_url TEXT,
  location GEOMETRY(Point, 4326), 
 
+ -- ✨ Added Payout routing targets
+ payment_details_set BOOLEAN NOT NULL DEFAULT FALSE,
+ mobile_money_number VARCHAR(20) DEFAULT NULL,
+ mobile_money_network VARCHAR(50) DEFAULT NULL,
+ paystack_subaccount_code VARCHAR(100) DEFAULT NULL,
+
  phone_verified_at TIMESTAMPTZ,
  is_active BOOLEAN NOT NULL DEFAULT FALSE,
  deleted_at TIMESTAMPTZ,

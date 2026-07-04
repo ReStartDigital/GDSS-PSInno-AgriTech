@@ -53,6 +53,18 @@ export class User {
   })
   location: { type: "Point"; coordinates: [number, number] } | null;
 
+  @Column({ type: "boolean", name: "payment_details_set", default: false })
+  paymentDetailsSet: boolean;
+
+  @Column({ type: "varchar", name: "mobile_money_number", nullable: true })
+  mobileMoneyNumber: string | null;
+
+  @Column({ type: "varchar", name: "mobile_money_network", nullable: true })
+  mobileMoneyNetwork: string | null;
+
+  @Column({ type: "varchar", name: "paystack_subaccount_code", nullable: true })
+  paystackSubaccountCode: string | null;
+
   @Column({ type: "timestamptz", name: "phone_verified_at", nullable: true })
   phoneVerifiedAt: Date | null;
 

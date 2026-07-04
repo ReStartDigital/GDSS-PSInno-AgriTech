@@ -22,14 +22,22 @@ export class UnauthorizedException extends AppException {
 }
 
 export class ForbiddenException extends AppException {
-  constructor(message = "You do not have permission to perform this action") {
-    super(403, ErrorCode.FORBIDDEN, message);
+  // ✨ Added optional specific error code override
+  constructor(
+    message = "You do not have permission to perform this action",
+    code: ErrorCode = ErrorCode.FORBIDDEN,
+  ) {
+    super(403, code, message);
   }
 }
 
 export class NotFoundException extends AppException {
-  constructor(message = "Resource not found") {
-    super(404, ErrorCode.NOT_FOUND, message);
+  // ✨ Added optional specific error code override
+  constructor(
+    message = "Resource not found",
+    code: ErrorCode = ErrorCode.NOT_FOUND,
+  ) {
+    super(404, code, message);
   }
 }
 
