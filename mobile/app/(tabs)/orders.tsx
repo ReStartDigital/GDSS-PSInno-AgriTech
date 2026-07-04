@@ -2,11 +2,17 @@ import { Link } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { vlClassNames } from "@/lib/design-system";
 import { BoxIso, Shop } from "iconoir-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function OrdersScreen() {
+  const insets = useSafeAreaInsets();
+
   return (
     <View className="flex-1 bg-gray-50">
-      <View className="bg-white px-5 pb-5 pt-12 shadow-sm">
+      <View 
+        className="bg-white px-5 pb-5 shadow-sm"
+        style={{ paddingTop: Math.max(insets.top, 16) }}
+      >
         <Text className="text-3xl font-black text-gray-950">My Orders</Text>
         <Text className="mt-1 text-sm font-black text-gray-400">
           Track your produce deliveries

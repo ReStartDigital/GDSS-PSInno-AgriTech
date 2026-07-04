@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { UserRole, useAuthStore } from "@vegelink/shared";
 import {
   User,
@@ -37,6 +38,7 @@ const toneStyles = {
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, clearAuth } = useAuthStore();
   const fullName = user?.fullName ?? "Kofi Mensah";
   const role = user?.role ?? "buyer";
@@ -50,7 +52,10 @@ export default function ProfileScreen() {
     <View className="flex-1 bg-gray-50">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerClassName="pb-28 pt-12"
+        contentContainerStyle={{
+          paddingBottom: 112,
+          paddingTop: Math.max(insets.top, 16),
+        }}
       >
         <View className="bg-white px-5 pb-8">
           <Text className="text-3xl font-black text-gray-950">Profile</Text>

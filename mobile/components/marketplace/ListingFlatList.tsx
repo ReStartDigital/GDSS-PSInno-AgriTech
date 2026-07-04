@@ -1,6 +1,7 @@
 import { Link } from "expo-router";
 import { useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   listingCategories,
   ListingCategoryFilter,
@@ -44,6 +45,7 @@ const regions = [
 ] as const;
 
 export function ListingFlatList() {
+  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] =
     useState<ListingCategoryFilter>("All");
@@ -108,7 +110,11 @@ export function ListingFlatList() {
     <View className="flex-1 bg-gray-50">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerClassName="px-5 pb-28 pt-12"
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingBottom: 112,
+          paddingTop: Math.max(insets.top, 16),
+        }}
       >
         <View className="flex-row items-start justify-between">
           <View>
