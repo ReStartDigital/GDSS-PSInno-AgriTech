@@ -55,10 +55,9 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingBottom: 112,
-          paddingTop: Math.max(insets.top, 16),
         }}
       >
-        <View className="bg-white px-5 pb-8">
+        <View className="bg-white px-5 pb-8" style={{ paddingTop: Math.max(insets.top + 16, 32) }}>
           <Text className="text-3xl font-black text-gray-950">Profile</Text>
 
           <View className="mt-7 flex-row items-center">
@@ -69,9 +68,6 @@ export default function ProfileScreen() {
               <Text className="text-xl font-black text-gray-950">{fullName}</Text>
               <Text className="mt-2 text-sm font-semibold text-gray-500">
                 Greater Accra Region
-              </Text>
-              <Text className="mt-1 text-sm font-semibold text-gray-500">
-                {roleLabels[role]}
               </Text>
             </View>
           </View>
