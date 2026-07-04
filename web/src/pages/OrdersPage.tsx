@@ -4,6 +4,8 @@ import { useAuthStore } from '../store/auth.store'
 import { Icon } from '../components/Icon'
 import { Spinner, ErrorAlert, EmptyState, StatusBadge } from '../components/ui/Feedback'
 import { Modal } from '../components/ui/Modal'
+import { PageHero } from '../components/ui/PageHero'
+import { ModalHeader } from '../components/ui/ModalHeader'
 import type { Order } from '../types/api'
 
 export default function OrdersPage() {
@@ -13,13 +15,11 @@ export default function OrdersPage() {
 
   return (
     <div className="page-stack">
-      <section className="page-hero">
-        <div>
-          <p className="eyebrow">Orders</p>
-          <h2>Your order history and active orders.</h2>
-          <p>Track status, confirm deliveries, and manage your order lifecycle.</p>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Orders"
+        title="Your order history and active orders."
+        description="Track status, confirm deliveries, and manage your order lifecycle."
+      />
 
       {isLoading && <Spinner />}
       {error && <ErrorAlert message="Could not load orders. Is the backend running?" />}
@@ -86,14 +86,12 @@ function OrderDetail({ order, onClose }: { order: Order; onClose: () => void }) 
 
   return (
     <Modal onClose={onClose}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-        <div>
-          <p style={{ color: '#6b7280', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Order Detail</p>
-          <h3 style={{ margin: '4px 0', color: '#264123' }}>#{order.id.slice(0, 8)}</h3>
-          <StatusBadge status={order.status} />
-        </div>
-        <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#6b7280' }}>×</button>
-      </div>
+      <ModalHeader
+        eyebrow="Order Detail"
+        title={`#${order.id.slice(0, 8)}`}
+        subtitle={<StatusBadge status={order.status} />}
+        onClose={onClose}
+      />
 
       <div className="detail-grid" style={{ marginBottom: 20 }}>
         {[
