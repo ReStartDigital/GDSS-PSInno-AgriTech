@@ -7,6 +7,7 @@ export interface Listing {
   price_per_kg_ghs: number
   harvest_date: string
   status: 'active' | 'sold' | 'cancelled'
+  location?: string
   farmer?: { firstName: string }
 }
 
@@ -25,4 +26,15 @@ export interface ApiUser {
   id: string
   phone: string
   role: UserRole
+}
+
+/** Matches the backend's standard error envelope: `{ error: { message: string } }` */
+export interface ApiErrorShape {
+  response?: {
+    data?: {
+      error?: {
+        message?: string
+      }
+    }
+  }
 }
