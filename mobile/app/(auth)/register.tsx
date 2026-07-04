@@ -6,12 +6,19 @@ import { vlClassNames, vlStyles } from "@/lib/design-system";
 import { Farm, Shop, Truck, Check, NavArrowRight } from "iconoir-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+type RoleColors = {
+  border: string;
+  bg: string;
+  iconBg: string;
+};
+
 type RoleOption = {
   id: Extract<UserRole, "farmer" | "buyer" | "transporter">;
   label: string;
   localLabel: string;
   description: string;
   Icon: React.ComponentType<{ color: string; width: number; height: number; strokeWidth: number }>;
+  colors: RoleColors;
 };
 
 const roles: RoleOption[] = [
@@ -21,6 +28,7 @@ const roles: RoleOption[] = [
     localLabel: "Okuafo",
     description: "I grow and sell vegetables",
     Icon: Farm,
+    colors: { border: "#166534", bg: "#F0FDF4", iconBg: "#166534" },
   },
   {
     id: "buyer",
@@ -28,6 +36,7 @@ const roles: RoleOption[] = [
     localLabel: "Otoni",
     description: "I buy fresh produce",
     Icon: Shop,
+    colors: { border: "#B45309", bg: "#FFFBEB", iconBg: "#B45309" },
   },
   {
     id: "transporter",
@@ -35,6 +44,7 @@ const roles: RoleOption[] = [
     localLabel: "Okwantufo",
     description: "I deliver produce",
     Icon: Truck,
+    colors: { border: "#1D4ED8", bg: "#EFF6FF", iconBg: "#1D4ED8" },
   },
 ];
 
@@ -109,15 +119,17 @@ function RoleCard({
   return (
     <Pressable
       className={`min-h-28 rounded-2xl border-2 p-5 active:opacity-80 ${
-        selected ? "border-green-800 bg-green-50" : "border-gray-100 bg-white"
+        selected ? "" : "border-gray-100 bg-white"
       }`}
+      style={selected ? { borderColor: option.colors.border, backgroundColor: option.colors.bg } : undefined}
       onPress={onPress}
     >
       <View className="flex-row items-center">
         <View
           className={`h-16 w-16 items-center justify-center rounded-2xl ${
-            selected ? "bg-green-800" : "bg-gray-100"
+            selected ? "" : "bg-gray-100"
           }`}
+          style={selected ? { backgroundColor: option.colors.iconBg } : undefined}
         >
           <option.Icon
             color={selected ? "#FFFFFF" : "#9CA3AF"}
@@ -141,8 +153,9 @@ function RoleCard({
 
         <View
           className={`h-8 w-8 items-center justify-center rounded-full ${
-            selected ? "bg-green-800" : "bg-gray-100"
+            selected ? "" : "bg-gray-100"
           }`}
+          style={selected ? { backgroundColor: option.colors.iconBg } : undefined}
         >
           {selected ? (
             <Check color="#FFFFFF" width={18} height={18} strokeWidth={2.5} />
