@@ -3,6 +3,7 @@ import { Alert, Pressable, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
 import { OTPInput } from "@/components/common/OTPInput";
+import { ProgressStep } from "@/components/common/ProgressStep";
 import { vlClassNames, vlStyles } from "@/lib/design-system";
 import { NavArrowLeft, NavArrowRight } from "iconoir-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -62,15 +63,7 @@ export default function VerifyScreen() {
         <View className="flex-row items-center gap-3">
           <Pressable
             accessibilityLabel="Go back"
-            className="h-12 w-12 items-center justify-center rounded-2xl bg-white active:bg-gray-100"
-            style={{
-              borderColor: "#111827",
-              borderWidth: 2,
-              shadowColor: "#111827",
-              shadowOpacity: 0.05,
-              shadowRadius: 8,
-              shadowOffset: { width: 0, height: 4 },
-            }}
+            className="h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 active:bg-gray-200"
             onPress={handleBack}
           >
             <NavArrowLeft color="#111827" width={24} height={24} strokeWidth={2.5} />
@@ -143,12 +136,4 @@ export default function VerifyScreen() {
   );
 }
 
-function ProgressStep({ active = false }: { active?: boolean }) {
-  return (
-    <View
-      className={`h-1.5 flex-1 rounded-full ${
-        active ? "bg-green-800" : "bg-gray-100"
-      }`}
-    />
-  );
-}
+

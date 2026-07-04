@@ -1,8 +1,10 @@
 import { Link } from "expo-router";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@vegelink/shared";
 import { listingCategories, marketplaceListings } from "@/lib/marketplace-data";
 import { vlColors } from "@/lib/design-system";
+import { getGreeting } from "@/lib/utils";
 import {
   BellNotification,
   Search,
@@ -27,6 +29,7 @@ const quickActions = [
 ] as const;
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
   const firstName = user?.fullName?.split(" ")[0] ?? "Kofi";
   const fullName = user?.fullName ?? "Kofi Mensah";
@@ -38,7 +41,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerClassName="pb-28"
       >
-        <View className="overflow-hidden bg-green-800 px-5 pb-7 pt-14">
+        <View className="overflow-hidden bg-green-800 px-5 pb-7" style={{ paddingTop: insets.top + 12 }}>
           <View className="absolute -right-8 -top-8 h-40 w-40 rounded-full border border-green-600" />
           <View className="absolute right-6 top-7 h-20 w-20 rounded-full bg-lime-900 opacity-40" />
 
@@ -57,7 +60,7 @@ export default function HomeScreen() {
           </View>
 
           <Text className="mt-9 text-sm font-black text-green-100">
-            Good evening, {firstName}
+            {getGreeting()}, {firstName}
           </Text>
           <Text className="mt-1 text-2xl font-black text-white">{fullName}</Text>
           <Text className="mt-2 text-sm font-black capitalize text-yellow-400">

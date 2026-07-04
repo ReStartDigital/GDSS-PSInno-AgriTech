@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { findMarketplaceListing, MarketplaceListing } from "@/lib/marketplace-data";
 import { vlClassNames } from "@/lib/design-system";
+import { initials } from "@/lib/utils";
 import {
   NavArrowLeft,
   Heart,
@@ -19,6 +21,7 @@ import {
 export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const listing = findMarketplaceListing(id);
   const [quantity, setQuantity] = useState(1);
 
@@ -73,7 +76,7 @@ export default function ListingDetailScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerClassName="pb-36"
       >
-        <View className="relative min-h-72 overflow-hidden bg-green-50 px-5 pt-11">
+        <View className="relative min-h-72 overflow-hidden bg-green-50 px-5" style={{ paddingTop: insets.top + 8 }}>
           <View className="absolute -right-10 -top-12 h-44 w-44 rounded-full bg-green-200" />
           <View className="absolute -left-9 bottom-0 h-20 w-20 rounded-full bg-green-100" />
 
@@ -233,7 +236,7 @@ export default function ListingDetailScreen() {
         </View>
       </ScrollView>
 
-      <View className="absolute bottom-0 left-0 right-0 bg-white px-5 pb-7 pt-4 shadow-2xl">
+      <View className="absolute bottom-0 left-0 right-0 bg-white px-5 pt-4 shadow-2xl" style={{ paddingBottom: Math.max(insets.bottom, 28) }}>
         <Link href={`/listings/${listing.id}/order`} asChild>
           <Pressable className={vlClassNames.primaryButton}>
             <Text className={vlClassNames.primaryButtonText}>
@@ -296,10 +299,4 @@ function EstimateTile({ value, label }: { value: string; label: string }) {
   );
 }
 
-function initials(value: string) {
-  return value
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 2);
-}
+

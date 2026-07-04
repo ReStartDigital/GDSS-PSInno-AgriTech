@@ -6,6 +6,7 @@ import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
 import { NavArrowLeft, NavArrowRight } from "iconoir-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Rect, Path } from "react-native-svg";
+import { ProgressStep } from "@/components/common/ProgressStep";
 
 const roleLabels: Record<UserRole, string> = {
   farmer: "Farmer",
@@ -171,12 +172,4 @@ export default function PhoneScreen() {
   );
 }
 
-function ProgressStep({ active = false }: { active?: boolean }) {
-  return (
-    <View
-      className={`h-1.5 flex-1 rounded-full ${
-        active ? "bg-green-800" : "bg-gray-100"
-      }`}
-    />
-  );
-}
+

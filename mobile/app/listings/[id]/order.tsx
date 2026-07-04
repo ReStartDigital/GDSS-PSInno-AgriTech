@@ -1,9 +1,12 @@
 import { useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { findMarketplaceListing, MarketplaceListing } from "@/lib/marketplace-data";
 import { vlClassNames } from "@/lib/design-system";
+import { initials } from "@/lib/utils";
 import {
+  NavArrowLeft,
   Star,
   CheckCircle,
   Phone,
@@ -15,6 +18,7 @@ import {
 export default function ListingOrderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const listing = findMarketplaceListing(id);
   const [quantity, setQuantity] = useState(1);
 
@@ -75,8 +79,17 @@ export default function ListingOrderScreen() {
     <View className="flex-1 bg-white">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerClassName="px-5 pb-36 pt-10"
+        contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 144, paddingHorizontal: 20 }}
       >
+        <View className="mb-6">
+          <Pressable
+            accessibilityLabel="Go back"
+            className="h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 active:bg-gray-200"
+            onPress={handleBack}
+          >
+            <NavArrowLeft color="#111827" width={24} height={24} strokeWidth={2.5} />
+          </Pressable>
+        </View>
         <View className="flex-row items-start justify-between gap-4">
           <View className="flex-1">
             <Text className="text-3xl font-black leading-tight text-gray-950">
@@ -171,7 +184,7 @@ export default function ListingOrderScreen() {
         </View>
       </ScrollView>
 
-      <View className="absolute bottom-0 left-0 right-0 bg-white px-5 pb-7 pt-4 shadow-2xl">
+      <View className="absolute bottom-0 left-0 right-0 bg-white px-5 pt-4 shadow-2xl" style={{ paddingBottom: Math.max(insets.bottom, 28) }}>
         <Pressable className={vlClassNames.primaryButton} onPress={handleOrder}>
           <Text className={vlClassNames.primaryButtonText}>Order - GHC{total}</Text>
         </Pressable>
@@ -223,10 +236,4 @@ function EstimateTile({ value, label }: { value: string; label: string }) {
   );
 }
 
-function initials(value: string) {
-  return value
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 2);
-}
+
