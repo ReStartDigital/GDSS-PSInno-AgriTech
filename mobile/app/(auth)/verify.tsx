@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
@@ -20,6 +20,8 @@ export default function VerifyScreen() {
     role?: UserRole;
   }>();
   const [otp, setOtp] = useState("");
+  const [countdown, setCountdown] = useState(30);
+  const canResend = countdown === 0;
 
   const safePhone = phone?.trim() || "+233059983273";
   const safeRole: UserRole = role ?? "farmer";
@@ -41,9 +43,27 @@ export default function VerifyScreen() {
     });
   };
 
-  const handleResend = () => {
+  useEffect(() => {
+    if (countdown <= 0) return;
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [countdown]);
+
+  const handleResend = useCallback(() => {
+    if (!canResend) return;
+    setCountdown(30);
     Alert.alert("Code sent", `A new code was sent to ${safePhone}.`);
-  };
+  }, [canResend, safePhone]);
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -90,14 +110,20 @@ export default function VerifyScreen() {
         </View>
 
         <View className="mt-10 items-center">
-          <Pressable className="flex-row items-center" onPress={handleResend}>
+          <Pressable
+            className={`flex-row items-center ${canResend ? "opacity-100" : "opacity-50"}`}
+            onPress={handleResend}
+            disabled={!canResend}
+          >
             <View className="h-11 w-11 items-center justify-center rounded-full bg-gray-100">
               <View className="h-8 w-8 items-center justify-center rounded-full border-4 border-gray-200">
-                <Text className="text-xs font-black text-gray-700">26</Text>
+                <Text className="text-xs font-black text-gray-700">
+                  {canResend ? "✓" : countdown}
+                </Text>
               </View>
             </View>
             <Text className="ml-3 text-sm font-black text-gray-400">
-              Resend in 26s
+              {canResend ? "Resend code" : `Resend in ${countdown}s`}
             </Text>
           </Pressable>
 

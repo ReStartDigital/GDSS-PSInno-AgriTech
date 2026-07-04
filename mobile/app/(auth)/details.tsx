@@ -3,6 +3,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthUser, UserRole, useAuthStore } from "@vegelink/shared";
 import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
+import { ProgressStep } from "@/components/common/ProgressStep";
 import { NavArrowLeft, NavArrowDown, NavArrowRight } from "iconoir-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -189,12 +190,4 @@ function Field({
   );
 }
 
-function ProgressStep({ active = false }: { active?: boolean }) {
-  return (
-    <View
-      className={`h-1.5 flex-1 rounded-full ${
-        active ? "bg-green-800" : "bg-gray-100"
-      }`}
-    />
-  );
-}
+

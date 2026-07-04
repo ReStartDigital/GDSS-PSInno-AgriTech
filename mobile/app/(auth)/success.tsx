@@ -1,8 +1,8 @@
 import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { UserRole, useAuthStore } from "@vegelink/shared";
-import { vlClassNames, vlColors } from "@/lib/design-system";
-import { Check } from "iconoir-react-native";
+import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
+import { Check, NavArrowRight } from "iconoir-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const roleLabels: Record<UserRole, string> = {
@@ -44,7 +44,7 @@ export default function SuccessScreen() {
             Welcome, {firstName}!
           </Text>
           <Text className="mt-5 max-w-xs text-center text-base leading-7 text-gray-600">
-            Your VegeLink account is ready. Let&apos;s start trading.
+            Your VegeLink account is ready. Let{'\''} start trading.
           </Text>
         </View>
 
@@ -77,11 +77,15 @@ export default function SuccessScreen() {
         <View className="mt-auto">
           <Pressable
             className={vlClassNames.primaryButton}
+            style={vlStyles.primaryButtonShadow}
             onPress={() => router.replace("/(tabs)/home")}
           >
-            <Text className={vlClassNames.primaryButtonText}>
-              Go to Dashboard  -&gt;
-            </Text>
+            <View className="flex-row items-center justify-center gap-2">
+              <Text className={vlClassNames.primaryButtonText}>
+                Go to Dashboard
+              </Text>
+              <NavArrowRight color="#FFFFFF" width={18} height={18} strokeWidth={2.5} />
+            </View>
           </Pressable>
           <Text className="mt-5 text-center text-xs font-semibold text-gray-400">
             VegeLink Ghana - Agro Marketplace & Transport Network
