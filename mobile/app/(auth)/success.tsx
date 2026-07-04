@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { UserRole, useAuthStore } from "@vegelink/shared";
 import { vlClassNames, vlColors } from "@/lib/design-system";
 import { Check } from "iconoir-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const roleLabels: Record<UserRole, string> = {
   farmer: "Farmer",
@@ -14,14 +15,15 @@ const roleLabels: Record<UserRole, string> = {
 
 export default function SuccessScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
   const firstName = user?.fullName?.split(" ")[0] || "Kofi";
   const fullName = user?.fullName || "Kofi Mensah";
   const role = user?.role ?? "farmer";
 
   return (
-    <View className={vlClassNames.screen}>
-      <View className="flex-1 px-6 pb-10 pt-24">
+    <View className={vlClassNames.screen} style={{ paddingTop: insets.top }}>
+      <View className="flex-1 px-6 pb-10 pt-10">
         <View className="items-center">
           <View className="h-52 w-52 items-center justify-center rounded-full bg-gray-50">
             <View className="h-36 w-36 items-center justify-center rounded-full bg-green-50">

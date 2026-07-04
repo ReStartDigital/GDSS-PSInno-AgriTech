@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
-import { vlClassNames } from "@/lib/design-system";
-import { Farm, Shop, Truck, Check } from "iconoir-react-native";
+import { vlClassNames, vlStyles } from "@/lib/design-system";
+import { Farm, Shop, Truck, Check, NavArrowRight } from "iconoir-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type RoleOption = {
   id: Extract<UserRole, "farmer" | "buyer" | "transporter">;
@@ -39,6 +40,7 @@ const roles: RoleOption[] = [
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [role, setRole] = useState<RoleOption["id"]>("farmer");
 
   const handleContinue = () => {
@@ -49,8 +51,8 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View className={vlClassNames.screen}>
-      <View className="flex-1 px-6 pb-10 pt-14">
+    <View className={vlClassNames.screen} style={{ paddingTop: insets.top }}>
+      <View className="flex-1 px-6 pb-10 pt-4">
         <View className="flex-row items-center gap-3">
           <View className="h-9 w-9 items-center justify-center rounded-2xl bg-green-50">
             <View className="h-5 w-5 items-center justify-center rounded-full bg-green-800">
@@ -79,8 +81,15 @@ export default function RegisterScreen() {
         </View>
 
         <View className="mt-auto">
-          <Pressable className={vlClassNames.primaryButton} onPress={handleContinue}>
-            <Text className={vlClassNames.primaryButtonText}>Continue  -&gt;</Text>
+          <Pressable
+            className={vlClassNames.primaryButton}
+            style={vlStyles.primaryButtonShadow}
+            onPress={handleContinue}
+          >
+            <View className="flex-row items-center justify-center gap-2">
+              <Text className={vlClassNames.primaryButtonText}>Continue</Text>
+              <NavArrowRight color="#FFFFFF" width={18} height={18} strokeWidth={2.5} />
+            </View>
           </Pressable>
         </View>
       </View>

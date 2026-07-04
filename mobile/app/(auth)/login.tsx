@@ -1,4 +1,10 @@
+import { useState } from "react";
+import { Pressable, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { NavArrowRight } from "iconoir-react-native";
+
 
 type OnboardingSlide = {
   role: "farmer" | "buyer" | "transporter";
@@ -96,10 +102,17 @@ export default function LoginScreen() {
         ))}
       </View>
 
-      <Pressable className={vlClassNames.primaryButton} onPress={continueFlow}>
-        <Text className={vlClassNames.primaryButtonText}>
-          {isLastSlide ? "Get Started ->" : "Next ->"}
-        </Text>
+      <Pressable
+        className={vlClassNames.primaryButton}
+        style={vlStyles.primaryButtonShadow}
+        onPress={continueFlow}
+      >
+        <View className="flex-row items-center justify-center gap-2">
+          <Text className={vlClassNames.primaryButtonText}>
+            {isLastSlide ? "Get Started" : "Next"}
+          </Text>
+          <NavArrowRight color="#FFFFFF" width={18} height={18} strokeWidth={2.5} />
+        </View>
       </Pressable>
     </View>
   );

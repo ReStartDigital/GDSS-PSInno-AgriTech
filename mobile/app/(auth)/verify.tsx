@@ -4,12 +4,14 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
 import { OTPInput } from "@/components/common/OTPInput";
 import { vlClassNames, vlStyles } from "@/lib/design-system";
-import { NavArrowLeft } from "iconoir-react-native";
+import { NavArrowLeft, NavArrowRight } from "iconoir-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const otpLength = 6;
 
 export default function VerifyScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { firstName, lastName, phone, role } = useLocalSearchParams<{
     firstName?: string;
     lastName?: string;
@@ -55,8 +57,8 @@ export default function VerifyScreen() {
   };
 
   return (
-    <View className={vlClassNames.screen}>
-      <View className="flex-1 px-6 pb-10 pt-9">
+    <View className={vlClassNames.screen} style={{ paddingTop: insets.top }}>
+      <View className="flex-1 px-6 pb-10 pt-4">
         <View className="flex-row items-center gap-3">
           <Pressable
             accessibilityLabel="Go back"
@@ -117,15 +119,23 @@ export default function VerifyScreen() {
             style={isOtpReady ? vlStyles.primaryButtonShadow : undefined}
             onPress={handleVerify}
           >
-            <Text
-              className={
-                isOtpReady
-                  ? vlClassNames.primaryButtonText
-                  : vlClassNames.mutedButtonText
-              }
-            >
-              Verify  -&gt;
-            </Text>
+            <View className="flex-row items-center justify-center gap-2">
+              <Text
+                className={
+                  isOtpReady
+                    ? vlClassNames.primaryButtonText
+                    : vlClassNames.mutedButtonText
+                }
+              >
+                Verify
+              </Text>
+              <NavArrowRight
+                color={isOtpReady ? "#FFFFFF" : "#9CA3AF"}
+                width={18}
+                height={18}
+                strokeWidth={2.5}
+              />
+            </View>
           </Pressable>
         </View>
       </View>

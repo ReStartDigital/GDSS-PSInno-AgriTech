@@ -3,7 +3,9 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
 import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
-import { NavArrowLeft } from "iconoir-react-native";
+import { NavArrowLeft, NavArrowRight } from "iconoir-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Rect, Path } from "react-native-svg";
 
 const roleLabels: Record<UserRole, string> = {
   farmer: "Farmer",
@@ -15,11 +17,18 @@ const roleLabels: Record<UserRole, string> = {
 
 export default function PhoneScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { role } = useLocalSearchParams<{ role?: UserRole }>();
   const [phone, setPhone] = useState("");
   const safeRole: UserRole = role ?? "farmer";
   const phoneDigits = phone.replace(/\D/g, "").slice(0, 9);
   const canContinue = phoneDigits.length === 9;
+
+  const formatPhoneNumber = (digits: string) => {
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 5) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
+    return `${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5)}`;
+  };
 
   const displayPlaceholder = useMemo(() => {
     return phoneDigits.length > 0 ? "" : "XX XXX XXXX";
@@ -53,8 +62,8 @@ export default function PhoneScreen() {
   };
 
   return (
-    <View className={vlClassNames.screen}>
-      <View className="flex-1 px-6 pb-10 pt-9">
+    <View className={vlClassNames.screen} style={{ paddingTop: insets.top }}>
+      <View className="flex-1 px-6 pb-10 pt-4">
         <View className="flex-row items-center gap-3">
           <Pressable
             accessibilityLabel="Go back"
@@ -85,24 +94,28 @@ export default function PhoneScreen() {
             Mobile number
           </Text>
           <View
-            className="mt-3 min-h-16 flex-row items-center rounded-2xl border-2 bg-white px-4"
+            className="mt-3 h-16 flex-row items-center rounded-2xl border-2 bg-white px-4"
             style={{ borderColor: vlColors.brandGreen }}
           >
-            <View className="mr-3 h-7 w-9 overflow-hidden rounded-sm">
-              <View className="h-1/3 bg-red-600" />
-              <View className="h-1/3 bg-yellow-400" />
-              <View className="h-1/3 bg-green-700" />
+            <View className="mr-3 h-6 w-9 overflow-hidden rounded-sm border border-gray-100">
+              <Svg width={36} height={24} viewBox="0 0 36 24">
+                <Rect width={36} height={8} fill="#EF3340" />
+                <Rect y={8} width={36} height={8} fill="#FCD116" />
+                <Rect y={16} width={36} height={8} fill="#009739" />
+                <Path d="M18 9.5l.7 2.2h2.3l-1.9 1.4.7 2.2-1.8-1.3-1.8 1.3.7-2.2-1.9-1.4h2.3z" fill="#000000" />
+              </Svg>
             </View>
             <Text className="mr-4 text-xl font-black text-gray-700">+233</Text>
             <View className="mr-4 h-8 w-px bg-gray-200" />
             <TextInput
-              value={phoneDigits}
+              value={formatPhoneNumber(phoneDigits)}
               onChangeText={handlePhoneChange}
               placeholder={displayPlaceholder}
               placeholderTextColor="#C9CDD5"
               keyboardType="number-pad"
-              maxLength={9}
-              className="flex-1 text-xl font-black tracking-widest text-gray-950"
+              maxLength={11}
+              className="flex-1 text-xl font-black text-gray-950"
+              style={{ paddingVertical: 0, height: "100%" }}
             />
           </View>
           <Text className="mt-2 text-xs font-semibold text-gray-400">
@@ -134,15 +147,23 @@ export default function PhoneScreen() {
             style={canContinue ? vlStyles.primaryButtonShadow : undefined}
             onPress={handleContinue}
           >
-            <Text
-              className={
-                canContinue
-                  ? vlClassNames.primaryButtonText
-                  : vlClassNames.mutedButtonText
-              }
-            >
-              Send Code  -&gt;
-            </Text>
+            <View className="flex-row items-center justify-center gap-2">
+              <Text
+                className={
+                  canContinue
+                    ? vlClassNames.primaryButtonText
+                    : vlClassNames.mutedButtonText
+                }
+              >
+                Send Code
+              </Text>
+              <NavArrowRight
+                color={canContinue ? "#FFFFFF" : "#9CA3AF"}
+                width={18}
+                height={18}
+                strokeWidth={2.5}
+              />
+            </View>
           </Pressable>
         </View>
       </View>

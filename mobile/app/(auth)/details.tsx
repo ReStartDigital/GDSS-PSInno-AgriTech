@@ -3,12 +3,14 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthUser, UserRole, useAuthStore } from "@vegelink/shared";
 import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
-import { NavArrowLeft, NavArrowDown } from "iconoir-react-native";
+import { NavArrowLeft, NavArrowDown, NavArrowRight } from "iconoir-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const languages = ["EN", "TWI", "HAU", "EWE"] as const;
 
 export default function DetailsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { firstName, lastName, phone, role } = useLocalSearchParams<{
     firstName?: string;
     lastName?: string;
@@ -57,8 +59,8 @@ export default function DetailsScreen() {
   };
 
   return (
-    <View className={vlClassNames.screen}>
-      <View className="flex-1 px-6 pb-10 pt-9">
+    <View className={vlClassNames.screen} style={{ paddingTop: insets.top }}>
+      <View className="flex-1 px-6 pb-10 pt-4">
         <View className="flex-row items-center gap-3">
           <Pressable
             accessibilityLabel="Go back"
@@ -139,15 +141,23 @@ export default function DetailsScreen() {
             style={canCreate ? vlStyles.primaryButtonShadow : undefined}
             onPress={handleCreateAccount}
           >
-            <Text
-              className={
-                canCreate
-                  ? vlClassNames.primaryButtonText
-                  : vlClassNames.mutedButtonText
-              }
-            >
-              Create Account  -&gt;
-            </Text>
+            <View className="flex-row items-center justify-center gap-2">
+              <Text
+                className={
+                  canCreate
+                    ? vlClassNames.primaryButtonText
+                    : vlClassNames.mutedButtonText
+                }
+              >
+                Create Account
+              </Text>
+              <NavArrowRight
+                color={canCreate ? "#FFFFFF" : "#9CA3AF"}
+                width={18}
+                height={18}
+                strokeWidth={2.5}
+              />
+            </View>
           </Pressable>
         </View>
       </View>
