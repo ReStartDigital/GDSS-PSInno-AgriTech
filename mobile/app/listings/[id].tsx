@@ -3,6 +3,18 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { findMarketplaceListing, MarketplaceListing } from "@/lib/marketplace-data";
 import { vlClassNames } from "@/lib/design-system";
+import {
+  NavArrowLeft,
+  Heart,
+  ShareIos,
+  Star,
+  MapPin,
+  CheckCircle,
+  Phone,
+  Truck,
+  Minus,
+  Plus,
+} from "iconoir-react-native";
 
 export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -71,14 +83,14 @@ export default function ListingDetailScreen() {
               className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm"
               onPress={handleBack}
             >
-              <Text className="text-3xl font-black text-gray-950">‹</Text>
+              <NavArrowLeft color="#111827" width={24} height={24} strokeWidth={2.5} />
             </Pressable>
             <View className="flex-row gap-3">
               <Pressable className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
-                <Text className="text-2xl font-black text-gray-500">♡</Text>
+                <Heart color="#6B7280" width={22} height={22} strokeWidth={2} />
               </Pressable>
               <Pressable className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
-                <Text className="text-xl font-black text-gray-500">⌯</Text>
+                <ShareIos color="#6B7280" width={20} height={20} strokeWidth={2} />
               </Pressable>
             </View>
           </View>
@@ -103,16 +115,19 @@ export default function ListingDetailScreen() {
               <Text className="text-3xl font-black text-gray-950">
                 {listing.cropName}
               </Text>
-              <View className="mt-2 flex-row items-baseline gap-2">
+              <View className="mt-2 flex-row items-center gap-2">
                 <Text className="text-3xl font-black text-green-700">
                   GHC{listing.pricePerUnit}
                 </Text>
                 <Text className="text-base font-black text-gray-400">
                   /{listing.unitOfMeasure}
                 </Text>
-                <Text className="text-base font-black text-amber-500">
-                  ★ {listing.farmer.rating.toFixed(1)}
-                </Text>
+                <View className="ml-2 flex-row items-center gap-1">
+                  <Star color="#F59E0B" fill="#F59E0B" width={16} height={16} strokeWidth={2} />
+                  <Text className="text-base font-black text-amber-500">
+                    {listing.farmer.rating.toFixed(1)}
+                  </Text>
+                </View>
               </View>
             </View>
             <View className="rounded-2xl bg-gray-100 px-4 py-3">
@@ -123,9 +138,12 @@ export default function ListingDetailScreen() {
           </View>
 
           <View className="mt-5 flex-row items-center gap-4">
-            <Text className="text-sm font-black text-gray-600">
-              ⌖ {listing.farmer.locationLabel}
-            </Text>
+            <View className="flex-row items-center gap-1">
+              <MapPin color="#4B5563" width={16} height={16} strokeWidth={2} />
+              <Text className="text-sm font-black text-gray-600">
+                {listing.farmer.locationLabel}
+              </Text>
+            </View>
             <Text className="text-sm font-black text-gray-300">·</Text>
             <Text className="text-sm font-black text-gray-500">
               {listing.distanceKm} km away
@@ -144,15 +162,18 @@ export default function ListingDetailScreen() {
                   <Text className="text-base font-black text-gray-950">
                     {listing.farmer.fullName}
                   </Text>
-                  <Text className="text-base font-black text-green-700">✓</Text>
+                  <CheckCircle color="#166534" fill="#DCFCE7" width={16} height={16} strokeWidth={2} />
                 </View>
-                <Text className="mt-1 text-xs font-black text-amber-500">
-                  ★ {listing.farmer.rating.toFixed(1)}
-                  <Text className="text-gray-400">  Verified Seller</Text>
-                </Text>
+                <View className="mt-1 flex-row items-center gap-1">
+                  <Star color="#F59E0B" fill="#F59E0B" width={12} height={12} strokeWidth={2} />
+                  <Text className="text-xs font-black text-amber-500">
+                    {listing.farmer.rating.toFixed(1)}
+                    <Text className="text-gray-400">  Verified Seller</Text>
+                  </Text>
+                </View>
               </View>
               <Pressable className="h-12 w-12 items-center justify-center rounded-2xl bg-green-50">
-                <Text className="text-xl font-black text-green-800">☎</Text>
+                <Phone color="#166534" width={20} height={20} strokeWidth={2} />
               </Pressable>
             </View>
           </View>
@@ -166,7 +187,7 @@ export default function ListingDetailScreen() {
 
           <View className="mt-6 rounded-3xl border border-dashed border-gray-300 p-4">
             <View className="flex-row items-center gap-2">
-              <Text className="text-base font-black text-blue-600">▱</Text>
+              <Truck color="#2563EB" width={18} height={18} strokeWidth={2} />
               <Text className="text-sm font-black text-gray-700">
                 Transport Estimate
               </Text>
@@ -189,7 +210,7 @@ export default function ListingDetailScreen() {
               className="h-12 w-12 items-center justify-center rounded-2xl bg-gray-100"
               onPress={decrement}
             >
-              <Text className="text-2xl font-black text-gray-500">−</Text>
+              <Minus color="#6B7280" width={18} height={18} strokeWidth={2.5} />
             </Pressable>
             <View className="h-12 flex-1 items-center justify-center rounded-2xl border border-green-200 bg-green-50">
               <Text className="text-xl font-black text-green-800">{quantity}</Text>
@@ -198,7 +219,7 @@ export default function ListingDetailScreen() {
               className="h-12 w-12 items-center justify-center rounded-2xl bg-green-800 shadow-sm"
               onPress={increment}
             >
-              <Text className="text-2xl font-black text-white">+</Text>
+              <Plus color="#FFFFFF" width={18} height={18} strokeWidth={2.5} />
             </Pressable>
           </View>
 

@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
 import { OTPInput } from "@/components/common/OTPInput";
 import { vlClassNames } from "@/lib/design-system";
+import { NavArrowLeft } from "iconoir-react-native";
 
 const otpLength = 6;
 
@@ -70,7 +71,7 @@ export default function VerifyScreen() {
             }}
             onPress={handleBack}
           >
-            <Text className="text-3xl font-black text-gray-950">‹</Text>
+            <NavArrowLeft color="#111827" width={24} height={24} strokeWidth={2.5} />
           </Pressable>
           <View className="flex-1 gap-2">
             <View className="flex-row gap-2">

@@ -1,6 +1,7 @@
 import { Link } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { vlClassNames } from "@/lib/design-system";
+import { BoxIso, Shop } from "iconoir-react-native";
 
 export default function OrdersScreen() {
   return (
@@ -14,10 +15,7 @@ export default function OrdersScreen() {
 
       <View className="flex-1 items-center px-8 pt-20">
         <View className="h-24 w-24 items-center justify-center rounded-3xl bg-green-50">
-          <View className="h-12 w-12 items-center justify-center rounded-xl border-2 border-green-800">
-            <View className="h-5 w-8 border-b-2 border-green-800" />
-            <Text className="absolute text-base font-black text-green-800">[]</Text>
-          </View>
+          <BoxIso color="#166534" width={44} height={44} strokeWidth={1.5} />
         </View>
 
         <Text className="mt-6 text-center text-xl font-black text-gray-950">
@@ -29,8 +27,9 @@ export default function OrdersScreen() {
         </Text>
 
         <Link href="/(tabs)/marketplace" asChild>
-          <Pressable className="mt-7 h-14 w-56 items-center justify-center rounded-2xl bg-green-800 shadow-lg active:bg-green-900">
-            <Text className={vlClassNames.primaryButtonText}>[] Browse Produce</Text>
+          <Pressable className="mt-7 h-14 w-56 flex-row items-center justify-center gap-2 rounded-2xl bg-green-800 shadow-lg active:bg-green-900">
+            <Shop color="#FFFFFF" width={20} height={20} strokeWidth={2} />
+            <Text className={vlClassNames.primaryButtonText}>Browse Produce</Text>
           </Pressable>
         </Link>
       </View>

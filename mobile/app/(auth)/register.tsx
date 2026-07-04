@@ -3,13 +3,14 @@ import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
 import { vlClassNames } from "@/lib/design-system";
+import { Farm, Shop, Truck, Check } from "iconoir-react-native";
 
 type RoleOption = {
   id: Extract<UserRole, "farmer" | "buyer" | "transporter">;
   label: string;
   localLabel: string;
   description: string;
-  icon: string;
+  Icon: React.ComponentType<{ color: string; width: number; height: number; strokeWidth: number }>;
 };
 
 const roles: RoleOption[] = [
@@ -18,21 +19,21 @@ const roles: RoleOption[] = [
     label: "Farmer",
     localLabel: "Okuafo",
     description: "I grow and sell vegetables",
-    icon: "Y",
+    Icon: Farm,
   },
   {
     id: "buyer",
     label: "Buyer",
     localLabel: "Otoni",
     description: "I buy fresh produce",
-    icon: "B",
+    Icon: Shop,
   },
   {
     id: "transporter",
     label: "Transporter",
     localLabel: "Okwantufo",
     description: "I deliver produce",
-    icon: "T",
+    Icon: Truck,
   },
 ];
 
@@ -109,13 +110,12 @@ function RoleCard({
             selected ? "bg-green-800" : "bg-gray-100"
           }`}
         >
-          <Text
-            className={`text-2xl font-black ${
-              selected ? "text-white" : "text-gray-400"
-            }`}
-          >
-            {option.icon}
-          </Text>
+          <option.Icon
+            color={selected ? "#FFFFFF" : "#9CA3AF"}
+            width={32}
+            height={32}
+            strokeWidth={1.8}
+          />
         </View>
 
         <View className="ml-4 flex-1">
@@ -135,13 +135,9 @@ function RoleCard({
             selected ? "bg-green-800" : "bg-gray-100"
           }`}
         >
-          <Text
-            className={`text-base font-black ${
-              selected ? "text-white" : "text-gray-300"
-            }`}
-          >
-            {selected ? "✓" : ""}
-          </Text>
+          {selected ? (
+            <Check color="#FFFFFF" width={18} height={18} strokeWidth={2.5} />
+          ) : null}
         </View>
       </View>
     </Pressable>

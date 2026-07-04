@@ -3,6 +3,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthUser, UserRole, useAuthStore } from "@vegelink/shared";
 import { vlClassNames, vlColors } from "@/lib/design-system";
+import { NavArrowLeft, NavArrowDown } from "iconoir-react-native";
 
 const languages = ["EN", "TWI", "HAU", "EWE"] as const;
 
@@ -64,7 +65,7 @@ export default function DetailsScreen() {
             className="h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 active:bg-gray-200"
             onPress={handleBack}
           >
-            <Text className="text-3xl font-black text-gray-950">‹</Text>
+            <NavArrowLeft color="#111827" width={24} height={24} strokeWidth={2.5} />
           </Pressable>
           <View className="flex-1 gap-2">
             <View className="flex-row gap-2">
@@ -94,7 +95,7 @@ export default function DetailsScreen() {
             <Pressable className={vlClassNames.input}>
               <View className="flex-row items-center justify-between">
                 <Text className="text-base font-black text-gray-950">{region}</Text>
-                <Text className="text-xl font-black text-gray-400">v</Text>
+                <NavArrowDown color="#9CA3AF" width={20} height={20} strokeWidth={2} />
               </View>
             </Pressable>
           </View>

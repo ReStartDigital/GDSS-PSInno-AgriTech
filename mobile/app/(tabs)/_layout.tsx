@@ -1,15 +1,23 @@
 import { Tabs } from "expo-router";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { useAuthStore } from "@vegelink/shared";
 import { vlColors } from "@/lib/design-system";
+import {
+  Home,
+  Shop,
+  List,
+  Truck,
+  BoxIso,
+  User,
+} from "iconoir-react-native";
 
-const tabIcons: Record<string, string> = {
-  home: "⌂",
-  marketplace: "▦",
-  listings: "▤",
-  jobs: "▣",
-  orders: "▣",
-  profile: "⌾",
+const tabIconMap: Record<string, React.ComponentType<{ color: string; width: number; height: number; strokeWidth: number }>> = {
+  home: Home,
+  marketplace: Shop,
+  listings: List,
+  jobs: Truck,
+  orders: BoxIso,
+  profile: User,
 };
 
 export default function TabLayout() {
@@ -37,17 +45,21 @@ export default function TabLayout() {
           fontSize: 11,
           fontWeight: "900",
         },
-        tabBarIcon: ({ color, focused }) => (
-          <View
-            className={`h-10 w-10 items-center justify-center rounded-full ${
-              focused ? "bg-green-50" : "bg-transparent"
-            }`}
-          >
-            <Text style={{ color, fontSize: 22, fontWeight: "900" }}>
-              {tabIcons[route.name] ?? "•"}
-            </Text>
-          </View>
-        ),
+        tabBarIcon: ({ color, focused }) => {
+          const IconComponent = tabIconMap[route.name];
+
+          return (
+            <View
+              className={`h-10 w-10 items-center justify-center rounded-full ${
+                focused ? "bg-green-50" : "bg-transparent"
+              }`}
+            >
+              {IconComponent ? (
+                <IconComponent color={color as string} width={22} height={22} strokeWidth={2} />
+              ) : null}
+            </View>
+          );
+        },
       })}
     >
       <Tabs.Screen name="home" options={{ title: "Home" }} />

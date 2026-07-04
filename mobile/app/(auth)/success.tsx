@@ -2,6 +2,7 @@ import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { UserRole, useAuthStore } from "@vegelink/shared";
 import { vlClassNames, vlColors } from "@/lib/design-system";
+import { Check } from "iconoir-react-native";
 
 const roleLabels: Record<UserRole, string> = {
   farmer: "Farmer",
@@ -25,7 +26,7 @@ export default function SuccessScreen() {
           <View className="h-52 w-52 items-center justify-center rounded-full bg-gray-50">
             <View className="h-36 w-36 items-center justify-center rounded-full bg-green-50">
               <View className="h-28 w-28 items-center justify-center rounded-full bg-green-800">
-                <Text className="text-6xl font-black text-white">✓</Text>
+                <Check color="#FFFFFF" width={56} height={56} strokeWidth={3} />
               </View>
             </View>
             <Dot className="left-12 top-12 bg-yellow-500" />
@@ -60,7 +61,7 @@ export default function SuccessScreen() {
               </Text>
             </View>
             <View className="h-11 w-11 items-center justify-center rounded-full bg-green-800">
-              <Text className="text-xl font-black text-white">✓</Text>
+              <Check color="#FFFFFF" width={22} height={22} strokeWidth={2.5} />
             </View>
           </View>
         </View>

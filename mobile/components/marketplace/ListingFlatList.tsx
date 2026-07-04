@@ -8,6 +8,19 @@ import {
   marketplaceListings,
 } from "@/lib/marketplace-data";
 import { vlClassNames, vlColors } from "@/lib/design-system";
+import {
+  ViewGrid,
+  List as ListIcon,
+  Search,
+  FilterList,
+  NavArrowDown,
+  Filter,
+  Star,
+  MapPin,
+  Heart,
+  Xmark,
+  Check,
+} from "iconoir-react-native";
 
 type SortMode = "nearest" | "price_low" | "price_high" | "stock";
 type ViewMode = "grid" | "list";
@@ -111,21 +124,23 @@ export function ListingFlatList() {
             style={{ borderColor: viewMode === "grid" ? vlColors.brandGreen : "transparent" }}
             onPress={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
           >
-            <Text className="text-2xl font-black text-gray-700">
-              {viewMode === "grid" ? "▦" : "▤"}
-            </Text>
+            {viewMode === "grid" ? (
+              <ListIcon color="#374151" width={22} height={22} strokeWidth={2} />
+            ) : (
+              <ViewGrid color="#374151" width={22} height={22} strokeWidth={2} />
+            )}
           </Pressable>
         </View>
 
         <View className="mt-5 min-h-12 flex-row items-center rounded-2xl bg-gray-100 px-4">
-          <Text className="mr-2 text-2xl font-black text-gray-400">⌕</Text>
+          <Search color="#9CA3AF" width={20} height={20} strokeWidth={2} />
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Search vegetables, farmers, regions..."
+            placeholder="Search vegetables, regions..."
             placeholderTextColor="#98A1B2"
             returnKeyType="search"
-            className="flex-1 text-sm font-black text-gray-950"
+            className="ml-2 flex-1 text-sm font-black text-gray-950"
           />
         </View>
 
@@ -145,18 +160,18 @@ export function ListingFlatList() {
             }
           >
             <View className="flex-row items-center gap-2">
-              <Text className="text-lg font-black text-green-800">≡</Text>
+              <FilterList color="#166534" width={18} height={18} strokeWidth={2} />
               <Text className="text-sm font-black text-gray-700">{activeSortLabel}</Text>
             </View>
-            <Text className="text-lg font-black text-gray-400">⌄</Text>
+            <NavArrowDown color="#9CA3AF" width={18} height={18} strokeWidth={2} />
           </Pressable>
 
           <Pressable
             className="h-11 flex-row items-center rounded-2xl border border-gray-200 bg-white px-4 active:bg-gray-50"
             onPress={() => setIsFilterOpen(true)}
           >
-            <Text className="mr-2 text-lg font-black text-gray-500">▽</Text>
-            <Text className="text-sm font-black text-gray-700">Filter</Text>
+            <Filter color="#6B7280" width={18} height={18} strokeWidth={2} />
+            <Text className="ml-2 text-sm font-black text-gray-700">Filter</Text>
           </Pressable>
         </View>
 
@@ -209,17 +224,23 @@ function ListCard({ listing }: { listing: MarketplaceListing }) {
             </View>
 
             <View className="mt-2 flex-row items-center gap-3">
-              <Text className="text-xs font-black text-amber-500">
-                ★ {listing.farmer.rating.toFixed(1)}
-              </Text>
-              <Text className="text-xs font-semibold text-gray-400">
-                ⌖ {listing.distanceKm} km
-              </Text>
+              <View className="flex-row items-center gap-1">
+                <Star color="#F59E0B" fill="#F59E0B" width={14} height={14} strokeWidth={2} />
+                <Text className="text-xs font-black text-amber-500">
+                  {listing.farmer.rating.toFixed(1)}
+                </Text>
+              </View>
+              <View className="flex-row items-center gap-1">
+                <MapPin color="#9CA3AF" width={14} height={14} strokeWidth={2} />
+                <Text className="text-xs font-semibold text-gray-400">
+                  {listing.distanceKm} km
+                </Text>
+              </View>
             </View>
           </View>
 
           <Pressable className="ml-3 h-10 w-10 items-center justify-center rounded-full bg-gray-50">
-            <Text className="text-2xl font-black text-gray-300">♡</Text>
+            <Heart color="#D1D5DB" width={20} height={20} strokeWidth={2} />
           </Pressable>
         </View>
       </Pressable>
@@ -239,7 +260,7 @@ function GridCard({ listing }: { listing: MarketplaceListing }) {
             <FreshnessPill listing={listing} compact />
           </View>
           <Pressable className="absolute right-3 top-3 h-9 w-9 items-center justify-center rounded-full bg-white">
-            <Text className="text-xl font-black text-gray-300">♡</Text>
+            <Heart color="#D1D5DB" width={18} height={18} strokeWidth={2} />
           </Pressable>
           <ProduceThumb listing={listing} size="lg" />
         </View>
@@ -249,12 +270,18 @@ function GridCard({ listing }: { listing: MarketplaceListing }) {
             {listing.cropName}
           </Text>
           <Price listing={listing} />
-          <Text className="mt-2 text-xs font-black text-amber-500">
-            ★ {listing.farmer.rating.toFixed(1)}
-          </Text>
-          <Text className="mt-2 text-xs font-semibold text-gray-400" numberOfLines={1}>
-            ⌖ {listing.farmer.locationLabel} · {listing.distanceKm} km
-          </Text>
+          <View className="mt-2 flex-row items-center gap-1">
+            <Star color="#F59E0B" fill="#F59E0B" width={14} height={14} strokeWidth={2} />
+            <Text className="text-xs font-black text-amber-500">
+              {listing.farmer.rating.toFixed(1)}
+            </Text>
+          </View>
+          <View className="mt-2 flex-row items-center gap-1">
+            <MapPin color="#9CA3AF" width={14} height={14} strokeWidth={2} />
+            <Text className="text-xs font-semibold text-gray-400" numberOfLines={1}>
+              {listing.farmer.locationLabel} · {listing.distanceKm} km
+            </Text>
+          </View>
         </View>
       </Pressable>
     </Link>
@@ -384,7 +411,7 @@ function FilterSheet({
               className="h-10 w-10 items-center justify-center rounded-full bg-gray-100"
               onPress={onClose}
             >
-              <Text className="text-2xl font-black text-gray-400">×</Text>
+              <Xmark color="#9CA3AF" width={20} height={20} strokeWidth={2.5} />
             </Pressable>
           </View>
 
@@ -441,7 +468,7 @@ function FilterSheet({
                     {region}
                   </Text>
                   {active ? (
-                    <Text className="text-base font-black text-green-800">✓</Text>
+                    <Check color="#166534" width={18} height={18} strokeWidth={2.5} />
                   ) : null}
                 </Pressable>
               );

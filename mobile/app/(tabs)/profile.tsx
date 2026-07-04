@@ -1,6 +1,15 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { UserRole, useAuthStore } from "@vegelink/shared";
+import {
+  User,
+  Bell,
+  Heart,
+  Language,
+  Phone,
+  LogOut,
+  NavArrowRight,
+} from "iconoir-react-native";
 
 const roleLabels: Record<UserRole, string> = {
   farmer: "Farmer Account",
@@ -11,11 +20,11 @@ const roleLabels: Record<UserRole, string> = {
 };
 
 const menuItems = [
-  { label: "Edit Profile", icon: "User", tone: "green" },
-  { label: "Notifications", icon: "Bell", tone: "amber" },
-  { label: "Saved Produce", icon: "Heart", tone: "red" },
-  { label: "Language: English", icon: "EN", tone: "blue" },
-  { label: "Help & Support", icon: "Call", tone: "purple" },
+  { label: "Edit Profile", icon: User, tone: "green" },
+  { label: "Notifications", icon: Bell, tone: "amber" },
+  { label: "Saved Produce", icon: Heart, tone: "red" },
+  { label: "Language: English", icon: Language, tone: "blue" },
+  { label: "Help & Support", icon: Phone, tone: "purple" },
 ] as const;
 
 const toneStyles = {
@@ -84,7 +93,7 @@ export default function ProfileScreen() {
               onPress={handleLogout}
             >
               <View className="h-11 w-11 items-center justify-center rounded-2xl bg-red-100">
-                <Text className="text-lg font-black text-red-500">X</Text>
+                <LogOut color="#EF4444" width={22} height={22} strokeWidth={2} />
               </View>
               <Text className="ml-4 flex-1 text-base font-black text-red-600">
                 Sign Out
@@ -108,11 +117,11 @@ function StatTile({ value, label }: { value: string; label: string }) {
 
 function ProfileRow({
   label,
-  icon,
+  icon: IconComponent,
   tone,
 }: {
   label: string;
-  icon: string;
+  icon: React.ComponentType<{ color: string; width: number; height: number; strokeWidth: number }>;
   tone: keyof typeof toneStyles;
 }) {
   const colors = toneStyles[tone];
@@ -123,12 +132,10 @@ function ProfileRow({
         className="h-11 w-11 items-center justify-center rounded-2xl"
         style={{ backgroundColor: colors.bg }}
       >
-        <Text className="text-xs font-black" style={{ color: colors.text }}>
-          {icon}
-        </Text>
+        <IconComponent color={colors.text} width={20} height={20} strokeWidth={2} />
       </View>
       <Text className="ml-4 flex-1 text-base font-black text-gray-950">{label}</Text>
-      <Text className="text-2xl font-black text-gray-300">{">"}</Text>
+      <NavArrowRight color="#D1D5DB" width={24} height={24} strokeWidth={2.5} />
     </Pressable>
   );
 }

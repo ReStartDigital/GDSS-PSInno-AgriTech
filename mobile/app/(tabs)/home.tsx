@@ -3,6 +3,15 @@ import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useAuthStore } from "@vegelink/shared";
 import { listingCategories, marketplaceListings } from "@/lib/marketplace-data";
 import { vlColors } from "@/lib/design-system";
+import {
+  BellNotification,
+  Search,
+  StatUp,
+  Shop,
+  BoxIso,
+  DeliveryTruck,
+  Heart,
+} from "iconoir-react-native";
 
 const pulseItems = [
   { crop: "Tomato", price: "GHC8/kg", accent: "#DC2626" },
@@ -11,10 +20,10 @@ const pulseItems = [
 ];
 
 const quickActions = [
-  { label: "Browse\nProduce", icon: "▦", href: "/(tabs)/marketplace" },
-  { label: "My Orders", icon: "▤", href: "/(tabs)/orders" },
-  { label: "Track\nDelivery", icon: "▣", href: "/(tabs)/orders" },
-  { label: "Saved Items", icon: "♡", href: "/(tabs)/profile" },
+  { label: "Browse\nProduce", Icon: Shop, href: "/(tabs)/marketplace" },
+  { label: "My Orders", Icon: BoxIso, href: "/(tabs)/orders" },
+  { label: "Track\nDelivery", Icon: DeliveryTruck, href: "/(tabs)/orders" },
+  { label: "Saved Items", Icon: Heart, href: "/(tabs)/profile" },
 ] as const;
 
 export default function HomeScreen() {
@@ -42,7 +51,7 @@ export default function HomeScreen() {
             </View>
 
             <Pressable className="h-11 w-11 items-center justify-center rounded-full bg-white/20">
-              <Text className="text-2xl font-black text-white">⌾</Text>
+              <BellNotification color="#FFFFFF" width={22} height={22} strokeWidth={2} />
               <View className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-yellow-400" />
             </Pressable>
           </View>
@@ -56,7 +65,9 @@ export default function HomeScreen() {
           </Text>
 
           <View className="mt-6 min-h-14 flex-row items-center rounded-2xl bg-white px-4">
-            <Text className="mr-3 text-2xl font-black text-gray-400">⌕</Text>
+            <View className="mr-3">
+              <Search color="#9CA3AF" width={22} height={22} strokeWidth={2} />
+            </View>
             <TextInput
               placeholder="Find fresh produce..."
               placeholderTextColor="#98A1B2"
@@ -70,7 +81,7 @@ export default function HomeScreen() {
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-2">
                 <View className="h-8 w-8 items-center justify-center rounded-xl bg-orange-50">
-                  <Text className="font-black text-orange-500">↗</Text>
+                  <StatUp color="#F97316" width={18} height={18} strokeWidth={2} />
                 </View>
                 <Text className="text-base font-black text-gray-950">Market Pulse</Text>
               </View>
@@ -122,21 +133,20 @@ export default function HomeScreen() {
                               : "#FFF1F2",
                     }}
                   >
-                    <Text
-                      className="text-2xl font-black"
-                      style={{
-                        color:
-                          index === 0
-                            ? vlColors.brandGreen
-                            : index === 1
-                              ? vlColors.warning
-                              : index === 2
-                                ? vlColors.blue
-                                : vlColors.danger,
-                      }}
-                    >
-                      {action.icon}
-                    </Text>
+                    <action.Icon
+                      width={24}
+                      height={24}
+                      strokeWidth={1.8}
+                      color={
+                        index === 0
+                          ? vlColors.brandGreen
+                          : index === 1
+                            ? vlColors.warning
+                            : index === 2
+                              ? vlColors.blue
+                              : vlColors.danger
+                      }
+                    />
                   </View>
                   <Text className="mt-3 text-center text-xs font-black leading-4 text-gray-700">
                     {action.label}
