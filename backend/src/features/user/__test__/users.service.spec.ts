@@ -5,9 +5,16 @@ import { UsersService } from "../users.service.js";
 import { UserRepository } from "../user.repository.js";
 // import { cloudinaryClient } from "../../../infrastructure/cloudinary/cloudinary.client.js";
 import { paystackClient } from "../../../infrastructure/paystack/paystack.client.js";
-// import { arkeselClient } from "../../../infrastructure/arkesel/arkesel.client.js";
+import { arkeselClient } from "../../../infrastructure/arkesel/arkesel.client.js";
 import { hashSecret } from "../../../common/utils/hash.util.js";
-import { buildAgent, buildAssignment, buildFarmer } from "./fixtures.js";
+import {
+  buildAgent,
+  buildAssignment,
+  buildBuyer,
+  buildEarnings,
+  buildFarmer,
+  buildTransporter,
+} from "./fixtures.js";
 import { UserRole } from "../../../common/constants/roles.enums.js";
 // import { ForbiddenException, UnprocessableException, NotFoundException } from "../../../common/exceptions/index.js";
 
@@ -57,9 +64,8 @@ const usersService = new UsersService();
 // Properly cast the infrastructure mocks so they're in scope for your assertions
 // const mockCloudinary = cloudinaryClient as jest.Mocked<typeof cloudinaryClient>;
 // const mockPaystack = paystackClient;
-// const mockArkesel = arkeselClient;
+const mockArkesel = arkeselClient as jest.Mocked<typeof arkeselClient>;
 // let mockVerifySecret = jest.mocked(HashUtil.verifySecret);
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let mockHashSecret = jest.mocked(hashSecret);
 const mockUserRepo = UserRepository.prototype as jest.Mocked<UserRepository>;
 
@@ -86,12 +92,14 @@ beforeEach(() => {
   mockUserRepo.createAgentAssignment = jest.fn<any>().mockResolvedValue(null);
 
   mockHashSecret = jest.fn<any>().mockResolvedValue("hashed-pin-string");
+  mockArkesel.generateOtp = jest.fn<any>().mockResolvedValue(null);
+  mockArkesel.sendSms = jest.fn<any>().mockResolvedValue({ success: true });
 
   mockUserRepo.unassignClient = jest.fn<any>().mockResolvedValue(null);
   mockUserRepo.findAssignmentByAgentAndUser = jest
     .fn<any>()
     .mockResolvedValue(null);
-
+  mockUserRepo.getEarningsSummary = jest.fn<any>().mockResolvedValue(null);
   // Reset Paystack mock methods cleanly
   jest.spyOn(paystackClient, "createSubaccount").mockImplementation(
     jest.fn<any>().mockResolvedValue({
@@ -107,12 +115,12 @@ beforeEach(() => {
     }),
   );
 
-  // jest.spyOn(arkeselClient, "sendSms").mockImplementation(
-  //   jest.fn<any>().mockResolvedValue({
-  //     success: true,
-  //     rawResponse: {message: "All good"},
-  //   }),
-  // );
+  jest.spyOn(arkeselClient, "sendSms").mockImplementation(
+    jest.fn<any>().mockResolvedValue({
+      success: true,
+      rawResponse: { message: "All good" },
+    }),
+  );
 });
 
 // ── 3. Run Clean Tests ─────────────────────────────────────────────────────────
@@ -405,135 +413,162 @@ describe("UsersService.getAgentClient", () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 // registerClient (agent)
 // ═══════════════════════════════════════════════════════════════════════════════
-// describe('UsersService.registerClient', () => {
-//   const dto = { phone: '+233244123456', name: 'Abena Mensah', role: 'farmer' };
+describe("UsersService.registerClient", () => {
+  const dto = {
+    phone: "+233244123456",
+    firstName: "Abena",
+    lastName: "Mensah",
+    role: "farmer",
+  };
 
-//   it('creates a new verified account, sends temp PIN via SMS, creates assignment', async () => {
-//     const agent = buildAgent();
-//     mockUserRepo.findPrivateById.mockResolvedValue(agent);
-//     mockUserRepo.findByPhone.mockResolvedValue(null); // no existing user
-//     mockUserRepo.hasActiveAgent.mockResolvedValue(false);
-//     mockUserRepo.createUnverified.mockResolvedValue(buildFarmer({ id: 'new-farmer-id' }));
-//     mockUserRepo.markPhoneVerified.mockResolvedValue(undefined);
-//     mockHashSecret.mockResolvedValue('hashed-temp-pin');
-//     mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(null);
-//     mockUserRepo.createAgentAssignment.mockResolvedValue(buildAssignment());
-//     mockArkesel.sendSms.mockResolvedValue({ success: true });
+  it("creates a new verified account, sends temp PIN via SMS, creates assignment", async () => {
+    const agent = buildAgent();
+    mockUserRepo.findPrivateById.mockResolvedValue(agent);
+    mockUserRepo.findByPhone.mockResolvedValue(null); // no existing user
+    mockUserRepo.hasActiveAgent.mockResolvedValue(false);
+    mockUserRepo.createUnverified.mockResolvedValue(
+      buildFarmer({ id: "new-farmer-id" }),
+    );
+    mockUserRepo.markPhoneVerified.mockResolvedValue(undefined);
+    mockHashSecret.mockResolvedValue("hashed-temp-pin");
+    mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(null);
+    mockUserRepo.createAgentAssignment.mockResolvedValue(buildAssignment());
+    mockArkesel.sendSms.mockResolvedValue({ success: true });
 
-//     const result = await usersService.registerClient('agent-abc-123', dto);
+    await usersService.registerClient("agent-abc-123", dto);
 
-//     expect(mockUserRepo.createUnverified).toHaveBeenCalledTimes(1);
-//     expect(mockUserRepo.markPhoneVerified).toHaveBeenCalledWith('new-farmer-id');
-//     expect(mockUserRepo.createAgentAssignment).toHaveBeenCalledWith('agent-abc-123', 'new-farmer-id');
-//     expect(mockArkesel.sendSms).toHaveBeenCalledWith(
-//       '+233244123456',
-//       expect.stringContaining('temporary PIN'),
-//     );
-//     expect(result.temporary_pin_sent_via_sms).toBe(true);
-//   });
+    expect(mockUserRepo.createUnverified).toHaveBeenCalledTimes(1);
+    expect(mockUserRepo.markPhoneVerified).toHaveBeenCalledWith(
+      "new-farmer-id",
+    );
+    expect(mockUserRepo.createAgentAssignment).toHaveBeenCalledWith(
+      "agent-abc-123",
+      "new-farmer-id",
+    );
+    expect(mockArkesel.sendSms).toHaveBeenCalledWith(
+      "+233244123456",
+      expect.stringContaining("temporary PIN"),
+    );
+  });
 
-//   // it('assigns agent to existing fully-verified account without touching their PIN', async () => {
-//   //   const agent = buildAgent();
-//   //   const existingFarmer = buildFarmer({ isPhoneVerified: true, pinHash: 'existing-hash' });
-//   //   mockUserRepo.findPrivateById.mockResolvedValue(agent);
-//   //   mockUserRepo.findByPhone.mockResolvedValue(existingFarmer);
-//   //   mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(null);
-//   //   mockUserRepo.hasActiveAgent.mockResolvedValue(false);
-//   //   mockUserRepo.createAgentAssignment.mockResolvedValue(buildAssignment());
-//   //   mockArkesel.sendSms.mockResolvedValue({ success: true });
+  it("assigns agent to existing fully-verified account without touching their PIN", async () => {
+    const agent = buildAgent();
+    const existingFarmer = buildFarmer({ pinHash: "existing-hash" });
+    mockUserRepo.findPrivateById.mockResolvedValue(agent);
+    mockUserRepo.findByPhone.mockResolvedValue(existingFarmer);
+    mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(null);
+    mockUserRepo.hasActiveAgent.mockResolvedValue(false);
+    mockUserRepo.createAgentAssignment.mockResolvedValue(buildAssignment());
+    mockArkesel.sendSms.mockResolvedValue({ success: true });
 
-//   //   const result = await usersService.registerClient('agent-abc-123', dto);
+    await usersService.registerClient("agent-abc-123", dto);
 
-//   //   // Must NOT create a new account or overwrite the existing PIN
-//   //   expect(mockUserRepo.createUnverified).not.toHaveBeenCalled();
-//   //   expect(mockUserRepo.updatePinHash).not.toHaveBeenCalled();
-//   //   expect(result.temporary_pin_sent_via_sms).toBe(false);
-//   //   expect(result.message).toMatch(/assigned/i);
-//   // });
+    // Must NOT create a new account or overwrite the existing PIN
+    expect(mockUserRepo.createUnverified).not.toHaveBeenCalled();
+    expect(mockUserRepo.updatePinHash).not.toHaveBeenCalled();
+  });
 
-//   // it('resumes an unverified account — updates details without creating duplicate', async () => {
-//   //   const agent = buildAgent();
-//   //   const unverifiedFarmer = buildFarmer({ isPhoneVerified: false, pinHash: null });
-//   //   mockUserRepo.findPrivateById.mockResolvedValue(agent);
-//   //   mockUserRepo.findByPhone.mockResolvedValue(unverifiedFarmer);
-//   //   mockUserRepo.updateUnverifiedDetails.mockResolvedValue(undefined);
-//   //   mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(null);
-//   //   mockUserRepo.hasActiveAgent.mockResolvedValue(false);
-//   //   mockUserRepo.createAgentAssignment.mockResolvedValue(buildAssignment());
-//   //   mockArkesel.sendSms.mockResolvedValue({ success: true });
+  it("resumes an unverified account — updates details without creating duplicate", async () => {
+    const agent = buildAgent();
+    const unverifiedFarmer = buildFarmer({ pinHash: null });
+    mockUserRepo.findPrivateById.mockResolvedValue(agent);
+    mockUserRepo.findByPhone.mockResolvedValue(unverifiedFarmer);
+    mockUserRepo.updateUnverifiedDetails.mockResolvedValue(undefined as any);
+    mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(null);
+    mockUserRepo.hasActiveAgent.mockResolvedValue(false);
+    mockUserRepo.createAgentAssignment.mockResolvedValue(buildAssignment());
+    mockArkesel.sendSms.mockResolvedValue({ success: true });
 
-//   //   await usersService.registerClient('agent-abc-123', dto);
+    await usersService.registerClient("agent-abc-123", dto);
 
-//   //   expect(mockUserRepo.createUnverified).not.toHaveBeenCalled();
-//   //   expect(mockUserRepo.updateUnverifiedDetails).toHaveBeenCalledWith(unverifiedFarmer.id, {
-//   //     name: dto.name,
-//   //     role: UserRole.FARMER,
-//   //   });
-//   // });
+    expect(mockUserRepo.createUnverified).not.toHaveBeenCalled();
+    expect(mockUserRepo.updateUnverifiedDetails).toHaveBeenCalledWith(
+      unverifiedFarmer.id,
+      {
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        role: UserRole.FARMER,
+      },
+    );
+  });
 
-//   // it('does not create a duplicate assignment when the agent is already assigned to this client', async () => {
-//   //   const agent = buildAgent();
-//   //   mockUserRepo.findPrivateById.mockResolvedValue(agent);
-//   //   mockUserRepo.findByPhone.mockResolvedValue(buildFarmer({ isPhoneVerified: true, pinHash: 'hash' }));
-//   //   mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(buildAssignment()); // already assigned
-//   //   mockArkesel.sendSms.mockResolvedValue({ success: true });
+  it("does not create a duplicate assignment when the agent is already assigned to this client", async () => {
+    const agent = buildAgent();
+    mockUserRepo.findPrivateById.mockResolvedValue(agent);
+    mockUserRepo.findByPhone.mockResolvedValue(
+      buildFarmer({ pinHash: "hash" }),
+    );
+    mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(
+      buildAssignment(),
+    ); // already assigned
+    mockArkesel.sendSms.mockResolvedValue({ success: true });
 
-//   //   await usersService.registerClient('agent-abc-123', dto);
+    await usersService.registerClient("agent-abc-123", dto);
 
-//   //   expect(mockUserRepo.createAgentAssignment).not.toHaveBeenCalled();
-//   // });
+    expect(mockUserRepo.createAgentAssignment).not.toHaveBeenCalled();
+  });
 
-//   // it('throws ConflictException when user already has a different active agent', async () => {
-//   //   const agent = buildAgent();
-//   //   mockUserRepo.findPrivateById.mockResolvedValue(agent);
-//   //   mockUserRepo.findByPhone.mockResolvedValue(buildFarmer({ isPhoneVerified: true }));
-//   //   mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(null);
-//   //   mockUserRepo.hasActiveAgent.mockResolvedValue(true); // different active agent
+  it("throws ConflictException when user already has a different active agent", async () => {
+    const agent = buildAgent();
+    mockUserRepo.findPrivateById.mockResolvedValue(agent);
+    mockUserRepo.findByPhone.mockResolvedValue(buildFarmer());
+    mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(null);
+    mockUserRepo.hasActiveAgent.mockResolvedValue(true); // different active agent
 
-//   //   await expect(usersService.registerClient('agent-abc-123', dto)).rejects.toBeInstanceOf(ConflictException);
-//   //   expect(mockUserRepo.createAgentAssignment).not.toHaveBeenCalled();
-//   // });
+    await expect(
+      usersService.registerClient("agent-abc-123", dto),
+    ).rejects.toThrow(
+      "This user already has an active agent. They must be unassigned first.",
+    );
+    expect(mockUserRepo.createAgentAssignment).not.toHaveBeenCalled();
+  });
 
-//   // it('throws ForbiddenException when caller is not an agent', async () => {
-//   //   mockUserRepo.findPrivateById.mockResolvedValue(buildFarmer()); // farmer trying to register clients
+  it("throws ForbiddenException when caller is not an agent", async () => {
+    mockUserRepo.findPrivateById.mockResolvedValue(buildFarmer()); // farmer trying to register clients
 
-//   //   await expect(usersService.registerClient('user-abc-123', dto)).rejects.toBeInstanceOf(ForbiddenException);
-//   // });
+    await expect(
+      usersService.registerClient("user-abc-123", dto),
+    ).rejects.toThrow(
+      "Only profiles holding active Agent clear levels can register clients.",
+    );
+  });
 
-//   // it('throws ConflictException when agent tries to register themselves', async () => {
-//   //   const agent = buildAgent({ phone: '+233244123456' }); // same phone as dto
-//   //   mockUserRepo.findPrivateById.mockResolvedValue(agent);
+  it("throws ConflictException when agent tries to register themselves", async () => {
+    const agent = buildAgent({ phone: "+233244123456" }); // same phone as dto
+    mockUserRepo.findPrivateById.mockResolvedValue(agent);
 
-//   //   await expect(usersService.registerClient('agent-abc-123', dto)).rejects.toBeInstanceOf(ConflictException);
-//   // });
+    await expect(
+      usersService.registerClient("agent-abc-123", dto),
+    ).rejects.toThrow("An agent cannot register themselves as a client.");
+  });
 
-//   // it('stores GPS location when provided', async () => {
-//   //   const agent = buildAgent();
-//   //   mockUserRepo.findPrivateById.mockResolvedValue(agent);
-//   //   mockUserRepo.findByPhone.mockResolvedValue(null);
-//   //   mockUserRepo.createUnverified.mockResolvedValue(buildFarmer({ id: 'new-farmer-id' }));
-//   //   mockUserRepo.markPhoneVerified.mockResolvedValue(undefined);
-//   //   mockHashSecret.mockResolvedValue('hash');
-//   //   mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(null);
-//   //   mockUserRepo.hasActiveAgent.mockResolvedValue(false);
-//   //   mockUserRepo.createAgentAssignment.mockResolvedValue(buildAssignment());
-//   //   mockArkesel.sendSms.mockResolvedValue({ success: true });
+  // it('stores GPS location when provided', async () => {
+  //   const agent = buildAgent();
+  //   mockUserRepo.findPrivateById.mockResolvedValue(agent);
+  //   mockUserRepo.findByPhone.mockResolvedValue(null);
+  //   mockUserRepo.createUnverified.mockResolvedValue(buildFarmer({ id: 'new-farmer-id' }));
+  //   mockUserRepo.markPhoneVerified.mockResolvedValue(undefined);
+  //   mockHashSecret.mockResolvedValue('hash');
+  //   mockUserRepo.findAssignmentByAgentAndUser.mockResolvedValue(null);
+  //   mockUserRepo.hasActiveAgent.mockResolvedValue(false);
+  //   mockUserRepo.createAgentAssignment.mockResolvedValue(buildAssignment());
+  //   mockArkesel.sendSms.mockResolvedValue({ success: true });
 
-//   //   await usersService.registerClient('agent-abc-123', {
-//   //     ...dto,
-//   //     location: { lat: 5.6037, lng: -0.187 },
-//   //   });
+  //   await usersService.registerClient('agent-abc-123', {
+  //     ...dto,
+  //     location: { lat: 5.6037, lng: -0.187 },
+  //   });
 
-//   //   expect(mockUserRepo.updateLocation).toHaveBeenCalledWith('new-farmer-id', 5.6037, -0.187);
-//   // });
-// });
+  //   expect(mockUserRepo.updateUnverifiedDetails).toHaveBeenCalledWith('new-farmer-id', 5.6037, -0.187);
+  // });
+});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // getPaymentDetails
 // ═══════════════════════════════════════════════════════════════════════════════
 // describe('UsersService.getPaymentDetails', () => {
 //   it('returns masked payment details for a farmer with payment details set', async () => {
-//     mockUsersRepo.findPrivateById.mockResolvedValue(buildFarmerWithPayment());
+//     mockUserRepo.findPrivateById.mockResolvedValue(buildFarmerWithPayment());
 
 //     const result = await usersService.getPaymentDetails('user-abc-123');
 
@@ -543,7 +578,7 @@ describe("UsersService.getAgentClient", () => {
 //   });
 
 //   it('returns payment_details_set=false with nulls when no payment details set', async () => {
-//     mockUsersRepo.findPrivateById.mockResolvedValue(buildFarmer({ paymentDetailsSet: false }));
+//     mockUserRepo.findPrivateById.mockResolvedValue(buildFarmer({ paymentDetailsSet: false }));
 
 //     const result = await usersService.getPaymentDetails('user-abc-123');
 
@@ -553,12 +588,12 @@ describe("UsersService.getAgentClient", () => {
 //   });
 
 //   it('throws ForbiddenException for buyer trying to access payment details', async () => {
-//     mockUsersRepo.findPrivateById.mockResolvedValue(buildBuyer());
+//     mockUserRepo.findPrivateById.mockResolvedValue(buildBuyer());
 //     await expect(usersService.getPaymentDetails('buyer-abc-123')).rejects.toBeInstanceOf(ForbiddenException);
 //   });
 
 //   it('transporter can access their own payment details', async () => {
-//     mockUsersRepo.findPrivateById.mockResolvedValue(
+//     mockUserRepo.findPrivateById.mockResolvedValue(
 //       buildTransporter({ mobileMoneyNumber: '+233244777666', mobileMoneyNetwork: 'vodafone', paymentDetailsSet: true }),
 //     );
 
@@ -568,42 +603,54 @@ describe("UsersService.getAgentClient", () => {
 // });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// getEarnings
+// getEarningsSummary
 // ═══════════════════════════════════════════════════════════════════════════════
-// describe('UsersService.getEarnings', () => {
-//   it('returns earnings summary for a farmer', async () => {
-//     mockUsersRepo.findPrivateById.mockResolvedValue(buildFarmer());
-//     mockUsersRepo.getEarningsSummary.mockResolvedValue(buildEarnings());
+describe("UsersService.getEarningsSummary", () => {
+  it("returns earnings summary for a farmer", async () => {
+    mockUserRepo.findPrivateById.mockResolvedValue(buildFarmer());
+    mockUserRepo.getEarningsSummary.mockResolvedValue(buildEarnings());
 
-//     const result = await usersService.getEarnings('user-abc-123');
+    const result = await usersService.getEarningsSummary("user-abc-123");
 
-//     expect(result.totalEarned).toBe('1250.50');
-//     expect(result.pendingSettlement).toBe('130.54');
-//     expect(result.settled).toBe('1119.96');
-//     expect(result.thisMonth).toBe('382.00');
-//     expect(result.thisWeek).toBe('130.54');
-//   });
+    expect(result.totalEarned).toBe("1250.50");
+    expect(result.pendingSettlement).toBe("130.54");
+    expect(result.settled).toBe("1119.96");
+    expect(result.thisMonth).toBe("382.00");
+    expect(result.thisWeek).toBe("130.54");
+  });
 
-//   it('returns earnings for a transporter', async () => {
-//     mockUsersRepo.findPrivateById.mockResolvedValue(buildTransporter());
-//     mockUsersRepo.getEarningsSummary.mockResolvedValue(buildEarnings({ totalEarned: '500.00' }));
+  it("returns earnings for a transporter", async () => {
+    mockUserRepo.findPrivateById.mockResolvedValue(buildTransporter());
+    mockUserRepo.getEarningsSummary.mockResolvedValue(
+      buildEarnings({ totalEarned: "500.00" }),
+    );
 
-//     const result = await usersService.getEarnings('transporter-abc-123');
-//     expect(result.totalEarned).toBe('500.00');
-//   });
+    const result = await usersService.getEarningsSummary("transporter-abc-123");
+    expect(result.totalEarned).toBe("500.00");
+  });
 
-//   it('throws ForbiddenException for buyers — they do not receive earnings', async () => {
-//     mockUsersRepo.findPrivateById.mockResolvedValue(buildBuyer());
-//     await expect(usersService.getEarnings('buyer-abc-123')).rejects.toBeInstanceOf(ForbiddenException);
-//   });
+  it("throws ForbiddenException for buyers — they do not receive earnings", async () => {
+    mockUserRepo.findPrivateById.mockResolvedValue(buildBuyer());
+    await expect(
+      usersService.getEarningsSummary("buyer-abc-123"),
+    ).rejects.toThrow(
+      "Earnings metrics summaries are only available to functional operators.",
+    );
+  });
 
-//   it('throws ForbiddenException for agents', async () => {
-//     mockUsersRepo.findPrivateById.mockResolvedValue(buildAgent());
-//     await expect(usersService.getEarnings('agent-abc-123')).rejects.toBeInstanceOf(ForbiddenException);
-//   });
+  it("throws ForbiddenException for agents", async () => {
+    mockUserRepo.findPrivateById.mockResolvedValue(buildAgent());
+    await expect(
+      usersService.getEarningsSummary("agent-abc-123"),
+    ).rejects.toThrow(
+      "Earnings metrics summaries are only available to functional operators.",
+    );
+  });
 
-//   it('throws NotFoundException when user does not exist', async () => {
-//     mockUsersRepo.findPrivateById.mockResolvedValue(null);
-//     await expect(usersService.getEarnings('nonexistent')).rejects.toBeInstanceOf(NotFoundException);
-//   });
-// });
+  it("throws NotFoundException when user does not exist", async () => {
+    mockUserRepo.findPrivateById.mockResolvedValue(null);
+    await expect(
+      usersService.getEarningsSummary("nonexistent"),
+    ).rejects.toThrow("User profile not found.");
+  });
+});
