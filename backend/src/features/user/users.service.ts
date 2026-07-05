@@ -1,6 +1,9 @@
 import { type UserRepository, userRepository } from "./user.repository.js";
 import { cloudinaryClient } from "../../infrastructure/cloudinary/cloudinary.client.js";
-import { paystackClient } from "../../infrastructure/paystack/paystack.client.js";
+import {
+  paystackClient,
+  SUPPORTED_MOBILE_NETWORKS,
+} from "../../infrastructure/paystack/paystack.client.js";
 import { UserRole } from "../../common/constants/roles.enums.js";
 import { ErrorCode } from "../../common/constants/error-codes.enum.js";
 import {
@@ -21,6 +24,8 @@ import * as HashUtil from "../../common/utils/hash.util.js";
 import type { PaginatedResult } from "../../common/utils/paginate.util.js";
 import type { User } from "../../database/entities/User.js";
 import crypto from "crypto";
+import { generateOtp } from "../../common/utils/otp.util.js";
+import { arkeselClient } from "../../infrastructure/arkesel/arkesel.client.js";
 
 const VIRTUAL_EMAIL_DOMAIN = process.env.VIRTUAL_EMAIL_DOMAIN || "vegelink.app";
 
@@ -163,6 +168,12 @@ export class UsersService {
       );
     }
 
+    if (!SUPPORTED_MOBILE_NETWORKS.includes(dto.mobile_network)) {
+      throw new UnprocessableException(
+        `Unsupported network. Choose from: ${SUPPORTED_MOBILE_NETWORKS.join(", ")}`,
+        ErrorCode.UNSUPPORTED_MOBILE_NETWORK,
+      );
+    }
     // 2. Prevent overriding existing setups
     // if (user.paymentDetailsSet) {
     //   throw new ConflictException(
@@ -241,55 +252,85 @@ export class UsersService {
       );
     }
 
-    // Prevent a tracking map loop onto oneself
-    const existingUser = await this.repo.findByPhone(dto.phone);
-    if (existingUser) {
-      if (existingUser.id === agentId) {
-        throw new ConflictException(
-          "An agent cannot assign their own profile credentials as a managed client.",
-          ErrorCode.CANNOT_ASSIGN_SELF,
-        );
-      }
-
-      // Look for a conflicting active mapping link path context
-      const activeAgent = await this.repo.hasActiveAgent(existingUser.id);
-      if (activeAgent) {
-        throw new ConflictException(
-          "This target client is already linked under an active agent assignment tracking card.",
-          ErrorCode.ALREADY_HAS_ACTIVE_AGENT,
-        );
-      }
-
+    // Cannot register self
+    if (dto.phone === agent.phone) {
       throw new ConflictException(
-        "A client profile referencing this telephone footprint already exists.",
-        ErrorCode.CLIENT_ALREADY_REGISTERED,
+        "An agent cannot register themselves as a client.",
+        ErrorCode.CANNOT_ASSIGN_SELF,
       );
     }
 
-    // Synthesize a secure communications bridge proxy string
-    const syntheticEmail = `proxy_${dto.phone.replace("+", "")}@${VIRTUAL_EMAIL_DOMAIN}`;
-    const locationGeo = dto.location
-      ? {
-          type: "Point" as const,
-          coordinates: [dto.location.lng, dto.location.lat] as [number, number],
+    let temporaryPin: string | null = null;
+    let clientId: string | number;
+    // Prevent a tracking map loop onto oneself
+    const existingUser = await this.repo.findByPhone(dto.phone);
+    if (existingUser) {
+      clientId = existingUser.id;
+      // Look for a conflicting active mapping link path context
+      if (!existingUser.phoneVerifiedAt || !existingUser.pinHash) {
+        // Fully active account — we can still assign an agent to it
+        // but we do NOT overwrite their PIN or account details.
+        // Unverified incomplete registration — agent takes it over
+        await this.repo.updateUnverifiedDetails(existingUser.id, {
+          firstName: dto.firstName,
+          lastName: dto.lastName,
+          role: dto.role as UserRole,
+        });
+      }
+      const alreadyAssigned = await this.repo.findAssignmentByAgentAndUser(
+        agentId,
+        clientId,
+      );
+      if (!alreadyAssigned) {
+        const hasOtherAgent = await this.repo.hasActiveAgent(clientId);
+        if (hasOtherAgent) {
+          throw new ConflictException(
+            "This user already has an active agent. They must be unassigned first.",
+            ErrorCode.ALREADY_HAS_ACTIVE_AGENT,
+          );
         }
-      : null;
+        await this.repo.createAgentAssignment(agentId, clientId);
+      }
+    } else {
+      // Synthesize a secure communications bridge proxy string
+      const syntheticEmail = `proxy_${dto.phone.replace("+", "")}@${VIRTUAL_EMAIL_DOMAIN}`;
+      const locationGeo = dto.location
+        ? {
+            type: "Point" as const,
+            coordinates: [dto.location.lng, dto.location.lat] as [
+              number,
+              number,
+            ],
+          }
+        : null;
 
-    // Step 1: Create client matrix profile row record
-    const newClient = await this.repo.createUnverified({
-      phone: dto.phone,
-      firstName: dto.firstName,
-      middleName: dto.middleName,
-      lastName: dto.lastName,
-      role: dto.role as UserRole,
-      email: syntheticEmail,
-      location: locationGeo,
-    });
+      temporaryPin = generateOtp(5); // 5-digit temp PIN
+      const pinHash = await HashUtil.hashSecret(temporaryPin);
 
-    // Step 2: Establish assignment ownership linkage map
-    await this.repo.createAgentAssignment(agent.id, newClient.id);
+      // Step 1: Create client matrix profile row record
+      const newClient = await this.repo.createUnverified({
+        phone: dto.phone,
+        firstName: dto.firstName,
+        middleName: dto.middleName,
+        lastName: dto.lastName,
+        role: dto.role as UserRole,
+        email: syntheticEmail,
+        location: locationGeo,
+      });
+      clientId = newClient.id;
+      await this.repo.markPhoneVerified(newClient.id);
+      await this.repo.updatePinHash(newClient.id, pinHash);
+      // Step 2: Establish assignment ownership linkage map
+      await this.repo.createAgentAssignment(agent.id, newClient.id);
+    }
 
-    return this.getPrivateProfile(newClient.id);
+    const smsMessage = temporaryPin
+      ? `VegeLink: Your account has been created by ${agent.firstName}. Your temporary PIN is ${temporaryPin}. Log in and change it immediately.`
+      : `VegeLink: Agent ${agent.firstName} has been assigned to your account.`;
+
+    await arkeselClient.sendSms(dto.phone, smsMessage);
+
+    return this.getPrivateProfile(clientId);
   }
 
   /**

@@ -39,6 +39,6 @@ export const useAuthStore = create<AuthState>()(
       clearAuth: () =>
         set({ user: null, accessToken: null, isAuthenticated: false, registrationToken: null, pendingPhone: null }),
     }),
-    { name: 'vegelink-auth', partialize: (s) => ({ user: s.user, accessToken: s.accessToken }) },
+    { name: 'vegelink-auth', partialize: (s) => ({ user: s.user }) },
   ),
 )

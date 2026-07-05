@@ -3,27 +3,31 @@ import { useMyListings, useCreateListing, useDeleteListing } from '../hooks/useL
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createListingSchema, type CreateListingFormData } from '../schemas'
+import type { Listing } from '../types/api'
+import { getApiErrorMessage } from '../lib/errors'
 import { Icon } from '../components/Icon'
 import { Spinner, ErrorAlert, EmptyState, StatusBadge } from '../components/ui/Feedback'
 import { Field } from '../components/ui/Field'
+import { PageHero } from '../components/ui/PageHero'
+import { FormActions } from '../components/ui/FormActions'
 
 export default function ListingsPage() {
   const [showForm, setShowForm] = useState(false)
   const { data, isLoading, error } = useMyListings()
-  const listings = Array.isArray(data) ? data : []
+  const listings = data ?? []
 
   return (
     <div className="page-stack">
-      <section className="page-hero">
-        <div>
-          <p className="eyebrow">My Listings</p>
-          <h2>Your produce inventory.</h2>
-          <p>Manage your active listings, prices, and availability.</p>
-        </div>
-        <button type="button" className="primary-button" onClick={() => setShowForm(true)}>
-          + New Listing
-        </button>
-      </section>
+      <PageHero
+        eyebrow="My Listings"
+        title="Your produce inventory."
+        description="Manage your active listings, prices, and availability."
+        action={
+          <button type="button" className="primary-button" onClick={() => setShowForm(true)}>
+            + New Listing
+          </button>
+        }
+      />
 
       {showForm && <CreateListingForm onClose={() => setShowForm(false)} />}
 
@@ -35,7 +39,7 @@ export default function ListingsPage() {
 
       {listings.length > 0 && (
         <section className="listing-grid">
-          {listings.map((listing: any) => (
+          {listings.map((listing) => (
             <ListingCard key={listing.id} listing={listing} />
           ))}
         </section>
@@ -74,27 +78,31 @@ export default function ListingsPage() {
   )
 }
 
-function ListingCard({ listing }: { listing: any }) {
+function ListingCard({ listing }: { listing: Listing }) {
   const { mutate: deleteListing, isPending } = useDeleteListing()
   return (
     <article className="listing-card wide">
       <div className="listing-top">
-        <StatusBadge status={listing.status ?? 'active'} />
+        <StatusBadge status={listing.status} />
         <Icon name="leaf" />
       </div>
-      <h3>{listing.vegetable_type ?? listing.cropName}</h3>
+      <h3>{listing.vegetable_type}</h3>
       <div className="listing-meta">
-        <span style={{ fontWeight: 700, color: '#264123' }}>GH₵ {listing.price_per_kg_ghs ?? listing.pricePerUnit}/kg</span>
-        <span>{listing.quantity_kg ?? listing.availableQuantity} kg</span>
+        <span style={{ fontWeight: 700, color: '#264123' }}>GH₵ {listing.price_per_kg_ghs}/kg</span>
+        <span>{listing.quantity_kg} kg</span>
       </div>
       {listing.harvest_date && (
         <p style={{ color: '#6b7280', fontSize: '0.85rem', margin: '8px 0 0' }}>
           Harvest: {new Date(listing.harvest_date).toLocaleDateString()}
         </p>
       )}
-      <button type="button" className="secondary-button" disabled={isPending}
+      <button
+        type="button"
+        className="secondary-button"
+        disabled={isPending}
         onClick={() => { if (confirm('Delete this listing?')) deleteListing(listing.id) }}
-        style={{ marginTop: 12, width: '100%', justifyContent: 'center', color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)' }}>
+        style={{ marginTop: 12, width: '100%', justifyContent: 'center', color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)' }}
+      >
         {isPending ? 'Deleting…' : 'Delete'}
       </button>
     </article>
@@ -104,16 +112,14 @@ function ListingCard({ listing }: { listing: any }) {
 function CreateListingForm({ onClose }: { onClose: () => void }) {
   const { mutate, isPending, error, isSuccess } = useCreateListing()
   const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateListingFormData, unknown, CreateListingFormData>({
-    resolver: zodResolver(createListingSchema) as any,
+    resolver: zodResolver(createListingSchema) as never,
   })
 
   const onSubmit = (data: CreateListingFormData) => {
-    mutate(data, {
-      onSuccess: () => { reset(); onClose() },
-    })
+    mutate(data, { onSuccess: () => { reset(); onClose() } })
   }
 
-  const apiError = error && (error as any).response?.data?.error?.message
+  const apiError = getApiErrorMessage(error)
 
   return (
     <section className="section-card accent-card">
@@ -130,12 +136,12 @@ function CreateListingForm({ onClose }: { onClose: () => void }) {
         </div>
         {apiError && <ErrorAlert message={apiError} />}
         {isSuccess && <div style={{ color: '#d6ffcd', fontWeight: 600 }}>Listing created ✓</div>}
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button type="button" className="secondary-button" onClick={onClose} style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
-          <button type="submit" className="primary-button" disabled={isPending} style={{ flex: 1, justifyContent: 'center' }}>
-            {isPending ? 'Creating…' : 'Create Listing'}
-          </button>
-        </div>
+        <FormActions
+          onCancel={onClose}
+          submitLabel="Create Listing"
+          pendingLabel="Creating…"
+          isPending={isPending}
+        />
       </form>
     </section>
   )
