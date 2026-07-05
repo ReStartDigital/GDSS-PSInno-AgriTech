@@ -272,7 +272,7 @@ export class AuthService {
   }
   private async sendOtpOrThrow(
     phone: string,
-    full_name: string | null = null,
+    full_name: string | null = "client",
   ): Promise<void> {
     const sendResult = await arkeselClient.generateOtp(
       phone,
@@ -298,9 +298,9 @@ export class AuthService {
     // the phone number itself.
     await otpRepository.setCooldown(phone);
   }
-  public resendOtp = async (
+  public async resendOtp(
     dto: ResendOtpDto,
-  ): Promise<{ message: string; expiresInSeconds: number }> => {
+  ): Promise<{ message: string; expiresInSeconds: number }> {
     const existing = await userRepository.findByPhone(dto.phone);
 
     if (!existing) {
@@ -312,7 +312,7 @@ export class AuthService {
       );
     }
 
-    if (existing.phoneVerifiedAt) {
+    if (existing.phoneVerifiedAt && existing.pinHash) {
       throw new ConflictException(
         "This phone number is already registered. Try logging in instead.",
         ErrorCode.PHONE_ALREADY_REGISTERED,
@@ -327,11 +327,17 @@ export class AuthService {
     }
 
     await this.sendOtpOrThrow(dto.phone);
+    const redisKey = `otp:${dto.phone}`;
+    await this.redisService.set(
+      redisKey,
+      JSON.stringify({ attempts: 0 }),
+      AUTH_CONSTANTS.OTP.EXPIRY_SECONDS,
+    );
     return {
       message: "OTP resent",
       expiresInSeconds: AUTH_CONSTANTS.OTP.EXPIRY_SECONDS,
     };
-  };
+  }
   /**
    * POST /auth/refresh
    * Implements secure single-use token rotation for mobile apps.

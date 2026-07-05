@@ -157,7 +157,6 @@ describe("AuthService Integration Suite", () => {
         lastName: "Mensah",
         role: UserRole.AGENT,
       });
-      console.log(result);
 
       expect(mockUserRepo.createUnverified).not.toHaveBeenCalled();
       expect(mockUserRepo.updateUnverifiedDetails).toHaveBeenCalled();
