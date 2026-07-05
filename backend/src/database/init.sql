@@ -97,8 +97,46 @@ CREATE TABLE refresh_tokens (
  ip_address INET,
  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX idx_rt_user_id ON refresh_tokens(user_id);
+CREATE INDEX idx_rt_token_hash ON refresh_tokens(token_hash);
     
 CREATE TRIGGER update_users_modtime
     BEFORE UPDATE ON users
     FOR EACH ROW
     EXECUTE FUNCTION update_modified_column();
+
+CREATE TABLE packaging_options (
+ id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+ name VARCHAR(255) NOT NULL,
+ capacity_kg NUMERIC(8, 2) NOT NULL,
+ cost_per_unit_ghs NUMERIC(10, 2) NOT NULL,
+ suitable_for TEXT[] NOT NULL, -- e.g. ARRAY['tomatoes','peppers']
+ protection_level protection_level NOT NULL,
+ description TEXT,
+ guidelines_text TEXT,
+ image_url TEXT,
+ is_active BOOLEAN NOT NULL DEFAULT TRUE,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE produce_listings (
+ id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+ farmer_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+ vegetable_type VARCHAR(100) NOT NULL,
+ quantity_kg NUMERIC(10, 2) NOT NULL CHECK (quantity_kg > 0),
+ price_per_kg_ghs NUMERIC(10, 2) NOT NULL CHECK (price_per_kg_ghs > 0),
+ harvest_date DATE NOT NULL,
+ images JSONB NOT NULL DEFAULT '[]', -- Cloudinary URL array
+ recommended_packaging_id UUID REFERENCES packaging_options(id) ON DELETE SET NULL,
+ location GEOMETRY(Point, 4326) NOT NULL,
+ status listing_status NOT NULL DEFAULT 'active',
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_listings_farmer_id ON produce_listings(farmer_id);
+CREATE INDEX idx_listings_status ON produce_listings(status);
+CREATE INDEX idx_listings_veg_type ON produce_listings(vegetable_type);
+CREATE INDEX idx_listings_location ON produce_listings USING GIST(location);

@@ -18,14 +18,12 @@ export class InitialAuthAndUsers1782749693448 implements MigrationInterface {
 
         -- Global Application Context Enums
         CREATE TYPE user_role AS ENUM ('farmer', 'buyer', 'transporter', 'agent', 'admin');
-        CREATE TYPE listing_status AS ENUM ('active', 'sold', 'cancelled');
         CREATE TYPE order_status AS ENUM ('pending', 'negotiating', 'confirmed', 'packed', 'in_transit', 'delivered', 'cancelled');
         CREATE TYPE fulfillment_mode AS ENUM ('pickup', 'delivery');
         CREATE TYPE payment_status AS ENUM ('pending', 'success', 'failed', 'refunded');
         CREATE TYPE payment_channel AS ENUM ('mobile_money', 'card');
         CREATE TYPE mobile_money_provider AS ENUM ('mtn', 'vodafone', 'airteltigo', 'telecel');
         CREATE TYPE transport_status AS ENUM ('open', 'accepted', 'en_route', 'picked_up', 'in_transit', 'delivered', 'cancelled');
-        CREATE TYPE protection_level AS ENUM ('low', 'medium', 'high');
         CREATE TYPE sms_status AS ENUM ('sent', 'failed');
         CREATE TYPE audit_action AS ENUM ('CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'PAYMENT');
 
