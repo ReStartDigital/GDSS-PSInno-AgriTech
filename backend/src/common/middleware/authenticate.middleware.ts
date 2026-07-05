@@ -3,6 +3,10 @@ import { verifyAccessToken } from "../../infrastructure/jwt/jwt.util.js";
 import { UnauthorizedException } from "../exceptions/index.js";
 import { ErrorCode } from "../constants/error-codes.enum.js";
 
+export interface CustomRequest extends Request {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  token?: string | any;
+}
 /**
  * Validates the `Authorization: Bearer <token>` header as a full access
  * token (type === 'access'). Populates req.user. Used on every route that

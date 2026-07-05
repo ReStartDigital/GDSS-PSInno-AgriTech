@@ -46,11 +46,19 @@ export class AuthController {
   };
 
   /** POST /auth/resend-otp */
-  async resendOtp(req: Request, res: Response): Promise<void> {
-    const dto = req.body as ResendOtpDto;
-    const result = await this.authService.resendOtp(dto);
-    ApiResponse.sendSuccess(res, result, 200);
-  }
+  public resendOtp = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const dto = req.body as ResendOtpDto;
+      const result = await this.authService.resendOtp(dto);
+      ApiResponse.sendSuccess(res, result, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 
   /**
    * STEP 2 — POST /auth/verify-otp
@@ -82,7 +90,7 @@ export class AuthController {
   ): Promise<void> => {
     try {
       const dto = req.body as SetPinDto;
-      const phone = req.registrationContext?.phone;
+      const phone = req.registration?.phone;
 
       if (!phone) {
         throw new AppException(
