@@ -12,7 +12,6 @@ export class PackagingOptionsAndProductListings1783216802569 implements Migratio
         id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         name                VARCHAR(255) NOT NULL,
         capacity_kg         NUMERIC(8,2) NOT NULL,
-        cost_per_unit_ghs   NUMERIC(10,2) NOT NULL,
         suitable_for        TEXT[] NOT NULL,
         protection_level    protection_level NOT NULL,
         description         TEXT,
@@ -27,13 +26,13 @@ export class PackagingOptionsAndProductListings1783216802569 implements Migratio
     // Seed the 5 standard packaging options
     await queryRunner.query(`
       INSERT INTO packaging_options
-        (name, capacity_kg, cost_per_unit_ghs, suitable_for, protection_level, description)
+        (name, capacity_kg, suitable_for, protection_level, description)
       VALUES
-        ('Ventilated Crates',  15, 8.00,  ARRAY['tomatoes','peppers','garden eggs'],                   'high',   'Stackable plastic crates with ventilation holes. Best for fragile produce.'),
-        ('Plastic Baskets',    20, 5.50,  ARRAY['garden eggs','okra','tomatoes'],                      'medium', 'Durable reusable baskets. Good general-purpose option.'),
-        ('Mesh Bags',          10, 1.50,  ARRAY['leafy greens','spinach','cabbage'],                   'low',    'Lightweight breathable bags. Suitable for produce that needs airflow.'),
-        ('Export-grade Boxes', 12, 12.00, ARRAY['tomatoes','peppers','garden eggs','exotic produce'],  'high',   'Corrugated boxes meeting export standards. For premium or export buyers.'),
-        ('Bulk Sacks',         50, 2.00,  ARRAY['yams','cassava','plantain','root vegetables'],        'low',    'Heavy-duty woven sacks for high-volume root vegetable transport.');
+        ('Ventilated Crates',  15,  ARRAY['tomatoes','peppers','garden eggs'],                   'high',   'Stackable plastic crates with ventilation holes. Best for fragile produce.'),
+        ('Plastic Baskets',    20,  ARRAY['garden eggs','okra','tomatoes'],                      'medium', 'Durable reusable baskets. Good general-purpose option.'),
+        ('Mesh Bags',          10,  ARRAY['leafy greens','spinach','cabbage'],                   'low',    'Lightweight breathable bags. Suitable for produce that needs airflow.'),
+        ('Export-grade Boxes', 12, ARRAY['tomatoes','peppers','garden eggs','exotic produce'],  'high',   'Corrugated boxes meeting export standards. For premium or export buyers.'),
+        ('Bulk Sacks',         50,  ARRAY['yams','cassava','plantain','root vegetables'],        'low',    'Heavy-duty woven sacks for high-volume root vegetable transport.');
     `);
 
     // ── produce_listings ──────────────────────────────────────────────────────
@@ -48,6 +47,7 @@ export class PackagingOptionsAndProductListings1783216802569 implements Migratio
         vegetable_type              VARCHAR(100) NOT NULL,
         quantity_kg                 NUMERIC(10,2) NOT NULL CHECK (quantity_kg > 0),
         price_per_kg_ghs            NUMERIC(10,2) NOT NULL CHECK (price_per_kg_ghs > 0),
+        packaging_cost_per_unit_ghs NUMERIC(10,2) NOT NULL DEFAULT 0.00 CHECK (packaging_cost_per_unit_ghs >= 0),
         harvest_date                DATE NOT NULL,
         images                      JSONB NOT NULL DEFAULT '[]',
         recommended_packaging_id    UUID REFERENCES packaging_options(id) ON DELETE SET NULL,

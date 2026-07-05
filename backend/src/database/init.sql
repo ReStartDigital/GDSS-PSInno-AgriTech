@@ -110,7 +110,6 @@ CREATE TABLE packaging_options (
  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
  name VARCHAR(255) NOT NULL,
  capacity_kg NUMERIC(8, 2) NOT NULL,
- cost_per_unit_ghs NUMERIC(10, 2) NOT NULL,
  suitable_for TEXT[] NOT NULL, -- e.g. ARRAY['tomatoes','peppers']
  protection_level protection_level NOT NULL,
  description TEXT,
@@ -127,6 +126,7 @@ CREATE TABLE produce_listings (
  vegetable_type VARCHAR(100) NOT NULL,
  quantity_kg NUMERIC(10, 2) NOT NULL CHECK (quantity_kg > 0),
  price_per_kg_ghs NUMERIC(10, 2) NOT NULL CHECK (price_per_kg_ghs > 0),
+ packaging_cost_per_unit_ghs NUMERIC(10,2) NOT NULL DEFAULT 0.00 CHECK (packaging_cost_per_unit_ghs >= 0),
  harvest_date DATE NOT NULL,
  images JSONB NOT NULL DEFAULT '[]', -- Cloudinary URL array
  recommended_packaging_id UUID REFERENCES packaging_options(id) ON DELETE SET NULL,
