@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useMyListings, useCreateListing, useDeleteListing } from '../hooks/useListings'
+import { useMyClients } from '../hooks/useClients'
+import { useAuthStore } from '../store/auth.store'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createListingSchema, type CreateListingFormData } from '../schemas'
@@ -12,29 +14,89 @@ import { PageHero } from '../components/ui/PageHero'
 import { FormActions } from '../components/ui/FormActions'
 
 export default function ListingsPage() {
+  const user = useAuthStore((s) => s.user)
+  const isAgent = user?.role === 'agent'
+  
+  const { data: clients = [], isLoading: clientsLoading } = useMyClients()
+  const [selectedFarmerId, setSelectedFarmerId] = useState<string>('')
+  
   const [showForm, setShowForm] = useState(false)
-  const { data, isLoading, error } = useMyListings()
+  
+  if (isAgent && !selectedFarmerId && clients.length > 0) {
+    setSelectedFarmerId(clients[0].id)
+  }
+
+  const { data, isLoading, error } = useMyListings(isAgent ? selectedFarmerId : undefined)
   const listings = data ?? []
+
+  const activeClientName = isAgent 
+    ? clients.find(c => c.id === selectedFarmerId)?.firstName ?? 'Selected Farmer'
+    : ''
 
   return (
     <div className="page-stack">
       <PageHero
-        eyebrow="My Listings"
-        title="Your produce inventory."
-        description="Manage your active listings, prices, and availability."
+        eyebrow={isAgent ? `Agent client: ${activeClientName}` : 'My Listings'}
+        title={isAgent ? 'Manage client listings.' : 'Your produce inventory.'}
+        description={isAgent 
+          ? 'View and manage listings on behalf of your onboarded farmers.' 
+          : 'Manage your active listings, prices, and availability.'
+        }
         action={
-          <button type="button" className="primary-button" onClick={() => setShowForm(true)}>
-            + New Listing
-          </button>
+          (!isAgent || clients.length > 0) ? (
+            <button type="button" className="primary-button" onClick={() => setShowForm(true)}>
+              + New Listing
+            </button>
+          ) : null
         }
       />
 
-      {showForm && <CreateListingForm onClose={() => setShowForm(false)} />}
+      {isAgent && (
+        <section className="section-card" style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#374151' }}>Select Client:</span>
+            {clientsLoading ? (
+              <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>Loading clients...</span>
+            ) : clients.length === 0 ? (
+              <span style={{ fontSize: '0.85rem', color: '#ef4444' }}>No clients registered yet. Please register a farmer first.</span>
+            ) : (
+              <select 
+                value={selectedFarmerId} 
+                onChange={(e) => setSelectedFarmerId(e.target.value)}
+                style={{ 
+                  padding: '8px 12px', 
+                  borderRadius: '6px', 
+                  border: '1px solid #E5E7EB', 
+                  background: '#fff',
+                  fontSize: '0.9rem',
+                  color: '#374151'
+                }}
+              >
+                {clients.map(c => (
+                  <option key={c.id} value={c.id}>{c.firstName} {c.lastName} ({c.phone})</option>
+                ))}
+              </select>
+            )}
+          </div>
+        </section>
+      )}
+
+      {showForm && (
+        <CreateListingForm 
+          onClose={() => setShowForm(false)} 
+          isAgent={isAgent}
+          clients={clients}
+          selectedFarmerId={selectedFarmerId}
+        />
+      )}
 
       {isLoading && <Spinner />}
-      {error && <ErrorAlert message="Could not load your listings." />}
+      {error && <ErrorAlert message="Could not load listings. Make sure the backend is running." />}
       {!isLoading && !error && listings.length === 0 && (
-        <EmptyState message="You have no listings yet. Create your first one above." />
+        <EmptyState message={isAgent 
+          ? 'This farmer client has no listings yet. Click "+ New Listing" to create one.' 
+          : 'You have no listings yet. Create your first one above.'
+        } />
       )}
 
       {listings.length > 0 && (
@@ -109,14 +171,36 @@ function ListingCard({ listing }: { listing: Listing }) {
   )
 }
 
-function CreateListingForm({ onClose }: { onClose: () => void }) {
+function CreateListingForm({ 
+  onClose, 
+  isAgent, 
+  clients,
+  selectedFarmerId 
+}: { 
+  onClose: () => void
+  isAgent: boolean
+  clients: any[]
+  selectedFarmerId: string
+}) {
   const { mutate, isPending, error, isSuccess } = useCreateListing()
   const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateListingFormData, unknown, CreateListingFormData>({
     resolver: zodResolver(createListingSchema) as never,
   })
+  
+  const [formFarmerId, setFormFarmerId] = useState(selectedFarmerId)
 
   const onSubmit = (data: CreateListingFormData) => {
-    mutate(data, { onSuccess: () => { reset(); onClose() } })
+    const payload = {
+      ...data,
+      location: {
+        lat: 6.6745,
+        lng: -1.5644,
+      },
+      supports_delivery: true,
+      supports_pickup: true,
+      ...(isAgent ? { farmer_id: formFarmerId } : {})
+    }
+    mutate(payload as any, { onSuccess: () => { reset(); onClose() } })
   }
 
   const apiError = getApiErrorMessage(error)
@@ -128,6 +212,29 @@ function CreateListingForm({ onClose }: { onClose: () => void }) {
         <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', color: '#f8faf5', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
       </div>
       <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'grid', gap: 14 }}>
+        {isAgent && (
+          <div style={{ marginBottom: 4 }}>
+            <span style={{ color: '#fff', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }}>Farmer Client</span>
+            <select 
+              value={formFarmerId}
+              onChange={(e) => setFormFarmerId(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '6px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.1)',
+                color: '#fff',
+                fontSize: '0.9rem',
+                outline: 'none',
+              }}
+            >
+              {clients.map(c => (
+                <option key={c.id} value={c.id} style={{ color: '#000' }}>{c.firstName} {c.lastName} ({c.phone})</option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="form-grid">
           <Field label="Crop Type" dark placeholder="e.g. Tomatoes" error={errors.vegetable_type} {...register('vegetable_type')} />
           <Field label="Quantity (kg)" dark type="number" min="1" placeholder="e.g. 200" error={errors.quantity_kg} {...register('quantity_kg')} />

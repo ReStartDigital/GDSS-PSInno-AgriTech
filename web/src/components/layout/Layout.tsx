@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { to: '/', label: 'Overview', icon: 'leaf' as const, exact: true },
   { to: '/marketplace', label: 'Marketplace', icon: 'shopping' as const },
   { to: '/listings', label: 'Listings', icon: 'bag' as const },
+  { to: '/clients', label: 'My Clients', icon: 'user' as const },
   { to: '/orders', label: 'Orders', icon: 'truck' as const },
   { to: '/profile', label: 'Profile', icon: 'user' as const },
 ]
@@ -14,6 +15,7 @@ function getPageTitle(path: string): string {
   if (path === '/') return 'Platform overview'
   if (path.startsWith('/marketplace')) return 'Marketplace'
   if (path.startsWith('/listings')) return 'My Listings'
+  if (path.startsWith('/clients')) return 'My Clients'
   if (path.startsWith('/orders')) return 'Orders'
   if (path.startsWith('/profile')) return 'Profile'
   if (path.startsWith('/auth')) return 'Authentication'
@@ -26,7 +28,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
 
   const visibleNav = NAV_ITEMS.filter((item) => {
-    if (item.to === '/listings' && role !== 'farmer') return false
+    if (item.to === '/listings' && role !== 'farmer' && role !== 'agent') return false
+    if (item.to === '/clients' && role !== 'agent') return false
     if (item.to === '/marketplace' && role === 'farmer') return false
     return true
   })

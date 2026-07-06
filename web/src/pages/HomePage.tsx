@@ -268,7 +268,7 @@ function DashboardSummary({ role }: { role: string }) {
       </div>
 
       <div className="dashboard-grid">
-        {(role === 'farmer' || role === 'buyer' || role === 'transporter') && (
+        {(role === 'farmer' || role === 'buyer' || role === 'transporter' || role === 'agent') && (
           <div className="dashboard-panel">
             <p className="dashboard-panel-label">Recent Orders</p>
             {ordersLoading ? <Spinner /> : recentOrders.length === 0 ? (
@@ -310,6 +310,23 @@ function DashboardSummary({ role }: { role: string }) {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {role === 'agent' && (
+          <div className="dashboard-panel">
+            <p className="dashboard-panel-label">Client Management</p>
+            <p style={{ color: '#374151', fontSize: '0.9rem', margin: '0 0 16px', lineHeight: '1.5' }}>
+              Onboard and manage farmer client details, view their active produce, and create listings on their behalf.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Link to="/clients" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '0 16px', fontSize: '0.85rem' }}>
+                My Clients
+              </Link>
+              <Link to="/listings" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '0 16px', fontSize: '0.85rem' }}>
+                Client Listings
+              </Link>
+            </div>
           </div>
         )}
 

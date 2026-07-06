@@ -79,6 +79,13 @@ export default function ProfilePage() {
               </Link>
             </div>
           )}
+          {user?.role === 'agent' && (
+            <div style={{ marginBottom: 16 }}>
+              <Link to="/clients" className="quick-link" style={{ textDecoration: 'none', display: 'inline-flex', width: '100%', justifyContent: 'flex-start' }}>
+                <Icon name="user" /> My Clients
+              </Link>
+            </div>
+          )}
 
           {user ? (
             <button type="button" className="secondary-button logout-button"
