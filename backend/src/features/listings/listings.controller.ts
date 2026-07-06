@@ -1,15 +1,15 @@
-import type { Request, Response } from 'express';
-import { listingsService } from './listings.service.js';
-import { sendSuccess } from '../../common/dto/api-response.dto.js';
-import { UnprocessableException } from '../../common/exceptions/index.js';
-import { ErrorCode } from '../../common/constants/error-codes.enum.js';
-import { asyncHandler } from '../../common/utils/async-handler.util.js';
+import type { Request, Response } from "express";
+import { listingsService } from "./listings.service.js";
+import { sendSuccess } from "../../common/dto/api-response.dto.js";
+import { UnprocessableException } from "../../common/exceptions/index.js";
+import { ErrorCode } from "../../common/constants/error-codes.enum.js";
+import { asyncHandler } from "../../common/utils/async-handler.util.js";
 import type {
   CreateListingDto,
   UpdateListingDto,
   ListingsQueryDto,
   PackagingRecommendDto,
-} from './listings.schema.js';
+} from "./listings.schema.js";
 
 export class ListingsController {
   // Wrap all methods with asyncHandler
@@ -22,7 +22,10 @@ export class ListingsController {
   getById = asyncHandler(async (req: Request, res: Response) => {
     const id = req.params.id as string;
     if (!id) {
-        throw new UnprocessableException('Listing ID is required', ErrorCode.VALIDATION_ERROR);
+      throw new UnprocessableException(
+        "Listing ID is required",
+        ErrorCode.VALIDATION_ERROR,
+      );
     }
     const listing = await listingsService.getById(id);
     sendSuccess(res, { listing });
@@ -49,9 +52,15 @@ export class ListingsController {
 
   uploadImage = asyncHandler(async (req: Request, res: Response) => {
     if (!req.file?.buffer) {
-      throw new UnprocessableException('No image file provided.', ErrorCode.VALIDATION_ERROR);
+      throw new UnprocessableException(
+        "No image file provided.",
+        ErrorCode.VALIDATION_ERROR,
+      );
     }
-    const result = await listingsService.uploadImage(req.user!, req.file.buffer);
+    const result = await listingsService.uploadImage(
+      req.user!,
+      req.file.buffer,
+    );
     sendSuccess(res, result, 201);
   });
 

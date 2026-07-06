@@ -1,7 +1,7 @@
 import { jest, describe, beforeEach, it, expect } from "@jest/globals";
 import { ListingsService } from "../listings.service.js";
 import { UserRole } from "../../../common/constants/roles.enums.js";
-import { ProduceListingEntity } from "../../../database/entities/ProduceListingEntity.js";
+import { ProduceListingEntity } from "../../../database/entities/ProduceListing.js";
 import type { AccessTokenPayload } from "../../../common/types/express.js";
 import { ListingsRepository } from "../listings.repository.js";
 
@@ -9,7 +9,10 @@ import { ListingsRepository } from "../listings.repository.js";
 const mockListingsRepository = {
   findById: jest.fn<(id: string) => Promise<ProduceListingEntity | null>>(),
   hasActiveOrders: jest.fn<(id: string) => Promise<boolean>>(),
-  update: jest.fn<(id: string, data: Partial<ProduceListingEntity>) => Promise<void>>(),
+  update:
+    jest.fn<
+      (id: string, data: Partial<ProduceListingEntity>) => Promise<void>
+    >(),
   findPackagingById: jest.fn(),
   recommendPackaging: jest.fn(),
   findAll: jest.fn(),
@@ -19,7 +22,9 @@ const mockListingsRepository = {
 jest.mock("../listings.repository.js", () => {
   return {
     listingsRepository: mockListingsRepository,
-    ListingsRepository: jest.fn().mockImplementation(() => mockListingsRepository),
+    ListingsRepository: jest
+      .fn()
+      .mockImplementation(() => mockListingsRepository),
   };
 });
 
@@ -28,7 +33,9 @@ jest.mock("../../../common/utils/logger.js");
 jest.mock("../../user/user.repository.js");
 
 // ── 2. Initialize Service with Mock ──────────────────────────────────────────
-const listingsService = new ListingsService(mockListingsRepository as unknown as ListingsRepository);
+const listingsService = new ListingsService(
+  mockListingsRepository as unknown as ListingsRepository,
+);
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -38,8 +45,13 @@ beforeEach(() => {
 describe("ListingsService", () => {
   describe("getById", () => {
     it("returns listing when it exists", async () => {
-      const mockListing = { id: "list-123", vegetableType: "Tomatoes" } as Partial<ProduceListingEntity>;
-      mockListingsRepository.findById.mockResolvedValue(mockListing as ProduceListingEntity);
+      const mockListing = {
+        id: "list-123",
+        vegetableType: "Tomatoes",
+      } as Partial<ProduceListingEntity>;
+      mockListingsRepository.findById.mockResolvedValue(
+        mockListing as ProduceListingEntity,
+      );
 
       const result = await listingsService.getById("list-123");
 
@@ -57,10 +69,17 @@ describe("ListingsService", () => {
   });
 
   describe("remove", () => {
-    const caller: AccessTokenPayload = { sub: "farmer-1", role: UserRole.FARMER, type: "access" };
+    const caller: AccessTokenPayload = {
+      sub: "farmer-1",
+      role: UserRole.FARMER,
+      type: "access",
+    };
 
     it("cancels listing when valid and no active orders", async () => {
-      const mockListing = { id: "list-123", farmerId: "farmer-1" } as ProduceListingEntity;
+      const mockListing = {
+        id: "list-123",
+        farmerId: "farmer-1",
+      } as ProduceListingEntity;
       mockListingsRepository.findById.mockResolvedValue(mockListing);
       mockListingsRepository.hasActiveOrders.mockResolvedValue(false);
       mockListingsRepository.update.mockResolvedValue(undefined);
@@ -75,7 +94,10 @@ describe("ListingsService", () => {
     });
 
     it("throws ConflictException when active orders exist", async () => {
-      const mockListing = { id: "list-123", farmerId: "farmer-1" } as ProduceListingEntity;
+      const mockListing = {
+        id: "list-123",
+        farmerId: "farmer-1",
+      } as ProduceListingEntity;
       mockListingsRepository.findById.mockResolvedValue(mockListing);
       mockListingsRepository.hasActiveOrders.mockResolvedValue(true);
 

@@ -23,14 +23,6 @@ export class PackagingOptionEntity {
   @Column({ type: "numeric", precision: 8, scale: 2, name: "capacity_kg" })
   capacityKg!: number;
 
-  @Column({
-    type: "numeric",
-    precision: 10,
-    scale: 2,
-    name: "cost_per_unit_ghs",
-  })
-  costPerUnitGhs!: number;
-
   /** Array of vegetable types this packaging suits. e.g. ['tomatoes','peppers'] */
   @Column({ type: "text", array: true, name: "suitable_for" })
   suitableFor!: string[];

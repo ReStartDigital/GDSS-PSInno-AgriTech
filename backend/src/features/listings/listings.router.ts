@@ -1,17 +1,20 @@
-import { Router } from 'express';
-import { listingsController } from './listings.controller.js';
-import { authenticate } from '../../common/middleware/authenticate.middleware.js';
-import { authorize } from '../../common/middleware/authorization.middleware.js';
-import { validate } from '../../common/middleware/validate.middleware.js';
-import { generalRateLimiter } from '../../common/middleware/rate-limit.middleware.js';
-import { uploadSingleImage, handleMulterError } from '../../common/middleware/upload.middleware.js';
-import { UserRole } from '../../common/constants/roles.enums.js';
+import { Router } from "express";
+import { listingsController } from "./listings.controller.js";
+import { authenticate } from "../../common/middleware/authenticate.middleware.js";
+import { authorize } from "../../common/middleware/authorization.middleware.js";
+import { validate } from "../../common/middleware/validate.middleware.js";
+import { generalRateLimiter } from "../../common/middleware/rate-limit.middleware.js";
+import {
+  uploadSingleImage,
+  handleMulterError,
+} from "../../common/middleware/upload.middleware.js";
+import { UserRole } from "../../common/constants/roles.enums.js";
 import {
   createListingSchema,
   updateListingSchema,
   listingsQuerySchema,
   packagingRecommendSchema,
-} from './listings.schema.js';
+} from "./listings.schema.js";
 
 const router = Router();
 router.use(generalRateLimiter);
@@ -103,10 +106,10 @@ router.use(generalRateLimiter);
  *               $ref: '#/components/schemas/ApiError'
  */
 router.post(
-  '/images',
+  "/images",
   authenticate,
   authorize(UserRole.FARMER, UserRole.AGENT),
-  uploadSingleImage('image'),
+  uploadSingleImage("image"),
   handleMulterError,
   listingsController.uploadImage,
 );
@@ -172,9 +175,9 @@ router.post(
  *               $ref: '#/components/schemas/ApiError'
  */
 router.get(
-  '/packaging/recommend',
+  "/packaging/recommend",
   authenticate,
-  validate(packagingRecommendSchema, 'query'),
+  validate(packagingRecommendSchema, "query"),
   listingsController.recommendPackaging,
 );
 
@@ -299,9 +302,9 @@ router.get(
  *         $ref: '#/components/responses/ValidationError'
  */
 router.get(
-  '/',
+  "/",
   authenticate,
-  validate(listingsQuerySchema, 'query'),
+  validate(listingsQuerySchema, "query"),
   listingsController.browse,
 );
 
@@ -412,7 +415,7 @@ router.get(
  *         $ref: '#/components/responses/ValidationError'
  */
 router.post(
-  '/',
+  "/",
   authenticate,
   authorize(UserRole.FARMER, UserRole.AGENT),
   validate(createListingSchema),
@@ -460,11 +463,7 @@ router.post(
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.get(
-  '/:id',
-  authenticate,
-  listingsController.getById,
-);
+router.get("/:id", authenticate, listingsController.getById);
 
 /**
  * @swagger
@@ -539,7 +538,7 @@ router.get(
  *         $ref: '#/components/responses/ValidationError'
  */
 router.patch(
-  '/:id',
+  "/:id",
   authenticate,
   authorize(UserRole.FARMER, UserRole.AGENT),
   validate(updateListingSchema),
@@ -607,7 +606,7 @@ router.patch(
  *                 message: Cannot delete a listing that has an active order. Cancel the order first.
  */
 router.delete(
-  '/:id',
+  "/:id",
   authenticate,
   authorize(UserRole.FARMER, UserRole.AGENT),
   listingsController.remove,

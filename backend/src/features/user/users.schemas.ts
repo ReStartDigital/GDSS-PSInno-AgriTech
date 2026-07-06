@@ -56,6 +56,8 @@ export const updateProfileSchema = z
       .max(100)
       .optional(),
     email: emailRules,
+    region: z.string().trim().max(255).nullable().optional(),
+    language: z.string().trim().max(50).optional(),
     location: z
       .object({
         lat: z.number().min(-90).max(90),
@@ -120,6 +122,8 @@ export const registerClientSchema = z.object({
   role: z.enum(REGISTERABLE_ROLES as [string, ...string[]], {
     message: `Role must be one of: ${REGISTERABLE_ROLES.join(", ")}`, // ✨ Corrected to 'message'
   }),
+  region: z.string().trim().max(255).nullable().optional(),
+  language: z.string().trim().max(50).optional(),
   location: z
     .object({
       lat: z.number().min(-90).max(90),

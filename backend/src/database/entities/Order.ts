@@ -8,7 +8,7 @@ import {
   JoinColumn,
 } from "typeorm";
 import { User } from "./User.js";
-import { ProduceListingEntity } from "./ProduceListingEntity.js";
+import { ProduceListingEntity } from "./ProduceListing.js";
 import { OrderStatus } from "../../common/constants/roles.enums.js";
 
 @Entity("orders")

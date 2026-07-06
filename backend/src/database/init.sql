@@ -36,6 +36,10 @@ CREATE TABLE users (
  profile_photo_url TEXT,
  location GEOMETRY(Point, 4326), 
 
+ -- ✨ Added demographic fields
+ region VARCHAR(255) DEFAULT NULL,
+ language VARCHAR(50) DEFAULT 'en',
+
  -- ✨ Added Payout routing targets
  payment_details_set BOOLEAN NOT NULL DEFAULT FALSE,
  mobile_money_number VARCHAR(20) DEFAULT NULL,

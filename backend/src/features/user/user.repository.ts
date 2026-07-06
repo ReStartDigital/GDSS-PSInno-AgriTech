@@ -22,6 +22,8 @@ const PUBLIC_COLUMNS: FindOptionsSelect<User> = {
   lastName: true,
   role: true,
   profilePhotoUrl: true,
+  region: true,
+  language: true,
   location: true,
   isActive: true,
   createdAt: true,

@@ -12,7 +12,7 @@ const baseConfig = {
   type: "postgres" as const,
   synchronize: false,
   logging: process.env.NODE_ENV === "development",
-  entities: [join(__dirname, "database", "entities", "**", "*.{ts,js}")],
+  entities: [join(__dirname, "entities", "**", "*.{ts,js}")],
   migrations: [join(__dirname, "migrations", "**", "*.{ts,js}")],
   subscribers: [],
 };
