@@ -22,6 +22,8 @@ const PUBLIC_COLUMNS: FindOptionsSelect<User> = {
   lastName: true,
   role: true,
   profilePhotoUrl: true,
+  region: true,
+  language: true,
   location: true,
   isActive: true,
   createdAt: true,
@@ -31,6 +33,7 @@ const PRIVATE_COLUMNS: FindOptionsSelect<User> = {
   ...PUBLIC_COLUMNS,
   phone: true,
   email: true,
+  pinHash: true,
   phoneVerifiedAt: true,
   paymentDetailsSet: true,
   mobileMoneyNumber: true,
@@ -105,6 +108,7 @@ export class UserRepository {
       lastName: string;
       role: UserRole;
       email?: string;
+      profilePhotoUrl?: string;
       location?: { type: "Point"; coordinates: [number, number] } | null;
     },
   ): Promise<User> {
@@ -113,6 +117,9 @@ export class UserRepository {
       middleName: params.middleName ?? null,
       lastName: params.lastName,
       role: params.role,
+      ...(params.profilePhotoUrl && {
+        profilePhotoUrl: params.profilePhotoUrl,
+      }),
       ...(params.email && { email: params.email }),
       ...(params.location !== undefined && { location: params.location }),
     });

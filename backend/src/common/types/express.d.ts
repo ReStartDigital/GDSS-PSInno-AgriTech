@@ -20,6 +20,8 @@ declare global {
       requestId: string;
       /** Set by `authenticate` middleware after verifying a full access token. */
       user?: AccessTokenPayload;
+      /** Set by `validate` middleware. */
+      validatedData?: unknown;
       registrationContext?: {
         phone: string;
       };
