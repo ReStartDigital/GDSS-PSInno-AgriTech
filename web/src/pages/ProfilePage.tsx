@@ -37,6 +37,8 @@ export default function ProfilePage() {
             {[
               { label: 'Role', value: user?.role ?? '—' },
               { label: 'Phone', value: user?.phone ?? '—' },
+              { label: 'Region', value: user?.region ?? '—' },
+              { label: 'Language', value: user?.language ?? '—' },
               { label: 'Verification', value: 'SMS verified' },
               { label: 'Session', value: user ? 'Active' : 'Not logged in' },
             ].map((item) => (

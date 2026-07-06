@@ -13,6 +13,8 @@ interface UserStore {
   pin?: string
   isActive: boolean
   createdAt: string
+  region?: string
+  language?: string
 }
 
 interface ClientAssignment {
@@ -134,6 +136,8 @@ interface PendingRegistration {
   firstName: string
   lastName: string
   role: string
+  region?: string
+  language?: string
 }
 
 let pendingReg: PendingRegistration | null = null
@@ -145,6 +149,8 @@ export const authApi = {
       firstName: data.firstName,
       lastName: data.lastName,
       role: data.role,
+      region: data.region,
+      language: data.language,
     }
     return Promise.resolve({
       data: {
@@ -179,6 +185,8 @@ export const authApi = {
       firstName: pendingReg.firstName,
       lastName: pendingReg.lastName,
       role: pendingReg.role,
+      region: pendingReg.region,
+      language: pendingReg.language,
       pin,
       isActive: true,
       createdAt: new Date().toISOString()
@@ -186,7 +194,7 @@ export const authApi = {
     users.push(newUser)
     setLocalStorage('vl_users', users)
 
-    const responseUser = { id: newUser.id, phone: newUser.phone, role: newUser.role }
+    const responseUser = { id: newUser.id, phone: newUser.phone, role: newUser.role, region: newUser.region, language: newUser.language }
     return Promise.resolve({
       data: {
         success: true,
@@ -209,7 +217,7 @@ export const authApi = {
         }
       })
     }
-    const responseUser = { id: user.id, phone: user.phone, role: user.role }
+    const responseUser = { id: user.id, phone: user.phone, role: user.role, region: user.region, language: user.language }
     return Promise.resolve({
       data: {
         success: true,

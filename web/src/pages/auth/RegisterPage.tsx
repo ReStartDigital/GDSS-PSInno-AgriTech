@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, Link } from 'react-router-dom'
@@ -14,6 +15,40 @@ const ROLES = [
   { value: 'agent', label: 'Agent', desc: 'Support farmers in the field' },
 ] as const
 
+const REGIONS = [
+  { value: 'Greater Accra', label: 'Greater Accra', defaultLang: 'ga' },
+  { value: 'Ashanti', label: 'Ashanti', defaultLang: 'twi' },
+  { value: 'Eastern', label: 'Eastern', defaultLang: 'twi' },
+  { value: 'Western', label: 'Western', defaultLang: 'fante' },
+  { value: 'Volta', label: 'Volta', defaultLang: 'ewe' },
+  { value: 'Central', label: 'Central', defaultLang: 'fante' },
+  { value: 'Northern', label: 'Northern', defaultLang: 'dagbani' },
+  { value: 'Bono', label: 'Bono', defaultLang: 'twi' },
+  { value: 'Bono East', label: 'Bono East', defaultLang: 'twi' },
+  { value: 'Ahafo', label: 'Ahafo', defaultLang: 'twi' },
+  { value: 'Savannah', label: 'Savannah', defaultLang: 'gonja' },
+  { value: 'North East', label: 'North East', defaultLang: 'mampruli' },
+  { value: 'Oti', label: 'Oti', defaultLang: 'ewe' },
+  { value: 'Western North', label: 'Western North', defaultLang: 'twi' },
+  { value: 'Upper East', label: 'Upper East', defaultLang: 'frafra' },
+  { value: 'Upper West', label: 'Upper West', defaultLang: 'dagaare' },
+] as const
+
+const LANGUAGES = [
+  { value: 'english', label: 'English' },
+  { value: 'twi', label: 'Twi (Akan)' },
+  { value: 'fante', label: 'Fante (Akan)' },
+  { value: 'ga', label: 'Ga' },
+  { value: 'ewe', label: 'Ewe' },
+  { value: 'dagbani', label: 'Dagbani' },
+  { value: 'frafra', label: 'Frafra (Gurenne)' },
+  { value: 'dagaare', label: 'Dagaare' },
+  { value: 'gonja', label: 'Gonja' },
+  { value: 'mampruli', label: 'Mampruli' },
+  { value: 'hausa', label: 'Hausa' },
+  { value: 'nzema', label: 'Nzema' },
+] as const
+
 export default function RegisterPage() {
   const navigate = useNavigate()
   const { mutate, isPending, error } = useRegister()
@@ -23,6 +58,16 @@ export default function RegisterPage() {
   })
 
   const selectedRole = watch('role')
+  const selectedRegion = watch('region')
+
+  useEffect(() => {
+    if (selectedRegion) {
+      const regionObj = REGIONS.find(r => r.value === selectedRegion)
+      if (regionObj) {
+        setValue('language', regionObj.defaultLang, { shouldValidate: true })
+      }
+    }
+  }, [selectedRegion, setValue])
 
   const onSubmit = (data: RegisterFormData) => {
     mutate(data, {
@@ -59,6 +104,58 @@ export default function RegisterPage() {
               <Field label="Last Name" dark placeholder="Mensah" error={errors.lastName} {...register('lastName')} />
             </div>
             <Field label="Phone Number" dark type="tel" placeholder="0244123456" error={errors.phone} {...register('phone')} />
+
+            <div className="form-grid">
+              <div style={{ display: 'grid', gap: 6 }}>
+                <span style={{ color: 'rgba(248,250,245,0.86)', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  Region
+                </span>
+                <select
+                  {...register('region')}
+                  style={{
+                    minHeight: 50, padding: '0 14px', borderRadius: 12,
+                    border: `1px solid ${errors.region ? '#ef4444' : 'rgba(255,255,255,0.14)'}`,
+                    background: 'rgba(255,255,255,0.1)',
+                    color: '#f8faf5',
+                    fontSize: '1rem', width: '100%', boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                >
+                  <option value="" style={{ background: '#264123', color: '#f8faf5' }}>Select Region</option>
+                  {REGIONS.map(r => (
+                    <option key={r.value} value={r.value} style={{ background: '#264123', color: '#f8faf5' }}>{r.label}</option>
+                  ))}
+                </select>
+                {errors.region && (
+                  <span style={{ color: '#fca5a5', fontSize: '0.78rem' }}>{errors.region.message}</span>
+                )}
+              </div>
+
+              <div style={{ display: 'grid', gap: 6 }}>
+                <span style={{ color: 'rgba(248,250,245,0.86)', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  Preferred Language
+                </span>
+                <select
+                  {...register('language')}
+                  style={{
+                    minHeight: 50, padding: '0 14px', borderRadius: 12,
+                    border: `1px solid ${errors.language ? '#ef4444' : 'rgba(255,255,255,0.14)'}`,
+                    background: 'rgba(255,255,255,0.1)',
+                    color: '#f8faf5',
+                    fontSize: '1rem', width: '100%', boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                >
+                  <option value="" style={{ background: '#264123', color: '#f8faf5' }}>Select Language</option>
+                  {LANGUAGES.map(l => (
+                    <option key={l.value} value={l.value} style={{ background: '#264123', color: '#f8faf5' }}>{l.label}</option>
+                  ))}
+                </select>
+                {errors.language && (
+                  <span style={{ color: '#fca5a5', fontSize: '0.78rem' }}>{errors.language.message}</span>
+                )}
+              </div>
+            </div>
             <div>
               <span style={{ color: 'rgba(248,250,245,0.86)', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>Your Role</span>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>

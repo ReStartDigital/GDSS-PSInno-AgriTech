@@ -19,7 +19,7 @@ export function Field({ label, error, dark, ...props }: FieldProps) {
       <input
         {...props}
         style={{
-          minHeight: 50, padding: '0 14px', borderRadius: 6,
+          minHeight: 50, padding: '0 14px', borderRadius: 12,
           border: `1px solid ${error ? '#ef4444' : dark ? 'rgba(255,255,255,0.14)' : 'rgba(38,65,35,0.18)'}`,
           background: dark ? 'rgba(255,255,255,0.1)' : '#fff',
           color: dark ? '#f8faf5' : '#1f2937',

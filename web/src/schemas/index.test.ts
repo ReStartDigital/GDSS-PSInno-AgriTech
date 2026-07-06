@@ -10,7 +10,7 @@ import {
 
 // ── registerSchema ────────────────────────────────────────────────────────────
 describe('registerSchema', () => {
-  const valid = { phone: '0244123456', firstName: 'Ama', lastName: 'Owusu', role: 'farmer' as const }
+  const valid = { phone: '0244123456', firstName: 'Ama', lastName: 'Owusu', role: 'farmer' as const, region: 'Ashanti', language: 'twi' }
 
   it('accepts a valid Ghanaian phone number starting with 0', () => {
     expect(registerSchema.safeParse(valid).success).toBe(true)
