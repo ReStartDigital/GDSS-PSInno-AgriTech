@@ -83,6 +83,8 @@ export class UserRepository {
     role: UserRole;
     email: string;
     location: { type: "Point"; coordinates: [number, number] } | null;
+    region?: string | null;
+    language?: string;
   }): Promise<User> {
     const entity = this.user.create({
       phone: params.phone,
@@ -92,6 +94,8 @@ export class UserRepository {
       role: params.role,
       email: params.email,
       location: params.location ?? null,
+      region: params.region ?? null,
+      language: params.language ?? "en",
       phoneVerifiedAt: null,
       pinHash: null,
       isActive: false,
