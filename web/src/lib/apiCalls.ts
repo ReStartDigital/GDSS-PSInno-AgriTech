@@ -54,7 +54,10 @@ const DEFAULT_LISTINGS: any[] = [
     status: 'active',
     images: [],
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    freshness: 'High',
+    agriScore: 94,
+    isUrgent: true
   },
   {
     id: 'list-2',
@@ -67,7 +70,10 @@ const DEFAULT_LISTINGS: any[] = [
     status: 'active',
     images: [],
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    freshness: 'Medium',
+    agriScore: 82,
+    isUrgent: false
   },
   {
     id: 'list-3',
@@ -80,7 +86,10 @@ const DEFAULT_LISTINGS: any[] = [
     status: 'active',
     images: [],
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    freshness: 'High',
+    agriScore: 88,
+    isUrgent: false
   }
 ]
 
@@ -277,6 +286,12 @@ export const listingsApi = {
     const farmerAccount = getUsers().find((u) => u.id === targetFarmerId)
 
     const list = getListings()
+    // Generate random but realistic freshness and AgriScore for mock listings
+    const freshnessOptions = ['High', 'Medium', 'Low'] as const
+    const freshness = freshnessOptions[Math.floor(Math.random() * freshnessOptions.length)]
+    const agriScore = Math.floor(70 + Math.random() * 28) // 70 to 97
+    const isUrgent = Math.random() > 0.6 // 40% chance of being urgent
+
     const newItem: any = {
       id: 'list-' + Math.random().toString(36).substring(2),
       farmerId: targetFarmerId,
@@ -292,7 +307,10 @@ export const listingsApi = {
       status: 'active',
       images: [],
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      freshness,
+      agriScore,
+      isUrgent
     }
     list.push(newItem)
     setLocalStorage('vl_listings', list)

@@ -66,7 +66,7 @@ export default function RegisterPage() {
                   <button key={r.value} type="button"
                     onClick={() => setValue('role', r.value, { shouldValidate: true })}
                     style={{
-                      padding: '12px 14px', borderRadius: 6, textAlign: 'left', cursor: 'pointer',
+                      padding: '12px 14px', borderRadius: 12, textAlign: 'left', cursor: 'pointer',
                       border: `2px solid ${selectedRole === r.value ? '#d6ffcd' : 'rgba(255,255,255,0.14)'}`,
                       background: selectedRole === r.value ? 'rgba(214,255,205,0.18)' : 'rgba(255,255,255,0.06)',
                       color: '#f8faf5',
