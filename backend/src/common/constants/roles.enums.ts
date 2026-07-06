@@ -21,32 +21,25 @@ export enum ListingStatus {
 }
 
 export enum OrderStatus {
-  PENDING                    = 'pending',
-  PENDING_AGENT_CONFIRMATION = 'pending_agent_confirmation',
-  PENDING_SMS_CONFIRMATION   = 'pending_sms_confirmation',
-  NEGOTIATING                = 'negotiating',
-  CONFIRMED                  = 'confirmed',
-  PACKED                     = 'packed',
-  IN_TRANSIT                 = 'in_transit',
-  DELIVERED                  = 'delivered',
-  COLLECTED                  = 'collected',     // pickup fulfilment
-  CANCELLED                  = 'cancelled',
-  CANCELLED_EXPIRED          = 'cancelled_expired',
-  FARMER_DISPUTED            = 'farmer_disputed',
+  PENDING = "pending",
+  PENDING_AGENT_CONFIRMATION = "pending_agent_confirmation",
+  PENDING_SMS_CONFIRMATION = "pending_sms_confirmation",
+  NEGOTIATING = "negotiating",
+  CONFIRMED = "confirmed",
+  PACKED = "packed",
+  IN_TRANSIT = "in_transit",
+  DELIVERED = "delivered",
+  COLLECTED = "collected", // pickup fulfilment
+  CANCELLED = "cancelled",
+  CANCELLED_EXPIRED = "cancelled_expired",
+  FARMER_DISPUTED = "farmer_disputed",
 }
 
 export enum FulfilmentMode {
-  DELIVERY = 'delivery',
-  PICKUP   = 'pickup',
+  DELIVERY = "delivery",
+  PICKUP = "pickup",
 }
 
-export enum ConfirmationMode {
-  AGENT         = 'agent',
-  AUTO          = 'auto',
-  SMS_REPLY     = 'sms_reply',
-  APP           = 'app',
-  TRUSTED_BUYER = 'trusted_buyer',
-}
 
 export enum TransactionType {
   DEPOSIT = "deposit",

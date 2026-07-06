@@ -7,7 +7,7 @@ import {
   JoinColumn,
 } from "typeorm";
 import { User } from "./User.js";
-import { Order } from "./Order.js";
+import { OrderEntity } from "./Order.js";
 import {
   TransactionType,
   TransactionStatus,
@@ -59,9 +59,9 @@ export class Transaction {
   @Column({ type: "uuid", name: "order_id", nullable: true })
   orderId: string | null;
 
-  @ManyToOne(() => Order, { onDelete: "SET NULL" })
+  @ManyToOne(() => OrderEntity, { onDelete: "SET NULL" })
   @JoinColumn({ name: "order_id" })
-  order: Order | null;
+  order: OrderEntity | null;
 
   @CreateDateColumn({ type: "timestamptz", name: "created_at" })
   createdAt: Date;

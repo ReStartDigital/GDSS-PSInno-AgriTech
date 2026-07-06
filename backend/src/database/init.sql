@@ -157,17 +157,19 @@ CREATE TABLE orders (
  price_per_kg_ghs NUMERIC(10, 2) NOT NULL, -- locked at order time
  negotiated_price_per_kg_ghs NUMERIC(10, 2), -- set if negotiation occurred
  produce_subtotal_ghs NUMERIC(12, 2) NOT NULL,
+
  packaging_type_id UUID REFERENCES packaging_options(id) ON DELETE SET NULL,
- packaging_cost_ghs NUMERIC(10, 2) NOT NULL DEFAULT 0,
+
  transport_cost_estimate_ghs NUMERIC(10, 2) NOT NULL DEFAULT 0,
  total_ghs NUMERIC(12, 2) NOT NULL,
  
- delivery_address TEXT NOT NULL,
+ delivery_address TEXT,
  delivery_location GEOMETRY(Point, 4326), -- buyer delivery GPS
  
  status order_status NOT NULL DEFAULT 'pending',
  cancelled_by UUID REFERENCES users(id) ON DELETE SET NULL,
  cancellation_reason TEXT,
+
  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
