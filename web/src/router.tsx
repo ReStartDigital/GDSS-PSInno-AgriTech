@@ -8,6 +8,7 @@ import ListingsPage from './pages/ListingsPage'
 import OrdersPage from './pages/OrdersPage'
 import ProfilePage from './pages/ProfilePage'
 import ClientsPage from './pages/ClientsPage'
+import JobsPage from './pages/JobsPage'
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
 import VerifyPage from './pages/auth/VerifyPage'
@@ -30,6 +31,7 @@ export function AppRouter() {
       <Route element={<RequireAuth />}>
         <Route path="/listings" element={<Layout><ListingsPage /></Layout>} />
         <Route path="/clients"  element={<Layout><ClientsPage /></Layout>} />
+        <Route path="/jobs"     element={<Layout><JobsPage /></Layout>} />
         <Route path="/orders"   element={<Layout><OrdersPage /></Layout>} />
       </Route>
     </Routes>

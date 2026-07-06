@@ -57,28 +57,6 @@ export default function ClientsPage() {
           ))}
         </section>
       )}
-
-      <section className="panel-grid">
-        <div className="section-card">
-          <div className="section-heading">
-            <div><p className="eyebrow">Agent Role</p><h3>Field operations guidelines.</h3></div>
-          </div>
-          <p style={{ color: '#374151', fontSize: '0.9rem', lineHeight: '1.6' }}>
-            As an authorized agent, you are responsible for onboarding offline smallholder farmers. 
-            Once registered, they will appear in your client dashboard. 
-            You can verify their produce quality, create marketplace listings on their behalf, 
-            and assist in coordinating logistics with matched transporters.
-          </p>
-        </div>
-        <div className="section-card accent-card">
-          <p className="eyebrow" style={{ color: '#d6ffcd', marginBottom: 8 }}>Representation</p>
-          <h3 style={{ margin: '0 0 8px', color: '#f8faf5', fontFamily: 'Poppins, sans-serif' }}>Support Abena's Farm</h3>
-          <p style={{ margin: '0 0 16px', color: '#f8faf5', fontSize: '0.9rem', opacity: 0.9 }}>
-            Use the Listings tab to add, edit, or delete listings on behalf of your active clients. 
-            Select the farmer's name when creating a new listing to direct all buyer queries and payments to their MoMo account.
-          </p>
-        </div>
-      </section>
     </div>
   )
 }

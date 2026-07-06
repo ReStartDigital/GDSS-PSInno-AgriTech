@@ -107,35 +107,6 @@ export default function ListingsPage() {
         </section>
       )}
 
-      <section className="panel-grid">
-        <div className="section-card">
-          <div className="section-heading">
-            <div><p className="eyebrow">Tips</p><h3>Listing lifecycle.</h3></div>
-          </div>
-          <div className="timeline">
-            {['Create listing', 'Buyer places order', 'Confirm order', 'Transport assigned', 'Delivery complete', 'Payment received'].map((s) => (
-              <div key={s} className="timeline-item">{s}</div>
-            ))}
-          </div>
-        </div>
-        <div className="section-card">
-          <div className="section-heading">
-            <div><p className="eyebrow">Status guide</p><h3>What each status means.</h3></div>
-          </div>
-          <div style={{ display: 'grid', gap: 10 }}>
-            {[
-              { s: 'active', d: 'Visible to buyers in the marketplace.' },
-              { s: 'sold', d: 'All quantity has been ordered and confirmed.' },
-              { s: 'cancelled', d: 'Listing removed from marketplace.' },
-            ].map((item) => (
-              <div key={item.s} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <StatusBadge status={item.s} />
-                <span style={{ color: '#374151', fontSize: '0.9rem' }}>{item.d}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
     </div>
   )
 }

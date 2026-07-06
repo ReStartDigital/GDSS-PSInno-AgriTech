@@ -50,28 +50,6 @@ export default function OrdersPage() {
       )}
 
       {selected && <OrderDetail order={selected} onClose={() => setSelected(null)} />}
-
-      <section className="panel-grid">
-        <div className="section-card">
-          <div className="section-heading">
-            <div><p className="eyebrow">Lifecycle</p><h3>Order status progression.</h3></div>
-          </div>
-          <div className="timeline">
-            {['Pending', 'Confirmed', 'Packed', 'In Transit', 'Delivered'].map((s) => (
-              <div key={s} className="timeline-item">{s}</div>
-            ))}
-          </div>
-        </div>
-        <div className="section-card accent-card">
-          <div className="section-heading">
-            <div><p className="eyebrow">SMS alerts</p><h3>Stay informed offline.</h3></div>
-          </div>
-          <p>Every order status change triggers an SMS via Arkesel — no internet needed.</p>
-          <div className="mini-badges" style={{ marginTop: 16 }}>
-            <span>Order placed</span><span>Payment confirmed</span><span>Delivery update</span>
-          </div>
-        </div>
-      </section>
     </div>
   )
 }
