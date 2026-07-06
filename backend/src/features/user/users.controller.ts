@@ -23,7 +23,7 @@ export class UsersController {
 
   async updateMyProfile(req: Request, res: Response): Promise<void> {
     const userId = req.user!.sub;
-    const dto = req.body as UpdateProfileDto;
+    const dto = req.validatedData as UpdateProfileDto;
 
     const updatedProfile = await usersService.updateProfile(userId, dto);
     // ✨ Fixed: Moved message into the data payload to match (res, data, statusCode)
@@ -35,7 +35,7 @@ export class UsersController {
 
   async changeMyPin(req: Request, res: Response): Promise<void> {
     const userId = req.user!.sub;
-    const dto = req.body as ChangePinDto;
+    const dto = req.validatedData as ChangePinDto;
 
     await usersService.changePin(userId, dto);
     // ✨ Fixed: Passed message inside the data object
@@ -65,7 +65,7 @@ export class UsersController {
 
   async configurePaymentDetails(req: Request, res: Response): Promise<void> {
     const userId = req.user!.sub;
-    const dto = req.body as PaymentDetailsDto;
+    const dto = req.validatedData as PaymentDetailsDto;
 
     await usersService.setupPaymentDetails(userId, dto);
     // ✨ Fixed: Passed message inside the data object
@@ -101,7 +101,7 @@ export class UsersController {
 
   async registerManagedClient(req: Request, res: Response): Promise<void> {
     const agentId = req.user!.sub;
-    const dto = req.body as RegisterClientDto;
+    const dto = req.validatedData as RegisterClientDto;
 
     const clientRecord = await usersService.registerClient(agentId, dto);
     // ✨ Fixed: Passed message inside data, and 201 cleanly into the 3rd parameter slot
@@ -117,7 +117,7 @@ export class UsersController {
 
   async getMyManagedClients(req: Request, res: Response): Promise<void> {
     const agentId = req.user!.sub;
-    const pagination = req.query as unknown as PaginationDto;
+    const pagination = req.validatedData as PaginationDto;
 
     const results = await usersService.getAgentClients(agentId, pagination);
     sendSuccess(res, results);

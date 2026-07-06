@@ -1,7 +1,7 @@
 import { DataSource, Repository } from "typeorm";
 import { AppDataSource } from "../../config/database.config.js";
-import { ProduceListingEntity } from "../../database/entities/PackagingListings.js";
-import { ListingStatus } from "../../database/entities/PackagingListings.js";
+import { ProduceListingEntity } from "../../database/entities/ProduceListingEntity.js";
+import { ListingStatus } from "../../database/entities/ProduceListingEntity.js";
 import { PackagingOptionEntity } from "../../database/entities/PackagingOptions.js";
 import {
   paginate,

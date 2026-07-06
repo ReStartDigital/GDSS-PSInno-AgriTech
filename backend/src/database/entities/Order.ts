@@ -8,7 +8,7 @@ import {
   JoinColumn,
 } from "typeorm";
 import { User } from "./User.js";
-import { ProduceListing } from "./ProduceListing.js";
+import { ProduceListingEntity } from "./ProduceListingEntity.js";
 import { OrderStatus } from "../../common/constants/roles.enums.js";
 
 @Entity("orders")
@@ -47,9 +47,9 @@ export class Order {
   @Column({ type: "uuid", name: "listing_id" })
   listingId: string;
 
-  @ManyToOne(() => ProduceListing, { onDelete: "RESTRICT" })
+  @ManyToOne(() => ProduceListingEntity, { onDelete: "RESTRICT" })
   @JoinColumn({ name: "listing_id" })
-  listing: ProduceListing;
+  listing: ProduceListingEntity;
 
   @CreateDateColumn({ type: "timestamptz", name: "created_at" })
   createdAt: Date;
