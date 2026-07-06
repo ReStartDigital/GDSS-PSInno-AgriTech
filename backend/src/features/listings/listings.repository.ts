@@ -175,6 +175,7 @@ export class ListingsRepository {
       vegetableType: string;
       quantityKg: number;
       pricePerKgGhs: number;
+      committedKg: number;
       harvestDate: string;
       images: string[];
       recommendedPackagingId: string | null;
@@ -293,6 +294,35 @@ export class ListingsRepository {
          CASE protection_level WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END
        LIMIT 2`,
     );
+  }
+  /**
+   * Atomically updates a listing's available stock volume
+   */
+  async updateQuantity(id: string, newQuantityKg: number): Promise<void> {
+    await this.update(id, {
+      quantityKg: newQuantityKg,
+      // If stock drops to zero, you could optionally auto-flip status to 'sold' here
+      status: newQuantityKg <= 0 ? ListingStatus.SOLD : ListingStatus.ACTIVE,
+    });
+  }
+
+  async updateCommittedQuantity(
+    id: string,
+    newCommittedKg: number,
+  ): Promise<void> {
+    await this.update(id, { committedKg: newCommittedKg });
+  }
+
+  async updateInventoryPools(
+    id: string,
+    totalQuantityKg: number,
+    committedQuantityKg: number,
+  ): Promise<void> {
+    await this.update(id, {
+      quantityKg: totalQuantityKg,
+      committedKg: committedQuantityKg,
+      status: totalQuantityKg <= 0 ? ListingStatus.SOLD : ListingStatus.ACTIVE,
+    });
   }
 }
 

@@ -53,6 +53,12 @@ export class RateLimitException extends AppException {
   }
 }
 
+export class BadRequestException extends AppException {
+  constructor(message: string = "Bad request.", code: ErrorCode) {
+    super(400, code, message);
+  }
+}
+
 /** Used specifically when an external dependency (Arkesel) rejects the request. */
 export class UnprocessableException extends AppException {
   constructor(message: string, code: ErrorCode) {
