@@ -14,7 +14,20 @@ $$ LANGUAGE plpgsql;
 -- Enums
 CREATE TYPE user_role AS ENUM ('farmer', 'buyer', 'transporter', 'agent', 'admin');
 CREATE TYPE listing_status AS ENUM ('active', 'sold', 'cancelled');
-CREATE TYPE order_status AS ENUM ('pending', 'negotiating', 'confirmed', 'packed', 'in_transit', 'delivered', 'cancelled');
+CREATE TYPE order_status AS ENUM (
+    'pending', 
+    'pending_agent_confirmation', 
+    'pending_sms_confirmation', 
+    'negotiating', 
+    'confirmed', 
+    'packed', 
+    'in_transit', 
+    'delivered', 
+    'collected', 
+    'cancelled', 
+    'cancelled_expired', 
+    'farmer_disputed'
+);
 CREATE TYPE fulfillment_mode AS ENUM ('pickup', 'delivery');
 CREATE TYPE payment_status AS ENUM ('pending', 'success', 'failed', 'refunded');
 CREATE TYPE payment_channel AS ENUM ('mobile_money', 'card');
@@ -144,6 +157,9 @@ CREATE INDEX idx_listings_farmer_id ON produce_listings(farmer_id);
 CREATE INDEX idx_listings_status ON produce_listings(status);
 CREATE INDEX idx_listings_veg_type ON produce_listings(vegetable_type);
 CREATE INDEX idx_listings_location ON produce_listings USING GIST(location);
+
+CREATE TYPE order_mode AS ENUM ('auto', 'agent', 'sms_reply');
+ALTER TABLE users ADD COLUMN order_mode order_mode NOT NULL DEFAULT 'auto';
 
 CREATE TABLE orders (
  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

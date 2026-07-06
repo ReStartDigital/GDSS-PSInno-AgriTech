@@ -40,7 +40,6 @@ export enum FulfilmentMode {
   PICKUP = "pickup",
 }
 
-
 export enum TransactionType {
   DEPOSIT = "deposit",
   PAYOUT = "payout",
