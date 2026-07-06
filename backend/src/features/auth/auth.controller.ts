@@ -109,7 +109,11 @@ export class AuthController {
       );
       ApiResponse.sendSuccess(
         res,
-        { user: result.user, accessToken: result.accessToken },
+        {
+          user: result.user,
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+        },
         201,
       );
     } catch (error) {
@@ -137,7 +141,11 @@ export class AuthController {
       );
       ApiResponse.sendSuccess(
         res,
-        { user: result.user, accessToken: result.accessToken },
+        {
+          user: result.user,
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+        },
         200,
       );
     } catch (error) {

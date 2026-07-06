@@ -4,6 +4,14 @@ import { AUTH_CONSTANTS } from "../../common/constants/auth.constants.js";
 import { REGISTERABLE_ROLES } from "../../common/constants/roles.enums.js";
 import { normalizePhone } from "../../common/utils/phone.util.js";
 
+const emailRules = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .email({ message: "Invalid email address format" })
+  .optional()
+  .nullable();
+
 const pinSchema = z
   .string()
   .min(
@@ -47,6 +55,7 @@ export const updateProfileSchema = z
       .min(2, "Last name must be at least 2 characters")
       .max(100)
       .optional(),
+    email: emailRules,
     location: z
       .object({
         lat: z.number().min(-90).max(90),

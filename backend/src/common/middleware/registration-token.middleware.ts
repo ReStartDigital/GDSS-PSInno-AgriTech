@@ -20,6 +20,7 @@ export function requireRegistrationToken(
   next: NextFunction,
 ): void {
   const header = req.headers.authorization;
+  console.log(header);
 
   if (!header || !header.startsWith("Bearer ")) {
     throw new UnauthorizedException(

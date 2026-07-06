@@ -1,19 +1,22 @@
-import { DataSource, Repository } from 'typeorm';
-import { AppDataSource } from '../../config/database.config.js';
-import { ProduceListing  } from '../../database/entities/ProduceListing.js';
-import { ListingStatus } from '../../common/constants/roles.enums.js';
-import { PackagingOptionEntity } from '../../database/entities/PackagingOptions.js';
-import { paginate, type PaginatedResult } from '../../common/utils/paginate.util.js';
-import type { ListingsQueryDto } from './listings.schema.js';
+import { DataSource, Repository } from "typeorm";
+import { AppDataSource } from "../../config/database.config.js";
+import { ProduceListingEntity } from "../../database/entities/PackagingListings.js";
+import { ListingStatus } from "../../database/entities/PackagingListings.js";
+import { PackagingOptionEntity } from "../../database/entities/PackagingOptions.js";
+import {
+  paginate,
+  type PaginatedResult,
+} from "../../common/utils/paginate.util.js";
+import type { ListingsQueryDto } from "./listings.schema.js";
 
 export class ListingsRepository {
-  private listings: Repository<ProduceListing>;
+  private listings: Repository<ProduceListingEntity>;
   private packaging: Repository<PackagingOptionEntity>;
   private ds: DataSource;
 
   constructor() {
     this.ds = AppDataSource;
-    this.listings = this.ds.getRepository(ProduceListing);
+    this.listings = this.ds.getRepository(ProduceListingEntity);
     this.packaging = this.ds.getRepository(PackagingOptionEntity);
   }
 
@@ -21,43 +24,53 @@ export class ListingsRepository {
 
   async findAll(
     query: ListingsQueryDto,
-  ): Promise<PaginatedResult<ProduceListing>> {
+  ): Promise<PaginatedResult<ProduceListingEntity>> {
     const qb = this.listings
-      .createQueryBuilder('l')
-      .leftJoinAndSelect('l.farmer', 'farmer')
-      .leftJoinAndSelect('l.recommendedPackaging', 'packaging')
-      .where('l.status = :status', { status: ListingStatus.ACTIVE });
+      .createQueryBuilder("l")
+      .leftJoinAndSelect("l.farmer", "farmer")
+      .leftJoinAndSelect("l.recommendedPackaging", "packaging")
+      .where("l.status = :status", { status: ListingStatus.ACTIVE });
 
     if (query.vegetable_type) {
       // ilike for case-insensitive partial match
-      qb.andWhere('l.vegetable_type ILIKE :veg', { veg: `%${query.vegetable_type}%` });
+      qb.andWhere("l.vegetable_type ILIKE :veg", {
+        veg: `%${query.vegetable_type}%`,
+      });
     }
 
     if (query.min_price_kg !== undefined) {
-      qb.andWhere('l.price_per_kg_ghs >= :minPrice', { minPrice: query.min_price_kg });
+      qb.andWhere("l.price_per_kg_ghs >= :minPrice", {
+        minPrice: query.min_price_kg,
+      });
     }
 
     if (query.max_price_kg !== undefined) {
-      qb.andWhere('l.price_per_kg_ghs <= :maxPrice', { maxPrice: query.max_price_kg });
+      qb.andWhere("l.price_per_kg_ghs <= :maxPrice", {
+        maxPrice: query.max_price_kg,
+      });
     }
 
     if (query.min_quantity_kg !== undefined) {
-      qb.andWhere('l.quantity_kg >= :minQty', { minQty: query.min_quantity_kg });
+      qb.andWhere("l.quantity_kg >= :minQty", {
+        minQty: query.min_quantity_kg,
+      });
     }
 
     if (query.packaging_id) {
-      qb.andWhere('l.recommended_packaging_id = :pkgId', { pkgId: query.packaging_id });
+      qb.andWhere("l.recommended_packaging_id = :pkgId", {
+        pkgId: query.packaging_id,
+      });
     }
 
     if (query.farmer_id) {
-      qb.andWhere('l.farmer_id = :farmerId', { farmerId: query.farmer_id });
+      qb.andWhere("l.farmer_id = :farmerId", { farmerId: query.farmer_id });
     }
 
     // Fulfilment mode filter
-    if (query.fulfilment_mode === 'delivery') {
-      qb.andWhere('l.supports_delivery = true');
-    } else if (query.fulfilment_mode === 'pickup') {
-      qb.andWhere('l.supports_pickup = true');
+    if (query.fulfilment_mode === "delivery") {
+      qb.andWhere("l.supports_delivery = true");
+    } else if (query.fulfilment_mode === "pickup") {
+      qb.andWhere("l.supports_pickup = true");
     }
     // 'both' = no additional filter
 
@@ -78,11 +91,11 @@ export class ListingsRepository {
           l.location::geography,
           ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
         )`,
-        'distance_m',
+        "distance_m",
       );
-      qb.orderBy('distance_m', 'ASC');
+      qb.orderBy("distance_m", "ASC");
     } else {
-      qb.orderBy('l.created_at', 'DESC');
+      qb.orderBy("l.created_at", "DESC");
     }
 
     return paginate(qb, { page: query.page, limit: query.limit });
@@ -90,17 +103,17 @@ export class ListingsRepository {
 
   // ── Single listing ────────────────────────────────────────────────────────
 
-  async findById(id: string): Promise<ProduceListing | null> {
+  async findById(id: string): Promise<ProduceListingEntity | null> {
     return this.listings.findOne({
       where: { id },
-      relations: ['farmer', 'recommendedPackaging'],
+      relations: { farmer: true, recommendedPackaging: true },
     });
   }
 
-  async findActiveById(id: string): Promise<ProduceListing | null> {
+  async findActiveById(id: string): Promise<ProduceListingEntity | null> {
     return this.listings.findOne({
       where: { id, status: ListingStatus.ACTIVE },
-      relations: ['farmer', 'recommendedPackaging'],
+      relations: { farmer: true, recommendedPackaging: true },
     });
   }
 
@@ -120,7 +133,7 @@ export class ListingsRepository {
     supportsPickup: boolean;
     autoConfirmUntilKg?: number | null;
     autoConfirmPriceFloorGhs?: number | null;
-  }): Promise<ProduceListing> {
+  }): Promise<ProduceListingEntity> {
     // Location is set via raw query because TypeORM can't construct a
     // PostGIS geometry object from a plain JS object directly.
     const result = await this.ds.query(
@@ -151,7 +164,7 @@ export class ListingsRepository {
       ],
     );
 
-    return this.findById(result[0].id) as Promise<ProduceListing>;
+    return this.findById(result[0].id) as Promise<ProduceListingEntity>;
   }
 
   // ── Update ────────────────────────────────────────────────────────────────
@@ -183,31 +196,43 @@ export class ListingsRepository {
       values.push(val);
     };
 
-    if (params.vegetableType !== undefined) addField('vegetable_type', params.vegetableType);
-    if (params.quantityKg !== undefined) addField('quantity_kg', params.quantityKg);
-    if (params.pricePerKgGhs !== undefined) addField('price_per_kg_ghs', params.pricePerKgGhs);
-    if (params.harvestDate !== undefined) addField('harvest_date', params.harvestDate);
-    if (params.images !== undefined) addField('images', JSON.stringify(params.images));
-    if (params.recommendedPackagingId !== undefined) addField('recommended_packaging_id', params.recommendedPackagingId);
-    if (params.status !== undefined) addField('status', params.status);
-    if (params.supportsDelivery !== undefined) addField('supports_delivery', params.supportsDelivery);
-    if (params.supportsPickup !== undefined) addField('supports_pickup', params.supportsPickup);
-    if (params.autoConfirmUntilKg !== undefined) addField('auto_confirm_until_kg', params.autoConfirmUntilKg);
-    if (params.autoConfirmPriceFloorGhs !== undefined) addField('auto_confirm_price_floor_ghs', params.autoConfirmPriceFloorGhs);
+    if (params.vegetableType !== undefined)
+      addField("vegetable_type", params.vegetableType);
+    if (params.quantityKg !== undefined)
+      addField("quantity_kg", params.quantityKg);
+    if (params.pricePerKgGhs !== undefined)
+      addField("price_per_kg_ghs", params.pricePerKgGhs);
+    if (params.harvestDate !== undefined)
+      addField("harvest_date", params.harvestDate);
+    if (params.images !== undefined)
+      addField("images", JSON.stringify(params.images));
+    if (params.recommendedPackagingId !== undefined)
+      addField("recommended_packaging_id", params.recommendedPackagingId);
+    if (params.status !== undefined) addField("status", params.status);
+    if (params.supportsDelivery !== undefined)
+      addField("supports_delivery", params.supportsDelivery);
+    if (params.supportsPickup !== undefined)
+      addField("supports_pickup", params.supportsPickup);
+    if (params.autoConfirmUntilKg !== undefined)
+      addField("auto_confirm_until_kg", params.autoConfirmUntilKg);
+    if (params.autoConfirmPriceFloorGhs !== undefined)
+      addField("auto_confirm_price_floor_ghs", params.autoConfirmPriceFloorGhs);
 
     // Location requires ST_SetSRID — handled separately if both lat and lng are provided
     if (params.lat !== undefined && params.lng !== undefined) {
-      sets.push(`location = ST_SetSRID(ST_MakePoint($${idx++}, $${idx++}), 4326)`);
+      sets.push(
+        `location = ST_SetSRID(ST_MakePoint($${idx++}, $${idx++}), 4326)`,
+      );
       values.push(params.lng, params.lat);
     }
 
     if (sets.length === 0) return;
 
-    sets.push('updated_at = NOW()');
+    sets.push("updated_at = NOW()");
     values.push(id);
 
     await this.ds.query(
-      `UPDATE produce_listings SET ${sets.join(', ')} WHERE id = $${idx}`,
+      `UPDATE produce_listings SET ${sets.join(", ")} WHERE id = $${idx}`,
       values,
     );
   }
@@ -231,7 +256,7 @@ export class ListingsRepository {
   async findAllActivePackaging(): Promise<PackagingOptionEntity[]> {
     return this.packaging.find({
       where: { isActive: true },
-      order: { protectionLevel: 'DESC', name: 'ASC' },
+      order: { protectionLevel: "DESC", name: "ASC" },
     });
   }
 
@@ -245,7 +270,9 @@ export class ListingsRepository {
    * ranked by protection_level DESC so the safest option comes first.
    * Falls back to general-purpose options if no exact match found.
    */
-  async recommendPackaging(vegetableType: string): Promise<PackagingOptionEntity[]> {
+  async recommendPackaging(
+    vegetableType: string,
+  ): Promise<PackagingOptionEntity[]> {
     const exact = await this.ds.query(
       `SELECT * FROM packaging_options
        WHERE is_active = TRUE

@@ -91,6 +91,7 @@ export class UsersService {
     if (dto.firstName !== undefined) updatePayload.firstName = dto.firstName;
     if (dto.middleName !== undefined) updatePayload.middleName = dto.middleName;
     if (dto.lastName !== undefined) updatePayload.lastName = dto.lastName;
+    if (dto.email !== undefined) updatePayload.email = dto.email ?? "";
 
     if (dto.location !== undefined) {
       updatePayload.location = {
@@ -114,6 +115,7 @@ export class UsersService {
       dto.current_pin,
       user.pinHash ?? "",
     );
+    console.log(user);
     if (!isVerified) {
       throw new UnauthorizedException(
         "The current PIN entered is invalid.",
