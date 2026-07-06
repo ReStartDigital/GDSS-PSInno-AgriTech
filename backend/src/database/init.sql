@@ -144,3 +144,45 @@ CREATE INDEX idx_listings_farmer_id ON produce_listings(farmer_id);
 CREATE INDEX idx_listings_status ON produce_listings(status);
 CREATE INDEX idx_listings_veg_type ON produce_listings(vegetable_type);
 CREATE INDEX idx_listings_location ON produce_listings USING GIST(location);
+
+CREATE TABLE orders (
+ id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+ buyer_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+ farmer_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+ listing_id UUID NOT NULL REFERENCES produce_listings(id) ON DELETE RESTRICT,
+ 
+ mode fulfillment_mode NOT NULL DEFAULT 'delivery',
+
+ quantity_kg NUMERIC(10, 2) NOT NULL CHECK (quantity_kg > 0),
+ price_per_kg_ghs NUMERIC(10, 2) NOT NULL, -- locked at order time
+ negotiated_price_per_kg_ghs NUMERIC(10, 2), -- set if negotiation occurred
+ produce_subtotal_ghs NUMERIC(12, 2) NOT NULL,
+ packaging_type_id UUID REFERENCES packaging_options(id) ON DELETE SET NULL,
+ packaging_cost_ghs NUMERIC(10, 2) NOT NULL DEFAULT 0,
+ transport_cost_estimate_ghs NUMERIC(10, 2) NOT NULL DEFAULT 0,
+ total_ghs NUMERIC(12, 2) NOT NULL,
+ 
+ delivery_address TEXT NOT NULL,
+ delivery_location GEOMETRY(Point, 4326), -- buyer delivery GPS
+ 
+ status order_status NOT NULL DEFAULT 'pending',
+ cancelled_by UUID REFERENCES users(id) ON DELETE SET NULL,
+ cancellation_reason TEXT,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+ CONSTRAINT chk_delivery_details CHECK (
+    (mode = 'delivery' AND delivery_address IS NOT NULL) OR 
+    (mode = 'pickup')
+ )
+);
+CREATE INDEX idx_orders_buyer_id ON orders(buyer_id);
+CREATE INDEX idx_orders_farmer_id ON orders(farmer_id);
+CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_orders_listing_id ON orders(listing_id);
+CREATE INDEX idx_orders_mode ON orders(mode);
+
+CREATE TRIGGER update_orders_modtime
+    BEFORE UPDATE ON orders
+    FOR EACH ROW
+    EXECUTE FUNCTION update_modified_column();
