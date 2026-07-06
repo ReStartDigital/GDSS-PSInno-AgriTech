@@ -407,7 +407,7 @@ export const ordersApi = {
       price_per_kg_ghs: listing.price_per_kg_ghs,
       total_ghs: totalGhs,
       delivery_address: data.delivery_address,
-      status: 'pending',
+      status: 'confirmed',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
@@ -578,7 +578,7 @@ export const usersApi = {
     } as any)
   },
 
-  registerClient: (data: { phone: string; firstName: string; lastName: string; email?: string }) => {
+  registerClient: (data: { phone: string; firstName: string; lastName: string; email?: string; region?: string; language?: string }) => {
     const user = getActiveUser()
     if (!user) return Promise.reject(new Error('Unauthorized'))
 
@@ -595,6 +595,8 @@ export const usersApi = {
       lastName: data.lastName,
       email: data.email || null,
       role: 'farmer',
+      region: data.region,
+      language: data.language,
       isActive: true,
       createdAt: new Date().toISOString()
     }

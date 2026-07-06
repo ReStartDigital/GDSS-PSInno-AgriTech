@@ -59,7 +59,7 @@ function OrderDetail({ order, onClose }: { order: Order; onClose: () => void }) 
   const { mutate: confirm, isPending: confirming } = useConfirmOrder()
   const { mutate: cancel, isPending: cancelling } = useCancelOrder()
 
-  const canConfirm = user?.role === 'farmer' && order.status === 'pending'
+  const canConfirm = (user?.role === 'farmer' || user?.role === 'agent') && order.status === 'pending'
   const canCancel = (order.status === 'pending' || order.status === 'confirmed')
 
   return (

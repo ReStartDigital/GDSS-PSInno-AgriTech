@@ -9,6 +9,8 @@ export interface Client {
   email?: string | null
   isActive: boolean
   createdAt: string
+  region?: string
+  language?: string
 }
 
 export interface RegisterClientData {
@@ -16,6 +18,8 @@ export interface RegisterClientData {
   firstName: string
   lastName: string
   email?: string
+  region?: string
+  language?: string
 }
 
 export function useMyClients() {

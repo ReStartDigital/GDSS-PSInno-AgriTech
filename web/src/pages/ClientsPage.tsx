@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -9,6 +9,7 @@ import { Spinner, ErrorAlert, EmptyState } from '../components/ui/Feedback'
 import { Field } from '../components/ui/Field'
 import { PageHero } from '../components/ui/PageHero'
 import { FormActions } from '../components/ui/FormActions'
+import { REGIONS, LANGUAGES } from './auth/RegisterPage'
 
 const phoneSchema = z
   .string()
@@ -20,6 +21,8 @@ const registerClientSchema = z.object({
   firstName: z.string().trim().min(1, 'First name is required'),
   lastName: z.string().trim().min(1, 'Last name is required'),
   email: z.string().email('Enter a valid email').optional().or(z.literal('')),
+  region: z.string().min(1, 'Region is required'),
+  language: z.string().min(1, 'Preferred language is required'),
 })
 
 type RegisterClientFormData = z.infer<typeof registerClientSchema>
@@ -79,6 +82,16 @@ function ClientCard({ client }: { client: Client }) {
             <strong>Email:</strong> {client.email}
           </span>
         )}
+        {client.region && (
+          <span style={{ fontSize: '0.9rem', color: '#374151' }}>
+            <strong>Region:</strong> {client.region}
+          </span>
+        )}
+        {client.language && (
+          <span style={{ fontSize: '0.9rem', color: '#374151' }}>
+            <strong>Preferred Language:</strong> <span style={{ textTransform: 'capitalize' }}>{client.language}</span>
+          </span>
+        )}
       </div>
       <button
         type="button"
@@ -99,9 +112,20 @@ function ClientCard({ client }: { client: Client }) {
 
 function RegisterClientForm({ onClose }: { onClose: () => void }) {
   const { mutate, isPending, error, isSuccess } = useRegisterClient()
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<RegisterClientFormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors }, reset } = useForm<RegisterClientFormData>({
     resolver: zodResolver(registerClientSchema),
   })
+
+  const selectedRegion = watch('region')
+
+  useEffect(() => {
+    if (selectedRegion) {
+      const regionObj = REGIONS.find(r => r.value === selectedRegion)
+      if (regionObj) {
+        setValue('language', regionObj.defaultLang, { shouldValidate: true })
+      }
+    }
+  }, [selectedRegion, setValue])
 
   const onSubmit = (data: RegisterClientFormData) => {
     // clean email if it's empty string
@@ -131,6 +155,56 @@ function RegisterClientForm({ onClose }: { onClose: () => void }) {
           <Field label="Last Name" dark placeholder="e.g. Mensah" error={errors.lastName} {...register('lastName')} />
           <Field label="Phone Number" dark placeholder="e.g. 0244123456" error={errors.phone} {...register('phone')} />
           <Field label="Email Address (Optional)" dark placeholder="e.g. abena@gmail.com" error={errors.email} {...register('email')} />
+
+          <div style={{ display: 'grid', gap: 6 }}>
+            <span style={{ color: 'rgba(248,250,245,0.86)', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              Region
+            </span>
+            <select
+              {...register('region')}
+              style={{
+                minHeight: 50, padding: '0 14px', borderRadius: 12,
+                border: `1px solid ${errors.region ? '#ef4444' : 'rgba(255,255,255,0.14)'}`,
+                background: 'rgba(255,255,255,0.1)',
+                color: '#f8faf5',
+                fontSize: '1rem', width: '100%', boxSizing: 'border-box',
+                outline: 'none',
+              }}
+            >
+              <option value="" style={{ background: '#264123', color: '#f8faf5' }}>Select Region</option>
+              {REGIONS.map(r => (
+                <option key={r.value} value={r.value} style={{ background: '#264123', color: '#f8faf5' }}>{r.label}</option>
+              ))}
+            </select>
+            {errors.region && (
+              <span style={{ color: '#fca5a5', fontSize: '0.78rem' }}>{errors.region.message}</span>
+            )}
+          </div>
+
+          <div style={{ display: 'grid', gap: 6 }}>
+            <span style={{ color: 'rgba(248,250,245,0.86)', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              Preferred Language
+            </span>
+            <select
+              {...register('language')}
+              style={{
+                minHeight: 50, padding: '0 14px', borderRadius: 12,
+                border: `1px solid ${errors.language ? '#ef4444' : 'rgba(255,255,255,0.14)'}`,
+                background: 'rgba(255,255,255,0.1)',
+                color: '#f8faf5',
+                fontSize: '1rem', width: '100%', boxSizing: 'border-box',
+                outline: 'none',
+              }}
+            >
+              <option value="" style={{ background: '#264123', color: '#f8faf5' }}>Select Language</option>
+              {LANGUAGES.map(l => (
+                <option key={l.value} value={l.value} style={{ background: '#264123', color: '#f8faf5' }}>{l.label}</option>
+              ))}
+            </select>
+            {errors.language && (
+              <span style={{ color: '#fca5a5', fontSize: '0.78rem' }}>{errors.language.message}</span>
+            )}
+          </div>
         </div>
         {apiError && <ErrorAlert message={apiError} />}
         {isSuccess && <div style={{ color: '#d6ffcd', fontWeight: 600 }}>Farmer onboarded ✓</div>}

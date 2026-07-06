@@ -15,7 +15,7 @@ const ROLES = [
   { value: 'agent', label: 'Agent', desc: 'Support farmers in the field' },
 ] as const
 
-const REGIONS = [
+export const REGIONS = [
   { value: 'Greater Accra', label: 'Greater Accra', defaultLang: 'ga' },
   { value: 'Ashanti', label: 'Ashanti', defaultLang: 'twi' },
   { value: 'Eastern', label: 'Eastern', defaultLang: 'twi' },
@@ -34,7 +34,7 @@ const REGIONS = [
   { value: 'Upper West', label: 'Upper West', defaultLang: 'dagaare' },
 ] as const
 
-const LANGUAGES = [
+export const LANGUAGES = [
   { value: 'english', label: 'English' },
   { value: 'twi', label: 'Twi (Akan)' },
   { value: 'fante', label: 'Fante (Akan)' },
