@@ -114,6 +114,8 @@ export class UserRepository {
       email?: string;
       profilePhotoUrl?: string;
       location?: { type: "Point"; coordinates: [number, number] } | null;
+      region?: string | null;
+      language?: string;
     },
   ): Promise<User> {
     await this.user.update(id, {
@@ -126,6 +128,8 @@ export class UserRepository {
       }),
       ...(params.email && { email: params.email }),
       ...(params.location !== undefined && { location: params.location }),
+      ...(params.region !== undefined && { region: params.region }),
+      ...(params.language && { language: params.language }),
     });
 
     const updatedUser = await this.findById(id);
@@ -301,6 +305,8 @@ export class UserRepository {
         "u.phone",
         "u.role",
         "u.profilePhotoUrl",
+        "u.region",
+        "u.language",
         "u.isActive",
         "u.createdAt",
       ])
