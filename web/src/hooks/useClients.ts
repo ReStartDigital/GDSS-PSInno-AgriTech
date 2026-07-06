@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '../lib/api'
+import { usersApi } from '../lib/apiCalls'
 
 export interface Client {
   id: string
@@ -22,7 +22,7 @@ export function useMyClients() {
   return useQuery<Client[]>({
     queryKey: ['clients', 'mine'],
     queryFn: () =>
-      api.get('/users/agent/clients').then((r) => r.data.data.data as Client[]),
+      usersApi.getClients().then((r) => r.data.data.data as Client[]),
   })
 }
 
@@ -30,7 +30,7 @@ export function useRegisterClient() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: RegisterClientData) =>
-      api.post('/users/agent/clients', data),
+      usersApi.registerClient(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['clients'] })
     },
@@ -41,7 +41,7 @@ export function useUnassignClient() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (clientId: string) =>
-      api.patch(`/users/agent/clients/${clientId}/unassign`),
+      usersApi.unassignClient(clientId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['clients'] })
     },
