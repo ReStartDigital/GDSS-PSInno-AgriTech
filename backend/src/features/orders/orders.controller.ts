@@ -6,6 +6,8 @@ import {
   cancelOrderSchema,
   declineOrderSchema,
 } from "./orders.schemas.js";
+import { ErrorCode } from "../../common/constants/error-codes.enum.js";
+import { UnprocessableException } from "../../common/exceptions/index.js";
 
 export class OrdersController {
   constructor(private ordersService: OrdersService) {}
@@ -49,7 +51,13 @@ export class OrdersController {
   ): Promise<void> => {
     try {
       const userId = req.user!.sub;
-      const { id: orderId } = req.params;
+      const orderId = req.params.id as string;
+      if (!orderId) {
+        throw new UnprocessableException(
+          "Listing ID is required",
+          ErrorCode.VALIDATION_ERROR,
+        );
+      }
 
       const order = await this.ordersService.confirmOrder(userId, orderId);
 
@@ -74,7 +82,13 @@ export class OrdersController {
   ): Promise<void> => {
     try {
       const userId = req.user!.sub;
-      const { id: orderId } = req.params;
+      const orderId = req.params.id as string;
+      if (!orderId) {
+        throw new UnprocessableException(
+          "Listing ID is required",
+          ErrorCode.VALIDATION_ERROR,
+        );
+      }
 
       const order = await this.ordersService.packOrder(userId, orderId);
 
@@ -100,7 +114,13 @@ export class OrdersController {
   ): Promise<void> => {
     try {
       const userId = req.user!.sub;
-      const { id: orderId } = req.params;
+      const orderId = req.params.id as string;
+      if (!orderId) {
+        throw new UnprocessableException(
+          "Listing ID is required",
+          ErrorCode.VALIDATION_ERROR,
+        );
+      }
       const validatedBody = negotiateOrderSchema.parse(req.body);
 
       const order = await this.ordersService.negotiateOrder(
@@ -130,7 +150,13 @@ export class OrdersController {
   ): Promise<void> => {
     try {
       const userId = req.user!.sub;
-      const { id: orderId } = req.params;
+      const orderId = req.params.id as string;
+      if (!orderId) {
+        throw new UnprocessableException(
+          "Listing ID is required",
+          ErrorCode.VALIDATION_ERROR,
+        );
+      }
       const validatedBody = cancelOrderSchema.parse(req.body);
 
       const order = await this.ordersService.cancelOrder(
@@ -160,7 +186,13 @@ export class OrdersController {
   ): Promise<void> => {
     try {
       const userId = req.user!.sub;
-      const { id: orderId } = req.params;
+      const orderId = req.params.id as string;
+      if (!orderId) {
+        throw new UnprocessableException(
+          "Listing ID is required",
+          ErrorCode.VALIDATION_ERROR,
+        );
+      }
 
       // Enforces the schema we established earlier containing the minimum 4 character requirement
       const validatedBody = declineOrderSchema.parse(req.body);
