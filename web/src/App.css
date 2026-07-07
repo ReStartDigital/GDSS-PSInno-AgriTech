@@ -1182,3 +1182,225 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Authenticated hero banner ────────────────────────────────────────────── */
+
+.auth-hero-banner {
+  position: relative;
+  overflow: hidden;
+  padding: 36px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #264123 0%, #1a2d18 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  border: 1px solid rgba(214, 255, 205, 0.12);
+  box-shadow: 0 8px 24px rgba(38, 65, 35, 0.2);
+}
+
+.auth-hero-circle {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(214, 255, 205, 0.15);
+  pointer-events: none;
+}
+
+.auth-hero-circle--1 {
+  width: 280px;
+  height: 280px;
+  top: -80px;
+  right: -60px;
+}
+
+.auth-hero-circle--2 {
+  width: 160px;
+  height: 160px;
+  top: 20px;
+  right: 60px;
+  background: rgba(214, 255, 205, 0.06);
+  border: none;
+}
+
+/* ── Quick actions ──────────────────────────────────────────────────────────── */
+
+.quick-actions-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+.quick-action-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  min-width: 72px;
+  cursor: pointer;
+  transition: transform 150ms ease;
+}
+
+.quick-action-tile:hover {
+  transform: translateY(-2px);
+}
+
+.quick-action-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-action-icon svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.quick-action-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(214, 255, 205, 0.85);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+/* ── Market Pulse ─────────────────────────────────────────────────────────── */
+
+.pulse-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.pulse-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pulse-change {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.pulse-change.up {
+  background: rgba(22, 101, 52, 0.1);
+  color: #166534;
+}
+
+.pulse-change.down {
+  background: rgba(220, 38, 38, 0.1);
+  color: #DC2626;
+}
+
+/* ── Produce card grid ────────────────────────────────────────────────────── */
+
+.produce-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.produce-card {
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 6px rgba(38, 65, 35, 0.05);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.produce-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(38, 65, 35, 0.1);
+}
+
+.produce-card-visual {
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.produce-card-body {
+  padding: 12px 14px 14px;
+}
+
+.produce-card-name {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.produce-card-price {
+  margin: 4px 0 0;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #166534;
+}
+
+.produce-card-unit {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+.produce-card-farmer {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+/* ── Responsive adjustments for new components ────────────────────────────── */
+
+@media (max-width: 760px) {
+  .auth-hero-banner {
+    padding: 24px;
+  }
+
+  .quick-actions-row {
+    gap: 8px;
+  }
+
+  .quick-action-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .pulse-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .produce-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
