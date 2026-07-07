@@ -87,7 +87,7 @@ export default function HomePage() {
   return (
     <div className="page-stack">
       {/* ── Hero Banner ── */}
-      <section className="overview-hero">
+      <section className="overview-hero" id="hero">
         <div className="overview-hero-copy">
           <span className="status-pill" style={{ alignSelf: 'flex-start' }}>Kumasi Vegetable Belt</span>
           <h2 className="overview-hero-title">VegeLink Ghana</h2>
@@ -137,7 +137,7 @@ export default function HomePage() {
       </div>
 
       {/* ── Dynamic Produce Browser ── */}
-      <section className="section-card">
+      <section className="section-card" id="browse">
         <div className="section-heading" style={{ flexWrap: 'wrap', gap: 16 }}>
           <div>
             <p className="eyebrow" style={{ color: '#6b7280' }}>Available now</p>
@@ -254,7 +254,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Who it Serves ── */}
-      <section className="section-card">
+      <section className="section-card" id="about">
         <div className="section-heading">
           <div>
             <p className="eyebrow" style={{ color: '#6b7280' }}>Who it serves</p>
@@ -273,7 +273,7 @@ export default function HomePage() {
       </section>
 
       {/* ── How it Works ── */}
-      <section className="section-card">
+      <section className="section-card" id="workflow">
         <div className="section-heading">
           <div>
             <p className="eyebrow" style={{ color: '#6b7280' }}>How it works</p>
@@ -291,7 +291,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Bottom Info & Coverage ── */}
-      <div className="overview-bottom-grid">
+      <div className="overview-bottom-grid" id="coverage">
         <div className="section-card">
           <div className="section-heading">
             <div>

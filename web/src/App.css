@@ -9,6 +9,10 @@
   color: #1f2937;
 }
 
+.app-shell.guest-shell {
+  grid-template-columns: 1fr;
+}
+
 .sidebar {
   position: sticky;
   top: 0;
@@ -233,6 +237,27 @@
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.topbar-nav-link {
+  text-decoration: none;
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 180ms ease;
+}
+
+.topbar-nav-link:hover {
+  color: #264123;
+  background: rgba(38, 65, 35, 0.06);
 }
 
 .icon-button,

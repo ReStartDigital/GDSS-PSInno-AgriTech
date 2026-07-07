@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth.store'
 import { Icon } from '../Icon'
 
@@ -41,63 +41,89 @@ export function Layout({ children }: { children: React.ReactNode }) {
   })
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar" aria-label="VegeLink primary navigation">
-        <div className="brand-block">
-          <div className="brand-mark" aria-hidden="true"><Icon name="leaf" /></div>
-          <div>
-            <p className="eyebrow">VegeLink Ghana</p>
-            <h1>Fresh trade, built for the field.</h1>
+    <div className={`app-shell ${!user ? 'guest-shell' : ''}`}>
+      {user && (
+        <aside className="sidebar" aria-label="VegeLink primary navigation">
+          <div className="brand-block">
+            <div className="brand-mark" aria-hidden="true"><Icon name="leaf" /></div>
+            <div>
+              <p className="eyebrow">VegeLink Ghana</p>
+              <h1>Fresh trade, built for the field.</h1>
+            </div>
           </div>
-        </div>
 
-        <nav className="sidebar-nav" aria-label="Platform sections">
-          {visibleNav.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.exact}
-              className={({ isActive }) => isActive ? 'active' : undefined}
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+          <nav className="sidebar-nav" aria-label="Platform sections">
+            {visibleNav.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.exact}
+                className={({ isActive }) => isActive ? 'active' : undefined}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
 
-        <div className="sidebar-panel">
-          <p className="panel-label">Session</p>
-          <h2>{user ? `${role} account` : 'Not logged in'}</h2>
-          <p>{user ? `Phone: ${user.phone}` : 'Log in to access the full platform.'}</p>
-          <div className="mini-badges">
-            {user ? (
-              <><span>Authenticated</span><span>{role}</span></>
-            ) : (
-              <span>Guest</span>
-            )}
+          <div className="sidebar-panel">
+            <p className="panel-label">Session</p>
+            <h2>{`${role} account`}</h2>
+            <p>{`Phone: ${user.phone}`}</p>
+            <div className="mini-badges">
+              <span>Authenticated</span>
+              <span>{role}</span>
+            </div>
           </div>
-        </div>
-      </aside>
+        </aside>
+      )}
 
       <main className="content" id="main">
         <header className="topbar">
-          <div>
-            <h2>{getPageTitle(location.pathname)}</h2>
-          </div>
+          {!user ? (
+            <div className="topbar-brand" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div className="brand-mark" style={{ width: 36, height: 36, borderRadius: 8, background: '#264123', color: '#d6ffcd', display: 'grid', placeItems: 'center' }} aria-hidden="true">
+                <Icon name="leaf" />
+              </div>
+              <span style={{ fontWeight: 800, color: '#264123', fontSize: '1.25rem', fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>VegeLink</span>
+            </div>
+          ) : (
+            <div>
+              <h2>{getPageTitle(location.pathname)}</h2>
+            </div>
+          )}
+          {location.pathname === '/' && (
+            <nav className="topbar-nav" aria-label="Homepage sections">
+              <a href="#hero" className="topbar-nav-link">Home</a>
+              <a href="#browse" className="topbar-nav-link">Browse Produce</a>
+              <a href="#about" className="topbar-nav-link">About Platform</a>
+              <a href="#workflow" className="topbar-nav-link">How it Works</a>
+              <a href="#coverage" className="topbar-nav-link">Coverage</a>
+            </nav>
+          )}
           <div className="topbar-actions">
-            <div className="avatar" aria-hidden="true">{user?.phone?.slice(-2) ?? 'VG'}</div>
+            {!user ? (
+              <>
+                <Link to="/auth/login" className="secondary-button" style={{ minHeight: 38, padding: '0 16px', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', borderRadius: 10 }}>Log In</Link>
+                <Link to="/auth/register" className="primary-button" style={{ minHeight: 38, padding: '0 16px', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', borderRadius: 10 }}>Register</Link>
+              </>
+            ) : (
+              <div className="avatar" aria-hidden="true">{user?.phone?.slice(-2) ?? 'VG'}</div>
+            )}
           </div>
         </header>
 
         {children}
 
-        <nav className="mobile-nav" aria-label="Mobile shortcuts">
-          {visibleNav.slice(0, 4).map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.exact}>
-              <Icon name={item.icon} />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
+        {user && (
+          <nav className="mobile-nav" aria-label="Mobile shortcuts">
+            {visibleNav.slice(0, 4).map((item) => (
+              <NavLink key={item.to} to={item.to} end={item.exact}>
+                <Icon name={item.icon} />
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+        )}
       </main>
     </div>
   )
