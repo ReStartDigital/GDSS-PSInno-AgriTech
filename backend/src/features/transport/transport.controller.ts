@@ -6,6 +6,8 @@ import {
 } from "./transport.schemas.js";
 import { ErrorCode } from "../../common/constants/error-codes.enum.js";
 import { UnprocessableException } from "../../common/exceptions/index.js";
+import { confirmDeliverySchema } from "./transport.schemas.js";
+import { HttpStatusCode } from "axios";
 
 export class TransportController {
   constructor(private transportService: TransportService) {}
@@ -106,6 +108,8 @@ export class TransportController {
   ): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const validatedBody = await confirmDeliverySchema.parseAsync(req.body);
+
       if (!id) {
         throw new UnprocessableException(
           "Transport request ID is required",
@@ -118,6 +122,7 @@ export class TransportController {
       const completedJob = await this.transportService.confirmSecureDelivery(
         id,
         transporterId,
+        validatedBody,
       );
 
       res.status(200).json({
@@ -127,6 +132,45 @@ export class TransportController {
         data: completedJob,
       });
     } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * STEP 1: DOORSTEP ARRIVAL CHECK-IN
+   * Triggered when the driver is physically standing at the doorstep.
+   * Updates state to 'en_route' and initiates the strict 6-minute Arkesel OTP.
+   */
+  triggerDoorstepArrival = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const requestId = req.params.id as string;
+
+      // Assumes your 'authenticate' middleware attaches the user profile to req.user
+      const transporterId = req.user?.sub as string;
+
+      if (!requestId || transporterId) {
+        throw new UnprocessableException(
+          "Both Transport Request ID and Transporter authentication token are required.",
+          ErrorCode.VALIDATION_ERROR,
+        );
+      }
+      const updatedRequest = await this.transportService.triggerDoorstepArrival(
+        requestId,
+        transporterId,
+      );
+
+      res.status(HttpStatusCode.Ok).json({
+        success: true,
+        message:
+          "Doorstep arrival registered. A 6-minute verification code has been dispatched to the buyer.",
+        data: updatedRequest,
+      });
+    } catch (error) {
+      // Passes network failures or bad state transition errors directly to global error handler
       next(error);
     }
   };

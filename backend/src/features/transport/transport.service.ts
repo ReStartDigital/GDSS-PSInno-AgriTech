@@ -4,6 +4,7 @@ import { TransportRepository } from "./transport.repository.js";
 import type {
   CreateTransportRequestDto,
   BrowseAvailableJobsDto,
+  ConfirmDeliveryDto,
 } from "./transport.schemas.js";
 import { TransportRequestEntity } from "../../database/entities/Transportation.js";
 import {
@@ -18,6 +19,8 @@ import {
 } from "../../common/exceptions/index.js";
 import { ErrorCode } from "../../common/constants/error-codes.enum.js";
 import { assertValidTransition } from "../orders/order-state-machine.js";
+import { arkeselClient } from "../../infrastructure/arkesel/arkesel.client.js";
+import { User } from "../../database/entities/User.js";
 
 export class TransportService {
   constructor(
@@ -141,9 +144,65 @@ export class TransportService {
       return updatedRequest;
     });
   }
+
+  async triggerDoorstepArrival(
+    requestId: string,
+    transporterId: string,
+  ): Promise<TransportRequestEntity> {
+    return await this.dataSource.transaction(async (manager) => {
+      const txTransportRepo = manager.getRepository(TransportRequestEntity);
+      const txOrderRepo = manager.getRepository(OrderEntity);
+      const txUserRepo = manager.getRepository(User);
+
+      const request = await txTransportRepo.findOne({
+        where: { id: requestId, transporterId },
+        lock: { mode: "pessimistic_write" },
+      });
+
+      // Guard: Ensure transport is actively moving, not already completed or arrived
+      if (!request || request.status !== TransportStatus.IN_TRANSIT) {
+        throw new BadRequestException(
+          "Driver must be actively in-transit to trigger doorstep arrival.",
+          ErrorCode.BAD_REQUEST,
+        );
+      }
+
+      const order = await txOrderRepo.findOne({
+        where: { id: request.orderId },
+        lock: { mode: "pessimistic_write" },
+      });
+
+      if (!order)
+        throw new NotFoundException(
+          "Associated order record not found.",
+          ErrorCode.ORDER_NOT_FOUND,
+        );
+
+      const buyer = await txUserRepo.findOneBy({ id: order.buyerId });
+      if (!buyer || !buyer.phone) {
+        throw new BadRequestException(
+          "Buyer phone records are unavailable for OTP collection.",
+          ErrorCode.BAD_REQUEST,
+        );
+      }
+
+      // Explicitly mark transport row status to track doorstep presence
+      // Make sure 'ARRIVED_AT_DOORSTEP' is allowed in your TransportStatus enum or cast safely
+      request.status = TransportStatus.EN_ROUTE;
+      const updatedRequest = await txTransportRepo.save(request);
+      const fullname = `${buyer.firstName} ${buyer.middleName} ${buyer.lastName}`;
+
+      // Trigger the real-time Arkesel SMS OTP (Strict 6-minute lifespan starts now)
+      await arkeselClient.generateAndSendDoorstepOtp(buyer.phone, fullname);
+
+      return updatedRequest;
+    });
+  }
+
   async confirmSecureDelivery(
     requestId: string,
     transporterId: string,
+    dto: ConfirmDeliveryDto,
   ): Promise<TransportRequestEntity> {
     return await this.dataSource.transaction(async (manager) => {
       const txTransportRepo = manager.getRepository(TransportRequestEntity);
@@ -155,18 +214,9 @@ export class TransportService {
         lock: { mode: "pessimistic_write" },
       });
 
-      if (!request) {
-        throw new NotFoundException(
-          "Active transport assignment not found for your carrier profile.",
-          ErrorCode.NOT_FOUND,
-        );
-      }
-      if (
-        request.status !== TransportStatus.ACCEPTED &&
-        request.status !== TransportStatus.IN_TRANSIT
-      ) {
+      if (!request || request.status !== TransportStatus.EN_ROUTE) {
         throw new BadRequestException(
-          "This delivery contract is not in a valid state to be completed.",
+          "Doorstep arrival verification (Step 1) must be initiated first.",
           ErrorCode.BAD_REQUEST,
         );
       }
@@ -184,16 +234,14 @@ export class TransportService {
         );
       }
 
-      // 3. Delegate Verification directly to your Arkesel API Client Wrapper
-      // Replace this inline block with your actual service signature:
-      // await this.arkeselService.verifyOtp(order.buyerPhone, dto.verification_pin);
-      const isOtpValid = true; // Placeholder for your external Arkesel verification logic execution response
-
-      if (!isOtpValid) {
-        throw new BadRequestException(
-          "The verification PIN entered does not match Arkesel session records.",
-          ErrorCode.BAD_REQUEST,
+      try {
+        // Verify PIN directly via Arkesel (Fails if 6 minutes have passed)
+        await arkeselClient.verifyDoorstepOtp(
+          order.buyer.phone,
+          dto.verification_pin,
         );
+      } catch (otpError: any) {
+        throw new BadRequestException(otpError.message, ErrorCode.BAD_REQUEST);
       }
 
       // 4. Validate state machine transition (IN_TRANSIT -> DELIVERED)
