@@ -27,10 +27,12 @@ const controller = new RatingsController(ratingsService);
 
 /**
  * @openapi
- * /ratings:
+ * /api/v1/ratings:
  *   post:
  *     summary: Submit an order transaction review
  *     description: Log a whole-number score (1-5) and an optional comment targeting a counter-party of a finalized (DELIVERED or PICKED_UP) transaction order. Synchronizes aggregate score profiles on the ratee user account.
+ *     tags:
+ *       - Ratings
  *     access: Private (Authenticated Buyers or Farmers)
  *     middleware: [authenticate]
  *     requestBody:
@@ -73,10 +75,12 @@ ratingsRouter.post('/', authenticate, controller.submitReview);
 
 /**
  * @openapi
- * /ratings/me:
+ * /api/v1/ratings/me:
  *   get:
  *     summary: Get contextual user review history feeds
  *     description: Returns a paginated list of reviews either authored by the authenticated caller or received by them from marketplace counterparties.
+ *     tags:
+ *       - Ratings
  *     access: Private (All Authenticated Users)
  *     middleware: [authenticate]
  *     parameters:
