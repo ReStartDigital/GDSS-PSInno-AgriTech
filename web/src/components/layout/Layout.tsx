@@ -196,14 +196,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           )}
 
-          {/* Center: homepage anchor nav (guest only on /) */}
-          {location.pathname === '/' && (
-            <nav className="topbar-nav" aria-label="Homepage sections">
-              <a href="#hero"     className="topbar-nav-link">Home</a>
-              <a href="#browse"   className="topbar-nav-link">Browse</a>
-              <a href="#about"    className="topbar-nav-link">About</a>
-              <a href="#workflow" className="topbar-nav-link">How it Works</a>
-              <a href="#coverage" className="topbar-nav-link">Coverage</a>
+          {/* Center: guest nav menu (when not authenticated) */}
+          {!user && (
+            <nav className="topbar-nav" aria-label="Guest navigation">
+              <NavLink to="/" end className={({ isActive }) => `topbar-nav-link ${isActive ? 'active' : ''}`}>Home</NavLink>
+              <NavLink to="/marketplace" className={({ isActive }) => `topbar-nav-link ${isActive ? 'active' : ''}`}>Marketplace</NavLink>
+              <NavLink to="/how-it-works" className={({ isActive }) => `topbar-nav-link ${isActive ? 'active' : ''}`}>How it Works</NavLink>
+              <NavLink to="/about" className={({ isActive }) => `topbar-nav-link ${isActive ? 'active' : ''}`}>About</NavLink>
             </nav>
           )}
 
