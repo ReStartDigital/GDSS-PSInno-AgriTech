@@ -7,11 +7,10 @@ import {
 } from "./ratings.schemas.js";
 
 export class RatingsController {
-    private ratingsRepo;
+  private ratingsRepo;
   // Update your constructor to accept the service layer instead of the repo
   constructor(private ratingsService: RatingsService) {
     this.ratingsRepo = new RatingsRepository();
-    
   }
 
   submitReview = async (

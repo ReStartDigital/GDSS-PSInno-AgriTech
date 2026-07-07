@@ -8,7 +8,6 @@ export class RatingsRepository {
   private repo: Repository<RatingsEntity>;
   private ds: DataSource;
 
-
   constructor() {
     this.ds = AppDataSource;
     this.repo = this.ds.getRepository(RatingsEntity);

@@ -1,13 +1,13 @@
-import { Router } from 'express';
-import { RatingsController } from './ratings.controller.js';
-import { RatingsRepository } from './ratings.repository.js';
-import { authenticate } from '../../common/middleware/authenticate.middleware.js';
-import { OrdersService } from '../orders/orders.service.js';
-import { RatingsService } from './ratings.service.js';
-import { AppDataSource } from '../../config/database.config.js';
-import { ListingsRepository } from '../listings/listings.repository.js';
-import { OrdersRepository } from '../orders/orders.repository.js';
-import { UserRepository } from '../user/user.repository.js';
+import { Router } from "express";
+import { RatingsController } from "./ratings.controller.js";
+import { RatingsRepository } from "./ratings.repository.js";
+import { authenticate } from "../../common/middleware/authenticate.middleware.js";
+import { OrdersService } from "../orders/orders.service.js";
+import { RatingsService } from "./ratings.service.js";
+import { AppDataSource } from "../../config/database.config.js";
+import { ListingsRepository } from "../listings/listings.repository.js";
+import { OrdersRepository } from "../orders/orders.repository.js";
+import { UserRepository } from "../user/user.repository.js";
 
 const ratingsRouter = Router();
 
@@ -22,8 +22,6 @@ const ratingsRepo = new RatingsRepository();
 // Reuses your existing ordersService context
 const ratingsService = new RatingsService(ratingsRepo, ordersService);
 const controller = new RatingsController(ratingsService);
-
-
 
 /**
  * @openapi
@@ -71,7 +69,7 @@ const controller = new RatingsController(ratingsService);
  *       409:
  *         description: Double-rating conflict attempt detected for this order tracking sequence
  */
-ratingsRouter.post('/', authenticate, controller.submitReview);
+ratingsRouter.post("/", authenticate, controller.submitReview);
 
 /**
  * @openapi
@@ -110,6 +108,6 @@ ratingsRouter.post('/', authenticate, controller.submitReview);
  *       401:
  *         description: Request lacks valid signature authorization credentials
  */
-ratingsRouter.get('/me', authenticate, controller.getMyReviews);
+ratingsRouter.get("/me", authenticate, controller.getMyReviews);
 
 export { ratingsRouter };

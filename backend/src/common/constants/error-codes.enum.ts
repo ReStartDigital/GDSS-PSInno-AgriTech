@@ -94,5 +94,5 @@ export enum ErrorCode {
   INBOUND_SMS_UNKNOWN_COMMAND = "INBOUND_SMS_UNKNOWN_COMMAND",
 
   // ── Ratings ────────────────────────────────────────────────────────────────
-  RATING_ALREADY_EXISTS= "RATING_ALREADY_EXISTS"
+  RATING_ALREADY_EXISTS = "RATING_ALREADY_EXISTS",
 }
