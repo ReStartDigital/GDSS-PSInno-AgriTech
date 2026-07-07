@@ -24,7 +24,90 @@ router.use(authenticate);
 
 /**
  * @openapi
- * /orders:
+ * /api/v1/orders:
+ *   get:
+ *     summary: Retrieve contextual orders
+ *     description: Fetches a paginated history of orders relative to the authenticated user's active context (Buyer vs. Farmer).
+ *     tags:
+ *       - Orders
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Array of localized orders retrieved successfully.
+ *       401:
+ *         description: Unauthorized.
+ *   post:
+ *     summary: Place a new order
+ *     description: Initiates a purchase checkout against a crop listing, immediately establishing a stock reservation (soft-hold).
+ *     tags:
+ *       - Orders
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateOrderBody'
+ *     responses:
+ *       201:
+ *         description: Order placed successfully and stock allocation reserved.
+ *       400:
+ *         description: Bad Request.
+ *       403:
+ *         description: Forbidden. User lacks the BUYER role.
+ */
+router
+  .route("/")
+  .get(ordersController.getOrders)
+  .post(authorize(UserRole.BUYER), ordersController.createOrder);
+
+/**
+ * @openapi
+ * /api/v1/orders/{id}:
+ *   get:
+ *     summary: Get order details
+ *     description: Fetches full relational details for an order. Restricted strictly to involved stakeholders (Buyer, Farmer, or assigned Transporter).
+ *     tags:
+ *       - Orders
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Order detailed profile data returned.
+ *       403:
+ *         description: Forbidden. User is not a structural party to this order transaction.
+ *       404:
+ *         description: Order not found.
+ */
+router.get(
+  "/:id",
+  authorize(UserRole.BUYER, UserRole.FARMER, UserRole.AGENT), // Extend role inclusion contextually
+  ordersController.getOrderById,
+);
+
+/**
+ * @openapi
+ * /api/v1/orders:
  *   post:
  *     summary: Place a new order
  *     description: Initiates a purchase checkout against a crop listing, immediately establishing a stock reservation (soft-hold).
@@ -54,7 +137,7 @@ router.post("/", authorize(UserRole.BUYER), ordersController.createOrder);
 
 /**
  * @openapi
- * /orders/{id}/confirm:
+ * /api/v1/orders/{id}/confirm:
  *   patch:
  *     summary: Confirm a pending order
  *     description: Executed by a producer or administrative agent to accept a contract, converting the temporary stock hold into a permanent deduction.
@@ -90,7 +173,7 @@ router.patch(
 
 /**
  * @openapi
- * /orders/{id}/decline:
+ * /api/v1/orders/{id}/decline:
  *   patch:
  *     summary: Decline a pending order
  *     description: Rejects an incoming order request and immediately releases any soft-held crop volume back into public catalog availability.
@@ -137,7 +220,7 @@ router.patch(
 
 /**
  * @openapi
- * /orders/{id}/negotiate:
+ * /api/v1/orders/{id}/negotiate:
  *   patch:
  *     summary: Submit a pricing counter-offer
  *     description: Registers an updated unit rate recommendation per kilogram, altering the pending billing totals before contract finalization.
@@ -184,7 +267,7 @@ router.patch(
 
 /**
  * @openapi
- * /orders/{id}/pack:
+ * /api/v1/orders/{id}/pack:
  *   patch:
  *     summary: Mark produce as packed
  *     description: Shifts the status to packed and dynamically routes the order forward based on whether it is a delivery or a customer warehouse pickup.
@@ -216,7 +299,7 @@ router.patch(
 
 /**
  * @openapi
- * /orders/{id}/cancel:
+ * /api/v1/orders/{id}/cancel:
  *   patch:
  *     summary: Cancel an active order contract
  *     description: Terminates the transaction contract and runs automatic stock rollback calculations depending on the active lifecycle stage.
