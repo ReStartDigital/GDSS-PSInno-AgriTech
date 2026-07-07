@@ -1,20 +1,54 @@
 import { useAuthStore } from '../store/auth.store'
 import { useLogout } from '../hooks/useAuth'
+import { useMyOrders } from '../hooks/useOrders'
 import { Icon } from '../components/Icon'
 import { Link } from 'react-router-dom'
+import { Spinner } from '../components/ui/Feedback'
+
+function getInitials(fullName?: string, phone?: string): string {
+  if (fullName && fullName.trim()) {
+    return fullName
+      .trim()
+      .split(' ')
+      .map((w) => w[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase()
+  }
+  return phone?.slice(-4) ?? 'VG'
+}
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  english: 'English',
+  twi: 'Twi (Akan)',
+  fante: 'Fante (Akan)',
+  ga: 'Ga',
+  ewe: 'Ewe',
+  dagbani: 'Dagbani',
+  frafra: 'Frafra (Gurenne)',
+  dagaare: 'Dagaare',
+  gonja: 'Gonja',
+  mampruli: 'Mampruli',
+  hausa: 'Hausa',
+  nzema: 'Nzema',
+}
 
 export default function ProfilePage() {
   const user = useAuthStore((s) => s.user)
   const { mutate: logout, isPending } = useLogout()
+  const { data: orders } = useMyOrders()
 
-  const initials = user?.phone?.slice(-4) ?? 'VG'
+  const initials = getInitials(user?.fullName, user?.phone)
+  const displayName = user?.fullName ?? user?.phone ?? 'Guest'
+  const orderCount = Array.isArray(orders) ? orders.length : 0
+  const languageLabel = user?.language ? (LANGUAGE_LABELS[user.language] ?? user.language) : '—'
 
   return (
     <div className="page-stack">
       <section className="page-hero">
         <div>
           <p className="eyebrow">Profile</p>
-          <h2>Your account and session.</h2>
+          <h2>Your account.</h2>
           <p>Manage your identity, role, and security settings.</p>
         </div>
         <Link to="/" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px' }}>
@@ -23,22 +57,41 @@ export default function ProfilePage() {
       </section>
 
       <section className="panel-grid profile-grid">
+        {/* ── Identity card ── */}
         <div className="section-card">
           <div className="profile-header">
             <div className="avatar avatar-large" aria-hidden="true">{initials}</div>
             <div>
               <p className="eyebrow">{user?.role ?? 'Guest'} account</p>
-              <h3 style={{ margin: '4px 0' }}>{user?.phone ?? 'Not logged in'}</h3>
-              <p style={{ margin: 0, color: '#6b7280' }}>VegeLink Ghana member</p>
+              <h3 style={{ margin: '4px 0 2px' }}>{displayName}</h3>
+              <p style={{ margin: 0, color: '#6b7280', fontSize: '0.88rem' }}>{user?.phone ?? ''}</p>
             </div>
           </div>
 
+          {/* Stats row */}
+          <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+            {[
+              { label: 'Orders', value: String(orderCount) },
+              { label: 'Rating', value: '4.8 ★' },
+            ].map((s) => (
+              <div key={s.label} style={{
+                flex: 1, textAlign: 'center', padding: '12px 8px',
+                background: 'rgba(214,255,205,0.25)', borderRadius: 12,
+                border: '1px solid rgba(38,65,35,0.08)'
+              }}>
+                <strong style={{ display: 'block', fontSize: '1.25rem', color: '#264123' }}>{s.value}</strong>
+                <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Detail grid */}
           <div className="detail-grid profile-summary" style={{ marginTop: 20 }}>
             {[
               { label: 'Role', value: user?.role ?? '—' },
               { label: 'Phone', value: user?.phone ?? '—' },
               { label: 'Region', value: user?.region ?? '—' },
-              { label: 'Language', value: user?.language ?? '—' },
+              { label: 'Language', value: languageLabel },
               { label: 'Verification', value: 'SMS verified' },
               { label: 'Session', value: user ? 'Active' : 'Not logged in' },
             ].map((item) => (
@@ -50,6 +103,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* ── Actions card ── */}
         <div className="section-card">
           <div className="section-heading">
             <div><p className="eyebrow">Account</p><h3>Tools and actions.</h3></div>
@@ -85,6 +139,13 @@ export default function ProfilePage() {
             <div style={{ marginBottom: 16 }}>
               <Link to="/clients" className="quick-link" style={{ textDecoration: 'none', display: 'inline-flex', width: '100%', justifyContent: 'flex-start' }}>
                 <Icon name="user" /> My Clients
+              </Link>
+            </div>
+          )}
+          {user?.role === 'transporter' && (
+            <div style={{ marginBottom: 16 }}>
+              <Link to="/jobs" className="quick-link" style={{ textDecoration: 'none', display: 'inline-flex', width: '100%', justifyContent: 'flex-start' }}>
+                <Icon name="truck" /> Transport Jobs
               </Link>
             </div>
           )}

@@ -37,11 +37,11 @@ interface TransportJob {
 
 // Initial default seed accounts
 const DEFAULT_USERS: UserStore[] = [
-  { id: 'user-farmer', phone: '0244123456', firstName: 'Kwame', lastName: 'Mensah', email: 'kwame@agritech.com', role: 'farmer', pin: '1234', isActive: true, createdAt: new Date().toISOString() },
-  { id: 'user-buyer', phone: '0244654321', firstName: 'Nana', lastName: 'Ampadu', email: 'nana@agritech.com', role: 'buyer', pin: '1234', isActive: true, createdAt: new Date().toISOString() },
-  { id: 'user-agent', phone: '0200000002', firstName: 'Ama', lastName: 'Osei', email: 'ama.agent@agritech.com', role: 'agent', pin: '1234', isActive: true, createdAt: new Date().toISOString() },
-  { id: 'user-transporter', phone: '0200000003', firstName: 'Kojo', lastName: 'Logistics', email: 'kojo@agritech.com', role: 'transporter', pin: '1234', isActive: true, createdAt: new Date().toISOString() },
-  { id: 'user-admin', phone: '0233999999', firstName: 'Abena', lastName: 'Admin', email: 'admin@vegelink.app', role: 'admin', pin: '1234', isActive: true, createdAt: new Date().toISOString() },
+  { id: 'user-farmer', phone: '0244123456', firstName: 'Kwame', lastName: 'Mensah', email: 'kwame@agritech.com', role: 'farmer', pin: '1234', isActive: true, createdAt: new Date().toISOString(), region: 'Ashanti', language: 'twi' },
+  { id: 'user-buyer', phone: '0244654321', firstName: 'Nana', lastName: 'Ampadu', email: 'nana@agritech.com', role: 'buyer', pin: '1234', isActive: true, createdAt: new Date().toISOString(), region: 'Greater Accra', language: 'ga' },
+  { id: 'user-agent', phone: '0200000002', firstName: 'Ama', lastName: 'Osei', email: 'ama.agent@agritech.com', role: 'agent', pin: '1234', isActive: true, createdAt: new Date().toISOString(), region: 'Ashanti', language: 'twi' },
+  { id: 'user-transporter', phone: '0200000003', firstName: 'Kojo', lastName: 'Logistics', email: 'kojo@agritech.com', role: 'transporter', pin: '1234', isActive: true, createdAt: new Date().toISOString(), region: 'Eastern', language: 'twi' },
+  { id: 'user-admin', phone: '0233999999', firstName: 'Abena', lastName: 'Admin', email: 'admin@vegelink.app', role: 'admin', pin: '1234', isActive: true, createdAt: new Date().toISOString(), region: 'Greater Accra', language: 'english' },
 ]
 
 const DEFAULT_LISTINGS: any[] = [
@@ -194,7 +194,7 @@ export const authApi = {
     users.push(newUser)
     setLocalStorage('vl_users', users)
 
-    const responseUser = { id: newUser.id, phone: newUser.phone, role: newUser.role, region: newUser.region, language: newUser.language }
+    const responseUser = { id: newUser.id, phone: newUser.phone, role: newUser.role, fullName: `${newUser.firstName} ${newUser.lastName}`, region: newUser.region, language: newUser.language }
     return Promise.resolve({
       data: {
         success: true,
@@ -217,7 +217,7 @@ export const authApi = {
         }
       })
     }
-    const responseUser = { id: user.id, phone: user.phone, role: user.role, region: user.region, language: user.language }
+    const responseUser = { id: user.id, phone: user.phone, role: user.role, fullName: `${user.firstName} ${user.lastName}`, region: user.region, language: user.language }
     return Promise.resolve({
       data: {
         success: true,
