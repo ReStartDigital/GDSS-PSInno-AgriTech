@@ -1,10 +1,9 @@
 import type { MigrationInterface, QueryRunner } from "typeorm";
 
 export class CreateRatingsTable1783421634864 implements MigrationInterface {
-
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`);
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`);
+    await queryRunner.query(`
             CREATE TABLE ratings (
                 id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                 rater_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
@@ -17,12 +16,11 @@ export class CreateRatingsTable1783421634864 implements MigrationInterface {
                 UNIQUE (rater_id, order_id)
             );
         `);
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP TABLE IF EXISTS ratings CASCADE;
         `);
-    }
-
+  }
 }
