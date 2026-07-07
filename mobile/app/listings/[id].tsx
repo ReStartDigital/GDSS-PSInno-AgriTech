@@ -4,7 +4,7 @@ import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { findMarketplaceListing, MarketplaceListing } from "@/lib/marketplace-data";
 import { vlClassNames } from "@/lib/design-system";
-import { initials } from "@/lib/utils";
+import { initials, getProduceEmoji } from "@/lib/utils";
 import {
   NavArrowLeft,
   Heart,
@@ -250,6 +250,7 @@ export default function ListingDetailScreen() {
 }
 
 function ProduceHero({ listing }: { listing: MarketplaceListing }) {
+  const emoji = getProduceEmoji(listing.cropName);
   return (
     <View className="h-40 w-40 items-center justify-center">
       <View
@@ -263,8 +264,8 @@ function ProduceHero({ listing }: { listing: MarketplaceListing }) {
         }}
       >
         <View className="absolute -right-2 top-2 h-10 w-14 rotate-45 rounded-full bg-white/35" />
-        <Text className="text-3xl font-black text-white">
-          {initials(listing.cropName)}
+        <Text className="text-5xl">
+          {emoji}
         </Text>
       </View>
     </View>

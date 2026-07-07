@@ -9,6 +9,7 @@ import {
   marketplaceListings,
 } from "@/lib/marketplace-data";
 import { vlClassNames, vlColors } from "@/lib/design-system";
+import { getProduceEmoji } from "@/lib/utils";
 import {
   ViewGrid,
   List as ListIcon,
@@ -342,11 +343,7 @@ function ProduceThumb({
   size: "sm" | "lg";
 }) {
   const dimensions = size === "sm" ? "h-20 w-20" : "h-24 w-24";
-  const cropInitials = listing.cropName
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 2);
+  const emoji = getProduceEmoji(listing.cropName);
 
   return (
     <View
@@ -364,7 +361,7 @@ function ProduceThumb({
         }}
       >
         <View className="absolute -right-1 -top-1 h-5 w-7 rotate-45 rounded-full bg-white/40" />
-        <Text className="text-base font-black text-white">{cropInitials}</Text>
+        <Text className="text-2xl">{emoji}</Text>
       </View>
     </View>
   );
