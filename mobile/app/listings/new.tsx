@@ -10,11 +10,13 @@ import {
   View,
   Modal,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { NavArrowLeft, NavArrowDown, Pin, Check, PlusCircle } from "iconoir-react-native";
-import { useCreateListing, useUpdateListing, useListingDetails, useRecommendPackaging } from "@/lib/listings-api";
+import { NavArrowLeft, NavArrowDown, Pin, Check, PlusCircle, Camera, Xmark } from "iconoir-react-native";
+import { useCreateListing, useUpdateListing, useListingDetails, useRecommendPackaging, useUploadListingImage } from "@/lib/listings-api";
+import * as ImagePicker from "expo-image-picker";
 
 const unitOptions = ["kg", "crate", "basket", "head", "bunch", "sack"] as const;
 
@@ -51,6 +53,10 @@ export default function NewListingScreen() {
   const [category, setCategory] = useState<(typeof categories)[number]>("Vegetables");
   const [unitOfMeasure, setUnitOfMeasure] = useState<(typeof unitOptions)[number]>("kg");
 
+  const [images, setImages] = useState<string[]>([]);
+  const uploadImageMutation = useUploadListingImage();
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   // Success state
   const [listingPosted, setListingPosted] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -74,6 +80,7 @@ export default function NewListingScreen() {
       else if (name.includes("cabbage") || name.includes("lettuce")) setSelectedEmoji("🥬");
       else if (name.includes("onion")) setSelectedEmoji("🧅");
       else if (name.includes("yam") || name.includes("potato")) setSelectedEmoji("🍠");
+      setImages(existingListing.images || []);
       /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [existingListing]);
@@ -129,6 +136,41 @@ export default function NewListingScreen() {
   const recommendedPackagingId = packagingOptions?.[0]?.id;
   const recommendedPackagingLabel = packagingOptions?.[0]?.label;
 
+  const handlePickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      Alert.alert("Permission Required", "Please allow gallery permissions to select produce photos.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
+      selectionLimit: 5,
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setUploadingImage(true);
+      try {
+        const uploadPromises = result.assets.map(async (asset) => {
+          const uploadRes = await uploadImageMutation.mutateAsync(asset.uri);
+          return uploadRes.url;
+        });
+        const urls = await Promise.all(uploadPromises);
+        setImages((current) => [...current, ...urls]);
+      } catch (err: any) {
+        Alert.alert("Upload Failed", err.message || "Failed to upload one or more images.");
+      } finally {
+        setUploadingImage(false);
+      }
+    }
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    setImages((current) => current.filter((_, idx) => idx !== indexToRemove));
+  };
+
   const handleSubmit = () => {
     if (!hasValidListing) return;
 
@@ -138,7 +180,7 @@ export default function NewListingScreen() {
       quantity_kg: parsedQuantity,
       price_per_kg_ghs: parsedPrice,
       harvest_date: harvestDate,
-      images: [],
+      images: images,
       recommended_packaging_id: recommendedPackagingId,
       location: { lat: 5.7023, lng: -0.0194 }, // default Accra coordinate
       supports_delivery: true,
@@ -306,6 +348,45 @@ export default function NewListingScreen() {
                   className="h-16 rounded-2xl border border-gray-250 bg-gray-50 px-4 text-base font-extrabold text-gray-950"
                 />
               </View>
+            </View>
+
+            {/* Images Uploader Row */}
+            <View>
+              <Text className="mb-2 text-xs font-black uppercase text-gray-400">
+                Produce Photos ({images.length}/5)
+              </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row py-1">
+                {/* Upload box */}
+                {images.length < 5 && (
+                  <Pressable
+                    onPress={handlePickImage}
+                    disabled={uploadingImage}
+                    className="w-20 h-20 rounded-2xl border border-dashed border-gray-300 bg-gray-50 items-center justify-center mr-3 active:bg-gray-100"
+                  >
+                    {uploadingImage ? (
+                      <ActivityIndicator size="small" color="#15803D" />
+                    ) : (
+                      <>
+                        <Camera color="#9CA3AF" width={22} height={22} strokeWidth={2} />
+                        <Text className="text-[10px] font-black text-gray-400 mt-1">Add Photo</Text>
+                      </>
+                    )}
+                  </Pressable>
+                )}
+
+                {/* Picked image thumbnails */}
+                {images.map((imgUrl, index) => (
+                  <View key={imgUrl} className="relative w-20 h-20 rounded-2xl overflow-hidden mr-3">
+                    <Image source={{ uri: imgUrl }} className="w-full h-full" />
+                    <Pressable
+                      onPress={() => handleRemoveImage(index)}
+                      className="absolute top-1 right-1 h-5 w-5 bg-black/60 rounded-full items-center justify-center active:bg-black"
+                    >
+                      <Xmark color="#FFFFFF" width={12} height={12} strokeWidth={3} />
+                    </Pressable>
+                  </View>
+                ))}
+              </ScrollView>
             </View>
 
             {/* Emoji Picker Grid */}
