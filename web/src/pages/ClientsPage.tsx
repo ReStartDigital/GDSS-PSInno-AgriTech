@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMyClients, useRegisterClient, useUnassignClient, type Client } from '../hooks/useClients'
 import { getApiErrorMessage } from '../lib/errors'
-import { Icon } from '../components/Icon'
 import { Spinner, ErrorAlert, EmptyState } from '../components/ui/Feedback'
 import { Field } from '../components/ui/Field'
 import { PageHero } from '../components/ui/PageHero'
@@ -54,11 +53,11 @@ export default function ClientsPage() {
       )}
 
       {clients.length > 0 && (
-        <section className="listing-grid">
+        <div className="mp-card-grid">
           {clients.map((client) => (
             <ClientCard key={client.id} client={client} />
           ))}
-        </section>
+        </div>
       )}
     </div>
   )
@@ -66,46 +65,73 @@ export default function ClientsPage() {
 
 function ClientCard({ client }: { client: Client }) {
   const { mutate: unassign, isPending } = useUnassignClient()
+
+  // Avatar color based on first letter
+  const initials = `${client.firstName[0]}${client.lastName[0]}`.toUpperCase()
+  const tint = 'rgba(214,255,205,0.35)'
+
   return (
-    <article className="listing-card wide">
-      <div className="listing-top">
-        <span className="status-pill">Farmer Client</span>
-        <Icon name="user" />
-      </div>
-      <h3>{client.firstName} {client.lastName}</h3>
-      <div className="listing-meta" style={{ display: 'grid', gap: 4, marginTop: 8 }}>
-        <span style={{ fontSize: '0.9rem', color: '#374151' }}>
-          <strong>Phone:</strong> {client.phone}
+    <article className="mp-card">
+      {/* Visual band — person avatar */}
+      <div className="mp-card-visual" style={{ background: tint }}>
+        <span className="mp-card-emoji" style={{ fontSize: '2.6rem' }}>👤</span>
+
+        {/* "Farmer Client" badge — top left */}
+        <span className="mp-urgent-badge" style={{ background: 'linear-gradient(135deg, #166534 0%, #15803d 100%)' }}>
+          Farmer Client
         </span>
-        {client.email && (
-          <span style={{ fontSize: '0.9rem', color: '#374151' }}>
-            <strong>Email:</strong> {client.email}
-          </span>
-        )}
-        {client.region && (
-          <span style={{ fontSize: '0.9rem', color: '#374151' }}>
-            <strong>Region:</strong> {client.region}
-          </span>
-        )}
-        {client.language && (
-          <span style={{ fontSize: '0.9rem', color: '#374151' }}>
-            <strong>Preferred Language:</strong> <span style={{ textTransform: 'capitalize' }}>{client.language}</span>
-          </span>
-        )}
+
+        {/* Initials badge — top right */}
+        <div className="mp-agriscore" style={{
+          background: '#264123', borderRadius: 12,
+          width: 34, height: 34,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#d6ffcd' }}>{initials}</span>
+        </div>
       </div>
-      <button
-        type="button"
-        className="secondary-button"
-        disabled={isPending}
-        onClick={() => {
-          if (confirm(`Are you sure you want to unassign ${client.firstName} ${client.lastName}?`)) {
-            unassign(client.id)
-          }
-        }}
-        style={{ marginTop: 16, width: '100%', justifyContent: 'center', color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)' }}
-      >
-        {isPending ? 'Unassigning…' : 'Unassign Client'}
-      </button>
+
+      {/* Body */}
+      <div className="mp-card-body">
+        <h3 className="mp-card-name">{client.firstName} {client.lastName}</h3>
+
+        <p className="mp-card-farmer">
+          <span style={{ opacity: 0.5, marginRight: 4 }}>📞</span>
+          {client.phone}
+        </p>
+
+        {/* Region + language meta */}
+        <div className="mp-card-meta" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+          {client.region && (
+            <span style={{ fontSize: '0.82rem', color: '#374151' }}>
+              📍 {client.region}
+            </span>
+          )}
+          {client.language && (
+            <span style={{ fontSize: '0.82rem', color: '#374151', textTransform: 'capitalize' }}>
+              🗣 {client.language}
+            </span>
+          )}
+          {client.email && (
+            <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>
+              ✉️ {client.email}
+            </span>
+          )}
+        </div>
+
+        {/* Unassign action */}
+        <button
+          type="button"
+          className="mp-order-btn"
+          disabled={isPending}
+          onClick={() => {
+            if (confirm(`Unassign ${client.firstName} ${client.lastName}?`)) unassign(client.id)
+          }}
+          style={{ background: isPending ? '#9ca3af' : 'rgba(239,68,68,0.85)', marginTop: 'auto' }}
+        >
+          {isPending ? 'Unassigning…' : 'Unassign Client'}
+        </button>
+      </div>
     </article>
   )
 }

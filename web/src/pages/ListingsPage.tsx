@@ -7,11 +7,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { createListingSchema, type CreateListingFormData } from '../schemas'
 import type { Listing } from '../types/api'
 import { getApiErrorMessage } from '../lib/errors'
-import { Icon } from '../components/Icon'
-import { Spinner, ErrorAlert, EmptyState, StatusBadge } from '../components/ui/Feedback'
+import { Spinner, ErrorAlert, EmptyState } from '../components/ui/Feedback'
 import { Field } from '../components/ui/Field'
 import { PageHero } from '../components/ui/PageHero'
 import { FormActions } from '../components/ui/FormActions'
+import { getCropConfig } from '../lib/produceUtils'
 
 const UNIT_OPTIONS = ['kg', 'crate', 'basket', 'bunch', 'sack', 'head'] as const
 
@@ -123,11 +123,11 @@ export default function ListingsPage() {
       )}
 
       {listings.length > 0 && (
-        <section className="listing-grid">
+        <div className="mp-card-grid">
           {listings.map((listing) => (
             <ListingCard key={listing.id} listing={listing} />
           ))}
-        </section>
+        </div>
       )}
 
     </div>
@@ -136,61 +136,90 @@ export default function ListingsPage() {
 
 function ListingCard({ listing }: { listing: Listing }) {
   const { mutate: deleteListing, isPending } = useDeleteListing()
+  const cfg = getCropConfig(listing.vegetable_type)
+
   return (
-    <article className="listing-card wide" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '280px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e5e7eb', padding: '20px', boxShadow: '0 4px 6px -1px rgba(38, 65, 35, 0.06)' }}>
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <StatusBadge status={listing.status} />
-              {listing.isUrgent && <UrgentSaleBadge />}
-            </div>
-            <h3 style={{ margin: '4px 0 0', fontSize: '1.2rem', fontWeight: 600, color: '#264123' }}>{listing.vegetable_type}</h3>
-          </div>
-          {listing.agriScore && <AgriScoreCircle score={listing.agriScore} />}
-        </div>
+    <article className="mp-card">
+      {/* Visual band — same as marketplace */}
+      <div className="mp-card-visual" style={{ background: cfg.tint }}>
+        <span className="mp-card-emoji">{cfg.emoji}</span>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-          {listing.freshness && <FreshnessBadge freshness={listing.freshness} />}
-        </div>
+        {/* Status badge — top left */}
+        <span className="mp-urgent-badge" style={{
+          background: listing.status === 'active'
+            ? 'linear-gradient(135deg, #166534 0%, #15803d 100%)'
+            : listing.status === 'sold'
+            ? 'linear-gradient(135deg, #374151 0%, #4b5563 100%)'
+            : 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+        }}>
+          {listing.status}
+        </span>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, background: '#f8faf5', padding: '12px', borderRadius: '12px', border: '1px solid #e5e7eb', marginBottom: 12 }}>
-          <div>
-            <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#6b7280', display: 'block', letterSpacing: '0.05em' }}>Price</span>
-            <strong style={{ fontSize: '0.95rem', color: '#264123' }}>GH₵ {listing.price_per_kg_ghs}/{(listing as any).unit_of_measure ?? 'kg'}</strong>
+        {/* AgriScore ring — top right */}
+        {listing.agriScore && (
+          <div className="mp-agriscore" title={`AgriScore: ${listing.agriScore}`}>
+            <AgriScoreCircle score={listing.agriScore} />
           </div>
-          <div>
-            <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#6b7280', display: 'block', letterSpacing: '0.05em' }}>Available</span>
-            <strong style={{ fontSize: '0.95rem', color: '#264123' }}>{listing.quantity_kg} {(listing as any).unit_of_measure ?? 'kg'}</strong>
+        )}
+
+        {/* Urgent badge — below status if both exist */}
+        {listing.isUrgent && (
+          <span className="mp-urgent-badge" style={{
+            top: 'auto', bottom: 12, left: 12,
+            background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
+          }}>🔥 Urgent</span>
+        )}
+      </div>
+
+      {/* Card body */}
+      <div className="mp-card-body">
+        {listing.freshness && (
+          <div style={{ marginBottom: 8 }}>
+            <FreshnessBadge freshness={listing.freshness} />
           </div>
-        </div>
+        )}
+
+        <h3 className="mp-card-name">{listing.vegetable_type}</h3>
 
         {(listing as any).description && (
-          <p style={{ color: '#6b7280', fontSize: '0.85rem', margin: '0 0 12px', lineHeight: 1.5 }}>
+          <p className="mp-card-farmer" style={{ marginBottom: 10, lineHeight: 1.5 }}>
             {(listing as any).description}
           </p>
         )}
 
-        {listing.harvest_date && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b7280', fontSize: '0.8rem', marginBottom: 12 }}>
-            <span style={{ width: 14, height: 14, display: 'inline-flex' }}><Icon name="clock" /></span>
-            <span>Harvest: {new Date(listing.harvest_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+        {/* Price + quantity meta row */}
+        <div className="mp-card-meta">
+          <div>
+            <span className="mp-card-price">GH₵ {listing.price_per_kg_ghs}</span>
+            <span className="mp-card-per"> /{(listing as any).unit_of_measure ?? 'kg'}</span>
           </div>
-        )}
-      </div>
+          <div className="mp-card-qty">
+            {listing.quantity_kg} {(listing as any).unit_of_measure ?? 'kg'}
+          </div>
+        </div>
 
-      <button
-        type="button"
-        className="secondary-button"
-        disabled={isPending}
-        onClick={() => { if (confirm('Delete this listing?')) deleteListing(listing.id) }}
-        style={{ width: '100%', justifyContent: 'center', color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)', borderRadius: '12px', minHeight: '44px', fontWeight: 600 }}
-      >
-        {isPending ? 'Deleting…' : 'Delete'}
-      </button>
+        {listing.harvest_date && (
+          <p className="mp-card-date">
+            <span style={{ opacity: 0.55 }}>Harvest:</span>{' '}
+            {new Date(listing.harvest_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+          </p>
+        )}
+
+        {/* Delete action */}
+        <button
+          type="button"
+          className="mp-order-btn"
+          disabled={isPending}
+          onClick={() => { if (confirm('Delete this listing?')) deleteListing(listing.id) }}
+          style={{ background: isPending ? '#9ca3af' : 'rgba(239,68,68,0.85)', marginTop: 'auto' }}
+        >
+          {isPending ? 'Deleting…' : 'Delete Listing'}
+        </button>
+      </div>
     </article>
   )
 }
+
 
 function CreateListingForm({ 
   onClose, 
@@ -340,47 +369,32 @@ function CreateListingForm({
 }
 
 function AgriScoreCircle({ score }: { score: number }) {
-  const radius = 14
-  const strokeWidth = 3
-  const circumference = 2 * Math.PI * radius
-  const strokeDashoffset = circumference - (score / 100) * circumference
-
+  const r = 13, sw = 3, circ = 2 * Math.PI * r
+  const offset = circ - (score / 100) * circ
+  const color = score >= 85 ? '#10b981' : score >= 70 ? '#f59e0b' : '#ef4444'
   return (
-    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36 }} title={`AgriScore: ${score}%`}>
-      <svg width="36" height="36" style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx="18" cy="18" r={radius} stroke="rgba(38,65,35,0.08)" strokeWidth={strokeWidth} fill="transparent" />
-        <circle cx="18" cy="18" r={radius} stroke="url(#agriScoreGradient)" strokeWidth={strokeWidth} fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
-        <defs>
-          <linearGradient id="agriScoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#10b981" />
-            <stop offset="100%" stopColor="#047857" />
-          </linearGradient>
-        </defs>
+    <div style={{ position: 'relative', width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <svg width="34" height="34" style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx="17" cy="17" r={r} stroke="rgba(255,255,255,0.3)" strokeWidth={sw} fill="none" />
+        <circle cx="17" cy="17" r={r} stroke={color} strokeWidth={sw} fill="none"
+          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
       </svg>
-      <span style={{ position: 'absolute', fontSize: '0.65rem', fontWeight: 800, color: '#047857' }}>{score}</span>
+      <span style={{ position: 'absolute', fontSize: '0.6rem', fontWeight: 800, color }}>{score}</span>
     </div>
   )
 }
 
 function FreshnessBadge({ freshness }: { freshness: 'High' | 'Medium' | 'Low' }) {
   const styles = {
-    High:   { bg: 'rgba(16, 185, 129, 0.08)', color: '#047857', border: 'rgba(16, 185, 129, 0.15)' },
-    Medium: { bg: 'rgba(245, 158, 11, 0.08)',  color: '#b45309', border: 'rgba(245, 158, 11, 0.15)' },
-    Low:    { bg: 'rgba(239, 68, 68, 0.08)',   color: '#b91c1c', border: 'rgba(239, 68, 68, 0.15)' },
+    High:   { bg: 'rgba(16, 185, 129, 0.1)', color: '#047857', border: 'rgba(16, 185, 129, 0.2)' },
+    Medium: { bg: 'rgba(245, 158, 11, 0.1)',  color: '#b45309', border: 'rgba(245, 158, 11, 0.2)' },
+    Low:    { bg: 'rgba(239, 68, 68, 0.1)',   color: '#b91c1c', border: 'rgba(239, 68, 68, 0.2)' },
   }[freshness]
 
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 600, background: styles.bg, color: styles.color, border: `1px solid ${styles.border}` }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 999, fontSize: '0.7rem', fontWeight: 600, background: styles.bg, color: styles.color, border: `1px solid ${styles.border}` }}>
       <span style={{ width: 6, height: 6, borderRadius: '50%', background: styles.color }} />
       {freshness} freshness
-    </span>
-  )
-}
-
-function UrgentSaleBadge() {
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 700, background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)', color: '#ffffff', letterSpacing: '0.03em', textTransform: 'uppercase', boxShadow: '0 2px 4px rgba(239, 68, 68, 0.15)' }}>
-      🔥 Urgent
     </span>
   )
 }

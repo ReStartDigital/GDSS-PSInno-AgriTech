@@ -1,26 +1,78 @@
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth.store'
 import { Icon } from '../Icon'
+import type { IconName } from '../Icon'
 
-const NAV_ITEMS = [
-  { to: '/',           label: 'Home',           icon: 'home'     as const, exact: true },
-  { to: '/overview',   label: 'Overview',        icon: 'leaf'     as const },
-  { to: '/marketplace',label: 'Marketplace',     icon: 'shopping' as const },
-  { to: '/listings',   label: 'Listings',        icon: 'bag'      as const },
-  { to: '/clients',    label: 'My Clients',      icon: 'user'     as const },
-  { to: '/jobs',       label: 'Transport Jobs',  icon: 'truck'    as const },
-  { to: '/orders',     label: 'Orders',          icon: 'bag'      as const },
-  { to: '/profile',    label: 'Profile',         icon: 'shield'   as const },
+// ── Nav item definition ────────────────────────────────────────────────────────
+
+interface NavItem {
+  to: string
+  label: string
+  icon: IconName
+  exact?: boolean
+}
+
+/** Returns role-specific nav items with proper labels */
+function getRoleNav(role: string | undefined): NavItem[] {
+  const base: NavItem[] = [
+    { to: '/overview', label: 'Overview', icon: 'leaf' },
+  ]
+
+  switch (role) {
+    case 'farmer':
+      return [
+        ...base,
+        { to: '/listings', label: 'My Listings',  icon: 'bag'      },
+        { to: '/orders',   label: 'My Orders',     icon: 'shopping' },
+        { to: '/profile',  label: 'Profile',       icon: 'user'     },
+      ]
+    case 'buyer':
+      return [
+        ...base,
+        { to: '/marketplace', label: 'Marketplace', icon: 'shopping' },
+        { to: '/orders',      label: 'My Orders',   icon: 'bag'      },
+        { to: '/profile',     label: 'Profile',     icon: 'user'     },
+      ]
+    case 'transporter':
+      return [
+        ...base,
+        { to: '/jobs',    label: 'Available Jobs', icon: 'truck'  },
+        { to: '/orders',  label: 'My Deliveries',  icon: 'bag'    },
+        { to: '/profile', label: 'Profile',        icon: 'user'   },
+      ]
+    case 'agent':
+      return [
+        ...base,
+        { to: '/marketplace', label: 'Marketplace',     icon: 'shopping' },
+        { to: '/clients',     label: 'My Farmers',      icon: 'user'     },
+        { to: '/listings',    label: 'Client Listings',  icon: 'bag'      },
+        { to: '/orders',      label: 'All Orders',      icon: 'truck'    },
+        { to: '/profile',     label: 'Profile',         icon: 'shield'   },
+      ]
+    default:
+      return [
+        ...base,
+        { to: '/marketplace', label: 'Marketplace', icon: 'shopping' },
+        { to: '/orders',      label: 'Orders',      icon: 'bag'      },
+        { to: '/profile',     label: 'Profile',     icon: 'user'     },
+      ]
+  }
+}
+
+/** Guest nav shown in topbar for unauthenticated users */
+const GUEST_NAV: NavItem[] = [
+  { to: '/',            label: 'Home',       icon: 'home',     exact: true },
+  { to: '/marketplace', label: 'Marketplace',icon: 'shopping'              },
 ]
 
-function getPageTitle(path: string): string {
+function getPageTitle(path: string, role?: string): string {
   if (path === '/') return 'Home'
-  if (path === '/overview') return 'Platform Overview'
+  if (path === '/overview') return 'Overview'
   if (path.startsWith('/marketplace')) return 'Marketplace'
-  if (path.startsWith('/listings')) return 'My Listings'
-  if (path.startsWith('/clients')) return 'My Clients'
-  if (path.startsWith('/jobs')) return 'Transport Jobs'
-  if (path.startsWith('/orders')) return 'Orders'
+  if (path.startsWith('/listings')) return role === 'agent' ? 'Client Listings' : 'My Listings'
+  if (path.startsWith('/clients')) return 'My Farmers'
+  if (path.startsWith('/jobs')) return 'Available Jobs'
+  if (path.startsWith('/orders')) return role === 'transporter' ? 'My Deliveries' : 'My Orders'
   if (path.startsWith('/profile')) return 'Profile'
   if (path.startsWith('/auth')) return 'Authentication'
   return 'VegeLink Ghana'
@@ -31,39 +83,52 @@ function capitalize(s: string) {
 }
 
 function formatPhone(phone: string) {
-  // Format 10-digit Ghana phone: 0244 123 456
   const digits = phone.replace(/\D/g, '')
   if (digits.length === 10) return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`
   return phone
 }
+
+// ── Role accent colors ─────────────────────────────────────────────────────────
+
+const ROLE_ACCENT: Record<string, string> = {
+  farmer:      '#d6ffcd',
+  buyer:       '#bfdbfe',
+  transporter: '#fde68a',
+  agent:       '#fca5a5',
+}
+
+const ROLE_ICON: Record<string, IconName> = {
+  farmer:      'leaf',
+  buyer:       'shopping',
+  transporter: 'truck',
+  agent:       'shield',
+}
+
+// ── Layout ────────────────────────────────────────────────────────────────────
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
   const role = user?.role
   const location = useLocation()
 
-  const visibleNav = NAV_ITEMS.filter((item) => {
-    if (item.to === '/' && user) return false
-    if (item.to === '/overview' && !user) return false
-    if (item.to === '/listings' && role !== 'farmer' && role !== 'agent') return false
-    if (item.to === '/clients' && role !== 'agent') return false
-    if (item.to === '/jobs' && role !== 'transporter') return false
-    if (item.to === '/marketplace' && role === 'farmer') return false
-    return true
-  })
+  const roleNav = getRoleNav(role)
 
-  // Mobile nav shows max 4 items BUT always ensures Profile is included
+  // Mobile nav: always include Profile as last item (max 4 items)
   const mobileNav = (() => {
-    if (visibleNav.length <= 4) return visibleNav
-    const profileItem = visibleNav.find(i => i.to === '/profile')
-    const rest = visibleNav.filter(i => i.to !== '/profile').slice(0, 3)
-    return profileItem ? [...rest, profileItem] : visibleNav.slice(0, 4)
+    if (roleNav.length <= 4) return roleNav
+    const profile = roleNav.find(i => i.to === '/profile')
+    const rest = roleNav.filter(i => i.to !== '/profile').slice(0, 3)
+    return profile ? [...rest, profile] : roleNav.slice(0, 4)
   })()
+
+  const roleColor = ROLE_ACCENT[role ?? ''] ?? '#d6ffcd'
+  const roleIconName: IconName = ROLE_ICON[role ?? ''] ?? 'leaf'
 
   return (
     <div className={`app-shell ${!user ? 'guest-shell' : ''}`}>
       {user && (
         <aside className="sidebar" aria-label="VegeLink primary navigation">
+          {/* Brand block */}
           <div className="brand-block">
             <div className="brand-mark" aria-hidden="true"><Icon name="leaf" /></div>
             <div>
@@ -72,8 +137,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
+          {/* Role-labelled navigation */}
           <nav className="sidebar-nav" aria-label="Platform sections">
-            {visibleNav.map((item) => (
+            {roleNav.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
@@ -86,13 +152,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
+          {/* Session panel with role color accent */}
           <div className="sidebar-panel">
-            <p className="panel-label">Session</p>
-            <h2>{capitalize(role ?? 'guest')} account</h2>
-            <p>{user.phone ? formatPhone(user.phone) : ''}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: `${roleColor}22`,
+                border: `1px solid ${roleColor}44`,
+                display: 'grid', placeItems: 'center',
+                color: roleColor, flexShrink: 0,
+              }}>
+                <Icon name={roleIconName} />
+              </div>
+              <div>
+                <p className="panel-label" style={{ margin: 0 }}>Logged in as</p>
+                <h2 style={{ margin: '2px 0 0' }}>{capitalize(role ?? 'user')}</h2>
+              </div>
+            </div>
+            <p style={{ margin: '0 0 12px' }}>{user.phone ? formatPhone(user.phone) : ''}</p>
             <div className="mini-badges">
-              <span>Authenticated</span>
-              <span>{capitalize(role ?? '')}</span>
+              <span style={{ background: `${roleColor}18`, borderColor: `${roleColor}30`, color: roleColor }}>
+                {capitalize(role ?? '')}
+              </span>
+              <span>Active</span>
             </div>
           </div>
         </aside>
@@ -100,6 +182,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <main className="content" id="main">
         <header className="topbar">
+          {/* Left: brand (guest) or page title (auth) */}
           {!user ? (
             <Link to="/" className="topbar-brand" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
               <div className="brand-mark" style={{ width: 36, height: 36, borderRadius: 8, background: '#264123', color: '#d6ffcd', display: 'grid', placeItems: 'center' }} aria-hidden="true">
@@ -109,9 +192,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </Link>
           ) : (
             <div className="topbar-title">
-              <h2>{getPageTitle(location.pathname)}</h2>
+              <h2>{getPageTitle(location.pathname, role)}</h2>
             </div>
           )}
+
+          {/* Center: homepage anchor nav (guest only on /) */}
           {location.pathname === '/' && (
             <nav className="topbar-nav" aria-label="Homepage sections">
               <a href="#hero"     className="topbar-nav-link">Home</a>
@@ -121,6 +206,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <a href="#coverage" className="topbar-nav-link">Coverage</a>
             </nav>
           )}
+
+          {/* Right: auth buttons (guest) or avatar (auth) */}
           <div className="topbar-actions">
             {!user ? (
               <>
@@ -128,7 +215,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link to="/auth/register" className="primary-button"   style={{ minHeight: 38, padding: '0 16px', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', borderRadius: 10 }}>Register</Link>
               </>
             ) : (
-              <Link to="/profile" className="avatar" aria-label="Profile" style={{ textDecoration: 'none' }}>
+              <Link
+                to="/profile"
+                className="avatar"
+                aria-label="Profile"
+                style={{ textDecoration: 'none', background: roleColor, color: '#264123', fontWeight: 800 }}
+              >
                 {user?.phone?.slice(-2) ?? 'VG'}
               </Link>
             )}
@@ -137,6 +229,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {children}
 
+        {/* Mobile bottom nav — role-specific items, Profile always visible */}
         {user && (
           <nav className="mobile-nav" aria-label="Mobile shortcuts">
             {mobileNav.map((item) => (

@@ -183,11 +183,27 @@
 }
 
 .sidebar-panel .mini-badges span {
-  background: rgba(214, 255, 205, 0.15);
-  border-color: rgba(214, 255, 205, 0.25);
-  color: #d6ffcd;
   font-size: 0.72rem;
   padding: 4px 10px;
+}
+
+.sidebar-role-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.sidebar-role-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .content h2,
