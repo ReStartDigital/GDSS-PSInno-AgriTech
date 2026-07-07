@@ -131,6 +131,8 @@
 .sidebar-nav a.active {
   background: rgba(214, 255, 205, 0.18);
   border-color: rgba(214, 255, 205, 0.36);
+  color: #d6ffcd;
+  font-weight: 700;
 }
 
 .sidebar-panel {
@@ -1488,16 +1490,41 @@
   }
 
   .quick-actions-row {
-    gap: 8px;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 0;
+  }
+
+  .quick-action-tile {
+    width: 22%;
+    min-width: unset;
   }
 
   .quick-action-icon {
     width: 48px;
     height: 48px;
+    border-radius: 14px;
   }
 
   .pulse-grid {
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 8px;
+    width: 100%;
+    gap: 12px;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .pulse-grid::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  .pulse-card {
+    flex-shrink: 0;
+    width: 130px;
+    margin: 0;
   }
 
   .produce-card-grid {
