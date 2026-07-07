@@ -9,11 +9,14 @@ import {
   TextInput,
   View,
   Modal,
+  ActivityIndicator,
+  Image,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { NavArrowLeft, NavArrowDown, Pin, Check, PlusCircle } from "iconoir-react-native";
-import { useListingsStore } from "@/lib/listings-store";
+import { NavArrowLeft, NavArrowDown, Pin, Check, PlusCircle, Camera, Xmark } from "iconoir-react-native";
+import { useCreateListing, useUpdateListing, useListingDetails, useRecommendPackaging, useUploadListingImage } from "@/lib/listings-api";
+import * as ImagePicker from "expo-image-picker";
 
 const unitOptions = ["kg", "crate", "basket", "head", "bunch", "sack"] as const;
 
@@ -36,13 +39,11 @@ export default function NewListingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { listings, addListing, updateListing } = useListingsStore();
-
   const isEditMode = !!id;
-  const existingListing = useMemo(() => {
-    if (!id) return null;
-    return listings.find((l) => l.id === id);
-  }, [id, listings]);
+
+  const { data: existingListing } = useListingDetails(id || "");
+  const createListingMutation = useCreateListing();
+  const updateListingMutation = useUpdateListing();
 
   const [cropName, setCropName] = useState("");
   const [description, setDescription] = useState("");
@@ -52,6 +53,10 @@ export default function NewListingScreen() {
   const [category, setCategory] = useState<(typeof categories)[number]>("Vegetables");
   const [unitOfMeasure, setUnitOfMeasure] = useState<(typeof unitOptions)[number]>("kg");
 
+  const [images, setImages] = useState<string[]>([]);
+  const uploadImageMutation = useUploadListingImage();
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   // Success state
   const [listingPosted, setListingPosted] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -60,24 +65,23 @@ export default function NewListingScreen() {
   // Load existing listing data in edit mode
   useEffect(() => {
     if (existingListing) {
-      setCropName(existingListing.cropName);
-      setDescription(existingListing.description || "");
-      setPriceText(existingListing.pricePerUnit.toString());
-      setQuantityText(existingListing.availableQuantity.toString());
-      setUnitOfMeasure(existingListing.unitOfMeasure as any);
-      setCategory(existingListing.category as any);
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setCropName(existingListing.vegetableType);
+      setDescription(existingListing.harvestDate ? `Harvest date: ${existingListing.harvestDate}` : "");
+      setPriceText(existingListing.pricePerKgGhs.toString());
+      setQuantityText(existingListing.quantityKg.toString());
+      setUnitOfMeasure("kg"); // Default unit in backend
+      setCategory("Vegetables");
 
       // Try to deduce emoji
-      const name = existingListing.cropName.toLowerCase();
-      const match = LISTING_EMOJIS.find((pe) => name.includes(pe) || pe === existingListing.harvestLabel);
-      if (match) {
-        setSelectedEmoji(match);
-      } else {
-        // Fallback checks
-        if (name.includes("tomato")) setSelectedEmoji("🍅");
-        else if (name.includes("pepper")) setSelectedEmoji("🌶️");
-        else if (name.includes("cabbage")) setSelectedEmoji("🥬");
-      }
+      const name = existingListing.vegetableType.toLowerCase();
+      if (name.includes("tomato")) setSelectedEmoji("🍅");
+      else if (name.includes("pepper") || name.includes("chili")) setSelectedEmoji("🌶️");
+      else if (name.includes("cabbage") || name.includes("lettuce")) setSelectedEmoji("🥬");
+      else if (name.includes("onion")) setSelectedEmoji("🧅");
+      else if (name.includes("yam") || name.includes("potato")) setSelectedEmoji("🍠");
+      setImages(existingListing.images || []);
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [existingListing]);
 
@@ -127,41 +131,84 @@ export default function NewListingScreen() {
     parsedPrice > 0 &&
     parsedQuantity > 0;
 
+  // Fetch packaging suggestions dynamically
+  const { data: packagingOptions } = useRecommendPackaging(cropName.trim());
+  const recommendedPackagingId = packagingOptions?.[0]?.id;
+  const recommendedPackagingLabel = packagingOptions?.[0]?.label;
+
+  const handlePickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      Alert.alert("Permission Required", "Please allow gallery permissions to select produce photos.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
+      selectionLimit: 5,
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setUploadingImage(true);
+      try {
+        const uploadPromises = result.assets.map(async (asset) => {
+          const uploadRes = await uploadImageMutation.mutateAsync(asset.uri);
+          return uploadRes.url;
+        });
+        const urls = await Promise.all(uploadPromises);
+        setImages((current) => [...current, ...urls]);
+      } catch (err: any) {
+        Alert.alert("Upload Failed", err.message || "Failed to upload one or more images.");
+      } finally {
+        setUploadingImage(false);
+      }
+    }
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    setImages((current) => current.filter((_, idx) => idx !== indexToRemove));
+  };
+
   const handleSubmit = () => {
     if (!hasValidListing) return;
 
-    const cm = colorMap[category] ?? colorMap.Vegetables;
+    const harvestDate = new Date().toISOString().split("T")[0]; // default to today
+    const submitData = {
+      vegetable_type: cropName.trim().toLowerCase(),
+      quantity_kg: parsedQuantity,
+      price_per_kg_ghs: parsedPrice,
+      harvest_date: harvestDate,
+      images: images,
+      recommended_packaging_id: recommendedPackagingId,
+      location: { lat: 5.7023, lng: -0.0194 }, // default Accra coordinate
+      supports_delivery: true,
+      supports_pickup: true,
+    };
 
-    if (isEditMode && existingListing) {
-      updateListing(existingListing.id, {
-        cropName: cropName.trim(),
-        description: description.trim(),
-        pricePerUnit: parsedPrice,
-        availableQuantity: parsedQuantity,
-        category,
-        unitOfMeasure,
-        accentColor: cm.accentColor,
-        tintColor: cm.tintColor,
-        harvestLabel: selectedEmoji, // Store emoji in harvestLabel or similar, or deduce dynamically
+    if (isEditMode && id) {
+      updateListingMutation.mutate({
+        id,
+        data: submitData
+      }, {
+        onSuccess: () => {
+          setListingPosted(true);
+        },
+        onError: (err: any) => {
+          Alert.alert("Failed to Update", err.error?.message || "Could not update listing.");
+        }
       });
     } else {
-      addListing({
-        cropName: cropName.trim(),
-        description: description.trim(),
-        pricePerUnit: parsedPrice,
-        availableQuantity: parsedQuantity,
-        category,
-        unitOfMeasure,
-        status: "available",
-        imageUrls: [],
-        harvestLabel: selectedEmoji,
-        packagingRecommendation: unitOfMeasure === "kg" ? "Ventilated crates" : "Plastic baskets",
-        accentColor: cm.accentColor,
-        tintColor: cm.tintColor,
+      createListingMutation.mutate(submitData, {
+        onSuccess: () => {
+          setListingPosted(true);
+        },
+        onError: (err: any) => {
+          Alert.alert("Failed to Post", err.error?.message || "Could not create listing.");
+        }
       });
     }
-
-    setListingPosted(true);
   };
 
   const handleReset = () => {
@@ -303,6 +350,45 @@ export default function NewListingScreen() {
               </View>
             </View>
 
+            {/* Images Uploader Row */}
+            <View>
+              <Text className="mb-2 text-xs font-black uppercase text-gray-400">
+                Produce Photos ({images.length}/5)
+              </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row py-1">
+                {/* Upload box */}
+                {images.length < 5 && (
+                  <Pressable
+                    onPress={handlePickImage}
+                    disabled={uploadingImage}
+                    className="w-20 h-20 rounded-2xl border border-dashed border-gray-300 bg-gray-50 items-center justify-center mr-3 active:bg-gray-100"
+                  >
+                    {uploadingImage ? (
+                      <ActivityIndicator size="small" color="#15803D" />
+                    ) : (
+                      <>
+                        <Camera color="#9CA3AF" width={22} height={22} strokeWidth={2} />
+                        <Text className="text-[10px] font-black text-gray-400 mt-1">Add Photo</Text>
+                      </>
+                    )}
+                  </Pressable>
+                )}
+
+                {/* Picked image thumbnails */}
+                {images.map((imgUrl, index) => (
+                  <View key={imgUrl} className="relative w-20 h-20 rounded-2xl overflow-hidden mr-3">
+                    <Image source={{ uri: imgUrl }} className="w-full h-full" />
+                    <Pressable
+                      onPress={() => handleRemoveImage(index)}
+                      className="absolute top-1 right-1 h-5 w-5 bg-black/60 rounded-full items-center justify-center active:bg-black"
+                    >
+                      <Xmark color="#FFFFFF" width={12} height={12} strokeWidth={3} />
+                    </Pressable>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+
             {/* Emoji Picker Grid */}
             {showEmojiPicker && (
               <View className="bg-white rounded-3xl border border-green-100 p-4 shadow-sm shadow-green-900/5">
@@ -415,6 +501,21 @@ export default function NewListingScreen() {
               </View>
             </View>
 
+            {/* Packaging Recommendation Tip */}
+            {recommendedPackagingLabel ? (
+              <View className="p-4 rounded-2xl bg-amber-50 border border-amber-100 flex-row items-center gap-3">
+                <Text className="text-xl">💡</Text>
+                <View className="flex-1">
+                  <Text className="text-xs font-black uppercase text-amber-800">
+                    Recommended Packaging
+                  </Text>
+                  <Text className="text-sm font-semibold text-amber-900 mt-0.5">
+                    {recommendedPackagingLabel} (increases protection during transit)
+                  </Text>
+                </View>
+              </View>
+            ) : null}
+
             {/* Description */}
             <View>
               <Text className="mb-2 text-xs font-black uppercase text-gray-400">
@@ -474,15 +575,21 @@ export default function NewListingScreen() {
         >
           <Pressable
             onPress={handleSubmit}
-            disabled={!hasValidListing}
+            disabled={!hasValidListing || createListingMutation.isPending || updateListingMutation.isPending}
             className={`h-16 flex-row items-center justify-center gap-2 rounded-2xl active:opacity-90 ${
               hasValidListing ? "bg-green-800" : "bg-[#C0D5C7]"
             }`}
           >
-            <PlusCircle color="white" width={20} height={20} strokeWidth={2.5} />
-            <Text className="text-base font-black text-white">
-              {isEditMode ? "Save Changes" : "Post Listing"}
-            </Text>
+            {createListingMutation.isPending || updateListingMutation.isPending ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <>
+                <PlusCircle color="white" width={20} height={20} strokeWidth={2.5} />
+                <Text className="text-base font-black text-white">
+                  {isEditMode ? "Save Changes" : "Post Listing"}
+                </Text>
+              </>
+            )}
           </Pressable>
         </View>
       )}

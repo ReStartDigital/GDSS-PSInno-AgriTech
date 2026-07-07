@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View, ActivityIndicator, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
 import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
@@ -7,6 +7,7 @@ import { NavArrowLeft, NavArrowRight } from "iconoir-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Rect, Path } from "react-native-svg";
 import { ProgressStep } from "@/components/common/ProgressStep";
+import { apiClient } from "@/lib/api-client";
 
 const roleLabels: Record<UserRole, string> = {
   farmer: "Farmer",
@@ -19,15 +20,18 @@ const roleLabels: Record<UserRole, string> = {
 export default function PhoneScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { firstName, lastName, role } = useLocalSearchParams<{
+  const { firstName, lastName, role, region, language } = useLocalSearchParams<{
     firstName?: string;
     lastName?: string;
     role?: UserRole;
+    region?: string;
+    language?: string;
   }>();
   const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
   const safeRole: UserRole = role ?? "farmer";
   const phoneDigits = phone.replace(/\D/g, "").slice(0, 9);
-  const canContinue = phoneDigits.length === 9;
+  const canContinue = phoneDigits.length === 9 && !loading;
 
   const formatPhoneNumber = (digits: string) => {
     if (digits.length <= 2) return digits;
@@ -55,20 +59,38 @@ export default function PhoneScreen() {
     });
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!canContinue) {
       return;
     }
 
-    router.push({
-      pathname: "/(auth)/verify",
-      params: {
-        firstName,
-        lastName,
-        phone: `+233${phoneDigits}`,
+    setLoading(true);
+    const fullPhone = `+233${phoneDigits}`;
+    try {
+      await apiClient.post("/auth/register", {
+        phone: fullPhone,
+        firstName: firstName || "",
+        lastName: lastName || "",
         role: safeRole,
-      },
-    });
+      });
+
+      router.push({
+        pathname: "/(auth)/verify",
+        params: {
+          firstName,
+          lastName,
+          phone: fullPhone,
+          role: safeRole,
+          region,
+          language,
+        },
+      });
+    } catch (err: any) {
+      const errMsg = err.error?.message || "Could not register your profile. Please check details and try again.";
+      Alert.alert("Failed to Send Code", errMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -147,7 +169,7 @@ export default function PhoneScreen() {
                 <Text className="text-sm font-black text-gray-950">
                   Registering as {roleLabels[safeRole]}
                 </Text>
-                <Pressable onPress={handleBack}>
+                <Pressable onPress={() => router.replace("/(auth)/register")}>
                   <Text className="mt-1 text-xs font-black text-gray-500 underline">
                     Change role
                   </Text>
@@ -161,23 +183,30 @@ export default function PhoneScreen() {
               className={canContinue ? vlClassNames.primaryButton : vlClassNames.mutedButton}
               style={canContinue ? vlStyles.primaryButtonShadow : undefined}
               onPress={handleContinue}
+              disabled={loading}
             >
               <View className="flex-row items-center justify-center gap-2">
-                <Text
-                  className={
-                    canContinue
-                      ? vlClassNames.primaryButtonText
-                      : vlClassNames.mutedButtonText
-                  }
-                >
-                  Send Code
-                </Text>
-                <NavArrowRight
-                  color={canContinue ? "#FFFFFF" : "#9CA3AF"}
-                  width={18}
-                  height={18}
-                  strokeWidth={2.5}
-                />
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <>
+                    <Text
+                      className={
+                        canContinue
+                          ? vlClassNames.primaryButtonText
+                          : vlClassNames.mutedButtonText
+                      }
+                    >
+                      Send Code
+                    </Text>
+                    <NavArrowRight
+                      color={canContinue ? "#FFFFFF" : "#9CA3AF"}
+                      width={18}
+                      height={18}
+                      strokeWidth={2.5}
+                    />
+                  </>
+                )}
               </View>
             </Pressable>
           </View>

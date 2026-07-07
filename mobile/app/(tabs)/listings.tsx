@@ -1,16 +1,27 @@
-import { View, Text, Pressable, ScrollView, Alert } from "react-native";
+import { View, Text, Pressable, ScrollView, Alert, RefreshControl, ActivityIndicator } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { Plus, EditPencil, Trash, BoxIso } from "iconoir-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useListingsStore, FarmerListing } from "@/lib/listings-store";
 import { useState } from "react";
 import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
+import { useAuthStore } from "@vegelink/shared";
+import { useMarketplaceListings, useCancelListing, useUpdateListing, mapBackendListingToClient, BackendListing } from "@/lib/listings-api";
 
 export default function ListingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { listings, toggleListingStatus, deleteListing } = useListingsStore();
+  const user = useAuthStore((s) => s.user);
   const [activeTab, setActiveTab] = useState<"active" | "all">("active");
+
+  const { data: listingsData, isLoading, refetch, isFetching } = useMarketplaceListings({
+    farmer_id: user?.id,
+  });
+
+  const cancelListingMutation = useCancelListing();
+  const updateListingMutation = useUpdateListing();
+
+  const rawListings = listingsData?.data || [];
+  const listings = rawListings.map(mapBackendListingToClient);
 
   const activeListings = listings.filter((l) => l.status === "available");
   const totalCount = listings.length;
@@ -22,6 +33,18 @@ export default function ListingsScreen() {
   const totalOrders = listings.reduce((sum, l) => sum + l.ordersCount, 0);
   const estRevenue = 2660; // Baseline as shown in screenshot
 
+  const toggleListingStatus = (id: string, currentStatus: string) => {
+    const nextBackendStatus = currentStatus === "available" ? "cancelled" : "active";
+    updateListingMutation.mutate({
+      id,
+      data: { status: nextBackendStatus }
+    }, {
+      onError: (err: any) => {
+        Alert.alert("Status Change Failed", err.error?.message || "Could not update status.");
+      }
+    });
+  };
+
   const handleDelete = (id: string, cropName: string) => {
     Alert.alert(
       "Delete Listing",
@@ -31,7 +54,13 @@ export default function ListingsScreen() {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => deleteListing(id),
+          onPress: () => {
+            cancelListingMutation.mutate(id, {
+              onError: (err: any) => {
+                Alert.alert("Delete Failed", err.error?.message || "Could not delete listing.");
+              }
+            });
+          },
         },
       ]
     );
@@ -81,7 +110,19 @@ export default function ListingsScreen() {
         </Pressable>
       </View>
 
-      <ScrollView className="flex-1 bg-gray-50/70" contentContainerClassName="pb-12">
+      <ScrollView
+        className="flex-1 bg-gray-50/70"
+        contentContainerClassName="pb-12"
+        refreshControl={
+          <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor="#15803D" />
+        }
+      >
+        {isLoading ? (
+          <View className="items-center justify-center py-20">
+            <ActivityIndicator size="large" color="#15803D" />
+          </View>
+        ) : (
+          <>
         {/* Stats Row */}
         <View className="flex-row gap-3 px-5 pt-5 pb-4">
           {/* Active Listings Card */}
@@ -183,7 +224,7 @@ export default function ListingsScreen() {
 
                         {/* Switch */}
                         <Pressable
-                          onPress={() => toggleListingStatus(item.id)}
+                          onPress={() => toggleListingStatus(item.id, item.status)}
                           className={`h-7 w-12 rounded-full p-1 flex-row items-center ${
                             isActive ? "bg-green-850 justify-end" : "bg-gray-200 justify-start"
                           }`}
@@ -264,6 +305,8 @@ export default function ListingsScreen() {
             })
           )}
         </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
