@@ -3,8 +3,9 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { findMarketplaceListing, MarketplaceListing } from "@/lib/marketplace-data";
+import { useUserSettingsStore } from "@/lib/user-settings-store";
 import { vlClassNames } from "@/lib/design-system";
-import { initials } from "@/lib/utils";
+import { initials, getProduceEmoji } from "@/lib/utils";
 import {
   NavArrowLeft,
   Heart,
@@ -66,9 +67,12 @@ export default function ListingDetailScreen() {
   const subtotal = listing.pricePerUnit * quantity;
   const total = subtotal + transportFee * quantity;
 
+  const { toggleSaveListing, isSaved } = useUserSettingsStore();
+  const saved = listing ? isSaved(listing.id) : false;
+
   const decrement = () => setQuantity((current) => Math.max(1, current - 1));
   const increment = () =>
-    setQuantity((current) => Math.min(listing.availableQuantity, current + 1));
+    setQuantity((current) => Math.max(1, listing ? Math.min(listing.availableQuantity, current + 1) : current + 1));
 
   return (
     <View className="flex-1 bg-white">
@@ -89,8 +93,17 @@ export default function ListingDetailScreen() {
               <NavArrowLeft color="#111827" width={24} height={24} strokeWidth={2.5} />
             </Pressable>
             <View className="flex-row gap-3">
-              <Pressable className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
-                <Heart color="#6B7280" width={22} height={22} strokeWidth={2} />
+              <Pressable
+                className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm active:bg-gray-50"
+                onPress={() => listing && toggleSaveListing(listing.id)}
+              >
+                <Heart
+                  color={saved ? "#EF4444" : "#6B7280"}
+                  fill={saved ? "#EF4444" : "none"}
+                  width={22}
+                  height={22}
+                  strokeWidth={2}
+                />
               </Pressable>
               <Pressable className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
                 <ShareIos color="#6B7280" width={20} height={20} strokeWidth={2} />
@@ -250,6 +263,7 @@ export default function ListingDetailScreen() {
 }
 
 function ProduceHero({ listing }: { listing: MarketplaceListing }) {
+  const emoji = getProduceEmoji(listing.cropName);
   return (
     <View className="h-40 w-40 items-center justify-center">
       <View
@@ -263,8 +277,8 @@ function ProduceHero({ listing }: { listing: MarketplaceListing }) {
         }}
       >
         <View className="absolute -right-2 top-2 h-10 w-14 rotate-45 rounded-full bg-white/35" />
-        <Text className="text-3xl font-black text-white">
-          {initials(listing.cropName)}
+        <Text className="text-5xl">
+          {emoji}
         </Text>
       </View>
     </View>
