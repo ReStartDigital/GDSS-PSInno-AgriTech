@@ -8,8 +8,6 @@ import { initials, getProduceEmoji } from "@/lib/utils";
 import { useListingDetails, mapBackendListingToClient } from "@/lib/listings-api";
 import { MarketplaceListing } from "@/lib/marketplace-data";
 
-const { width: screenWidth } = Dimensions.get("window");
-const carouselWidth = screenWidth - 40;
 import {
   NavArrowLeft,
   Heart,
@@ -22,6 +20,9 @@ import {
   Minus,
   Plus,
 } from "iconoir-react-native";
+
+const { width: screenWidth } = Dimensions.get("window");
+const carouselWidth = screenWidth - 40;
 
 export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
