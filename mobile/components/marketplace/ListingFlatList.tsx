@@ -23,6 +23,7 @@ import {
   Xmark,
   Check,
 } from "iconoir-react-native";
+import { useUserSettingsStore } from "@/lib/user-settings-store";
 
 type SortMode = "nearest" | "price_low" | "price_high" | "stock";
 type ViewMode = "grid" | "list";
@@ -213,6 +214,9 @@ export function ListingFlatList() {
 }
 
 function ListCard({ listing }: { listing: MarketplaceListing }) {
+  const { toggleSaveListing, isSaved } = useUserSettingsStore();
+  const saved = isSaved(listing.id);
+
   return (
     <Link href={{ pathname: "/listings/[id]", params: { id: listing.id } }} asChild>
       <Pressable className="rounded-2xl bg-white p-3 shadow-sm active:opacity-80">
@@ -246,8 +250,20 @@ function ListCard({ listing }: { listing: MarketplaceListing }) {
             </View>
           </View>
 
-          <Pressable className="ml-3 h-10 w-10 items-center justify-center rounded-full bg-gray-50">
-            <Heart color="#D1D5DB" width={20} height={20} strokeWidth={2} />
+          <Pressable
+            className="ml-3 h-10 w-10 items-center justify-center rounded-full bg-gray-50 active:bg-gray-100"
+            onPress={(e) => {
+              e.stopPropagation();
+              toggleSaveListing(listing.id);
+            }}
+          >
+            <Heart
+              color={saved ? "#EF4444" : "#D1D5DB"}
+              fill={saved ? "#EF4444" : "none"}
+              width={20}
+              height={20}
+              strokeWidth={2}
+            />
           </Pressable>
         </View>
       </Pressable>
@@ -256,6 +272,9 @@ function ListCard({ listing }: { listing: MarketplaceListing }) {
 }
 
 function GridCard({ listing }: { listing: MarketplaceListing }) {
+  const { toggleSaveListing, isSaved } = useUserSettingsStore();
+  const saved = isSaved(listing.id);
+
   return (
     <Link href={{ pathname: "/listings/[id]", params: { id: listing.id } }} asChild>
       <Pressable className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white active:opacity-80">
@@ -266,8 +285,20 @@ function GridCard({ listing }: { listing: MarketplaceListing }) {
           <View className="absolute left-3 top-3">
             <FreshnessPill listing={listing} compact />
           </View>
-          <Pressable className="absolute right-3 top-3 h-9 w-9 items-center justify-center rounded-full bg-white">
-            <Heart color="#D1D5DB" width={18} height={18} strokeWidth={2} />
+          <Pressable
+            className="absolute right-3 top-3 h-9 w-9 items-center justify-center rounded-full bg-white active:bg-gray-100 shadow-sm"
+            onPress={(e) => {
+              e.stopPropagation();
+              toggleSaveListing(listing.id);
+            }}
+          >
+            <Heart
+              color={saved ? "#EF4444" : "#D1D5DB"}
+              fill={saved ? "#EF4444" : "none"}
+              width={18}
+              height={18}
+              strokeWidth={2}
+            />
           </Pressable>
           <ProduceThumb listing={listing} size="lg" />
         </View>
