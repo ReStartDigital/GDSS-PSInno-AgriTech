@@ -7,7 +7,7 @@ import {
   declineOrderSchema,
 } from "./orders.schemas.js";
 import { ErrorCode } from "../../common/constants/error-codes.enum.js";
-import { UnprocessableException } from "../../common/exceptions/index.js";
+import { BadRequestException, UnprocessableException } from "../../common/exceptions/index.js";
 
 export class OrdersController {
   constructor(private ordersService: OrdersService) {}
@@ -208,6 +208,86 @@ export class OrdersController {
         message:
           "Order declined successfully. Stock allocations released back to public availability.",
         data: order,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /orders
+   * Retrieves paginated order history contextually filtered by the user's active structural role
+   */
+  getOrders = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user!.sub;
+      const userRole = req.user!.role; // e.g., UserRole.BUYER or UserRole.FARMER
+
+      // Parse pagination parameters with safe defaults
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.max(1, Math.min(100, parseInt(req.query.limit as string) || 20));
+
+      const { orders, total } = await this.ordersService.getOrdersByRole(userId, userRole, page, limit);
+
+      res.status(200).json({
+        success: true,
+        meta: {
+          total_records: total,
+          current_page: page,
+          limit,
+          total_pages: Math.ceil(total / limit),
+        },
+        data: orders,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /orders/:id
+   * Fetches full record parameters. Securely guarded to only allow involved parties.
+   */
+  getOrderById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user!.sub;
+      const { id: orderId } = req.params;
+
+      if (!orderId || typeof orderId !== 'string') {
+        throw new BadRequestException('Invalid or missing order identifier', ErrorCode.BAD_REQUEST);
+      }
+
+      // The service layer internally validates if the user is a buyer, farmer, or assigned transporter
+      const order = await this.ordersService.getOrderDetailsForParty(orderId, userId);
+
+      res.status(200).json({
+        success: true,
+        data: order,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * POST /orders/inbound-sms
+   * Public webhook endpoint parsing Arkesel SMS gateway payload structures for USSD/SMS offline confirmation replies
+   */
+  handleInboundSms = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      // Arkesel usually pushes incoming text strings as 'from' (sender mobile number) and 'message' text body
+      const { from, message } = req.body;
+
+      if (!from || !message) {
+        throw new BadRequestException('Malformed webhook payload structural properties missing', ErrorCode.BAD_REQUEST);
+      }
+
+      await this.ordersService.processInboundSmsCommand(from, String(message).trim());
+
+      // Webhook responses should return clean standard acknowledgments to prevent the gateway provider from retrying
+      res.status(200).json({
+        success: true,
+        message: 'Webhook event processed and state machine adjustments completed.',
       });
     } catch (error) {
       next(error);

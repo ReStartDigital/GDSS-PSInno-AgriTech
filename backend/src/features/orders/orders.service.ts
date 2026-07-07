@@ -299,4 +299,82 @@ export class OrdersService {
 
     return (await this.ordersRepo.findById(orderId))!;
   }
+  /**
+   * Fetches a paginated set of orders targeting a specific side of the marketplace
+   */
+  async getOrdersByRole(userId: string, role: string, page: number, limit: number): Promise<{ orders: OrderEntity[]; total: number }> {
+    const offset = (page - 1) * limit;
+    return this.ordersRepo.findAndCountByRole(userId, role, limit, offset);
+  }
+
+  /**
+   * Secure view assertion logic to allow only contract parties visibility access
+   */
+  async getOrderDetailsForParty(orderId: string, userId: string): Promise<OrderEntity> {
+    // Reuses your existing private roles guard logic from earlier
+    return this.getValidatedOrder(orderId, userId, 'either');
+  }
+
+  /**
+   * Parses text commands (e.g., "YES 42" or "NO 42") sent from simple feature phones
+   */
+  async processInboundSmsCommand(senderMobile: string, messageBody: string): Promise<void> {
+    // 1. Clean mobile formatting to locate the farmer record context
+    const user = await this.usersRepo.findByMobile(senderMobile);
+    if (!user) {
+      throw new NotFoundException('No user profile matches incoming mobile signature', ErrorCode.ORDER_FORBIDDEN);
+    }
+
+    // 2. Tokenize string structure: e.g. ["YES", "42"] or ["NO", "42"]
+    const parts = messageBody.split(/\s+/);
+    const command = parts[0]?.toUpperCase();
+    const orderShortId = parts[1]; // Or parse relational incremental code metrics
+
+    if (!command || !orderShortId) {
+      throw new BadRequestException('Unrecognized inbound message format command tokens', ErrorCode.INBOUND_SMS_UNKNOWN_COMMAND);
+    }
+
+    // 3. Locate the targeted pending order tied directly to this farmer
+    // (Assuming findByShortIdAndFarmer filters strictly by farmerId and a short visible tracker sequence or order ID)
+    const order = await this.ordersRepo.findByShortIdAndFarmer(orderShortId, user.id);
+    if (!order) {
+      throw new NotFoundException(`Pending order with identifier "${orderShortId}" not found for this account`, ErrorCode.ORDER_NOT_FOUND);
+    }
+
+    // 4. State Machine Execution based on token value
+    if (command === 'YES') {
+      assertValidTransition(order.status, OrderStatus.CONFIRMED);
+      await this.ordersRepo.updateStatus(order.id, OrderStatus.CONFIRMED);
+
+      // Convert the soft-hold into a permanent inventory pool deduction
+      const listing = await this.listingsRepo.findById(order.listingId);
+      if (listing) {
+        const orderQty = Number(order.quantityKg);
+        const newTotalQuantity = Math.max(0, Number(listing.quantityKg) - orderQty);
+        const newCommittedQuantity = Math.max(0, Number(listing.committedKg || 0) - orderQty);
+        
+        await this.listingsRepo.updateInventoryPools(listing.id, newTotalQuantity, newCommittedQuantity);
+      }
+      
+    } else if (command === 'NO') {
+      assertValidTransition(order.status, OrderStatus.CANCELLED);
+      await this.ordersRepo.updateStatus(order.id, OrderStatus.CANCELLED, {
+        cancelledBy: user.id,
+        cancellationReason: 'DECLINED_VIA_SMS_REPLY'
+      });
+
+      // Release the soft-held allocated slot back into public availability
+      const listing = await this.listingsRepo.findById(order.listingId);
+      if (listing) {
+        const newCommittedQuantity = Math.max(0, Number(listing.committedKg || 0) - Number(order.quantityKg));
+        await this.listingsRepo.updateCommittedQuantity(listing.id, newCommittedQuantity);
+      }
+      
+    } else {
+      throw new BadRequestException(
+        `Invalid command verb "${command}". Text reply must begin explicitly with YES or NO followed by the order ID.`, 
+        ErrorCode.INBOUND_SMS_UNKNOWN_COMMAND
+      );
+    }
+  }
 }
