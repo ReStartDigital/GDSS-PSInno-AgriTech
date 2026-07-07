@@ -72,8 +72,6 @@ export default function AuthPage({ navigate }: { navigate: (page: PageKey) => vo
           </div>
 
           <div className="status-row">
-            <span className="status-pill">HttpOnly refresh cookie</span>
-            <span className="status-pill">Role-gated navigation</span>
             <span className="status-pill">SMS verification</span>
           </div>
 

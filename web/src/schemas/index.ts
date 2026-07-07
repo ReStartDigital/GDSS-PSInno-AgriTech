@@ -39,7 +39,9 @@ export type LoginFormData = z.infer<typeof loginSchema>
 
 export const createListingSchema = z.object({
   vegetable_type: z.string().min(1, 'Crop type is required'),
+  description: z.string().optional(),
   quantity_kg: z.coerce.number().positive('Must be greater than 0'),
+  unit_of_measure: z.enum(['kg', 'crate', 'basket', 'bunch', 'sack', 'head']).default('kg'),
   price_per_kg_ghs: z.coerce.number().positive('Must be greater than 0'),
   harvest_date: z.string().min(1, 'Harvest date is required'),
   delivery_address: z.string().optional(),

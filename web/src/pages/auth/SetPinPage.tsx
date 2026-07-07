@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { setPinSchema, type SetPinFormData } from '../../schemas'
@@ -16,8 +17,13 @@ export default function SetPinPage() {
     resolver: zodResolver(setPinSchema),
   })
 
+  useEffect(() => {
+    if (!registrationToken) {
+      navigate('/auth/register')
+    }
+  }, [registrationToken, navigate])
+
   if (!registrationToken) {
-    navigate('/auth/register')
     return null
   }
 

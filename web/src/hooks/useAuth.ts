@@ -27,8 +27,8 @@ export function useSetPin() {
     mutationFn: (pin: string) => authApi.setPin(pin, registrationToken!),
     onSuccess: (res) => {
       const { user, accessToken } = res.data.data
-      setAuth({ id: user.id, phone: pendingPhone ?? user.phone, role: user.role, region: user.region, language: user.language }, accessToken)
-      navigate('/')
+      setAuth({ id: user.id, phone: pendingPhone ?? user.phone, role: user.role, fullName: user.fullName, region: user.region, language: user.language }, accessToken)
+      navigate('/overview')
     },
   })
 }
@@ -40,8 +40,8 @@ export function useLogin() {
     mutationFn: (data: LoginFormData) => authApi.login(data),
     onSuccess: (res) => {
       const { user, accessToken } = res.data.data
-      setAuth({ id: user.id, phone: user.phone, role: user.role, region: user.region, language: user.language }, accessToken)
-      navigate('/')
+      setAuth({ id: user.id, phone: user.phone, role: user.role, fullName: user.fullName, region: user.region, language: user.language }, accessToken)
+      navigate('/overview')
     },
   })
 }
