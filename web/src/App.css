@@ -340,6 +340,17 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
+.topbar-btn {
+  min-height: 38px !important;
+  padding: 0 16px;
+  font-size: 0.85rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
 .topbar-actions .avatar {
   background: #d6ffcd;
   color: #264123;
@@ -356,6 +367,7 @@
   align-items: center;
   justify-content: center;
   font: inherit;
+  white-space: nowrap;
 }
 
 .icon-button {
@@ -1005,6 +1017,20 @@
   .topbar-actions {
     grid-area: actions;
     align-self: center;
+    display: flex;
+    gap: 6px;
+  }
+
+  .topbar-actions .topbar-btn {
+    padding: 0 10px;
+    font-size: 0.8rem;
+    min-height: 34px !important;
+  }
+
+  @media (max-width: 360px) {
+    .topbar-brand span {
+      display: none;
+    }
   }
   
   .topbar-nav {

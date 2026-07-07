@@ -210,8 +210,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="topbar-actions">
             {!user ? (
               <>
-                <Link to="/auth/login"    className="secondary-button" style={{ minHeight: 38, padding: '0 16px', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', borderRadius: 10 }}>Log In</Link>
-                <Link to="/auth/register" className="primary-button"   style={{ minHeight: 38, padding: '0 16px', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', borderRadius: 10 }}>Register</Link>
+                <Link to="/auth/login"    className="secondary-button topbar-btn">Log In</Link>
+                <Link to="/auth/register" className="primary-button topbar-btn">Register</Link>
               </>
             ) : (
               <Link
