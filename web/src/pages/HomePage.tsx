@@ -1,10 +1,18 @@
-import { Link } from 'react-router-dom'
+import { useState, useMemo } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/auth.store'
-import { useMyOrders } from '../hooks/useOrders'
-import { useMyListings, useAllListings } from '../hooks/useListings'
-import type { Order, Listing } from '../types/api'
+import { useAllListings } from '../hooks/useListings'
+import { usePlaceOrder } from '../hooks/useOrders'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { placeOrderSchema, type PlaceOrderFormData } from '../schemas'
+import type { Listing } from '../types/api'
+import { getApiErrorMessage } from '../lib/errors'
 import { Icon } from '../components/Icon'
-import { Spinner, StatusBadge } from '../components/ui/Feedback'
+import { Spinner, ErrorAlert, EmptyState } from '../components/ui/Feedback'
+import { Field } from '../components/ui/Field'
+import { Modal } from '../components/ui/Modal'
+import { FormActions } from '../components/ui/FormActions'
 
 const MARKET_PULSE = [
   { crop: 'Tomatoes', price: 'GH₵ 4.50/kg', change: '+8%', accent: '#DC2626', tint: 'rgba(220,38,38,0.08)' },
@@ -35,200 +43,63 @@ const WORKFLOW = [
   { step: '05', title: 'Pay via MoMo',        detail: 'Paystack handles MTN, Telecel, AirtelTigo. SMS receipt to both parties.' },
 ]
 
-function getGreeting() {
-  const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 17) return 'Good afternoon'
-  return 'Good evening'
+// Crop styling configuration
+const CROP_CONFIG: Record<string, { emoji: string; tint: string; accent: string }> = {
+  tomatoes: { emoji: '🍅', tint: 'rgba(220,38,38,0.08)',   accent: '#DC2626' },
+  pepper:   { emoji: '🌶️', tint: 'rgba(239,68,68,0.08)',   accent: '#EF4444' },
+  onions:   { emoji: '🧅', tint: 'rgba(217,119,6,0.08)',   accent: '#D97706' },
+  yam:      { emoji: '🥔', tint: 'rgba(180,83,9,0.08)',    accent: '#B45309' },
+  okra:     { emoji: '🥦', tint: 'rgba(22,101,52,0.08)',   accent: '#166534' },
+  cabbage:  { emoji: '🥬', tint: 'rgba(4,120,87,0.08)',    accent: '#047857' },
+  default:  { emoji: '🌿', tint: 'rgba(38,65,35,0.06)',    accent: '#264123' },
 }
+
+function getCropConfig(name: string) {
+  const key = name.trim().toLowerCase()
+  return CROP_CONFIG[key] ?? CROP_CONFIG.default
+}
+
+const FILTERS = ['All', 'Tomatoes', 'Pepper', 'Onions', 'Yam', 'Okra', 'Cabbage']
 
 export default function HomePage() {
+  const [filter, setFilter]     = useState('All')
+  const [search, setSearch]     = useState('')
+  const [selected, setSelected] = useState<Listing | null>(null)
+  
   const user = useAuthStore((s) => s.user)
-  return user?.role
-    ? <AuthenticatedHome role={user.role} firstName={user.fullName?.split(' ')[0] ?? null} />
-    : <GuestHome />
-}
+  const navigate = useNavigate()
 
-// ── Authenticated dashboard ───────────────────────────────────────────────────
+  const params = filter !== 'All' ? { vegetable_type: filter } : undefined
+  const { data, isLoading, error } = useAllListings(params)
 
-function AuthenticatedHome({ role, firstName }: { role: string; firstName: string | null }) {
-  return (
-    <div className="page-stack">
-      <AuthHeroBanner role={role} firstName={firstName} />
-      <MarketPulseWidget />
-      <RoleDashboard role={role} />
-    </div>
-  )
-}
+  const listings = useMemo(() => {
+    const all: Listing[] = Array.isArray(data) ? data : []
+    if (!search.trim()) return all
+    return all.filter((l) =>
+      l.vegetable_type.toLowerCase().includes(search.toLowerCase()) ||
+      l.farmer?.firstName?.toLowerCase().includes(search.toLowerCase())
+    )
+  }, [data, search])
 
-function AuthHeroBanner({ role, firstName }: { role: string; firstName: string | null }) {
-  const tiles: { label: string; icon: Parameters<typeof Icon>[0]['name']; to: string; bg: string; color: string }[] = [
-    { label: 'Marketplace', icon: 'shopping', to: '/marketplace', bg: '#ECFDF3', color: '#166534' },
-    { label: 'My Orders',   icon: 'truck',    to: '/orders',      bg: '#FFF8E1', color: '#92400E' },
-    { label: 'Listings',    icon: 'bag',      to: '/listings',    bg: '#EFF6FF', color: '#1D4ED8' },
-    { label: 'Profile',     icon: 'user',     to: '/profile',     bg: '#FFF1F2', color: '#BE123C' },
-  ]
-  return (
-    <section className="auth-hero-banner">
-      <div className="auth-hero-circle auth-hero-circle--1" />
-      <div className="auth-hero-circle auth-hero-circle--2" />
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <span className="status-pill" style={{ alignSelf: 'flex-start', background: 'rgba(214,255,205,0.2)', borderColor: 'rgba(214,255,205,0.3)', color: '#d6ffcd' }}>
-          {role.charAt(0).toUpperCase() + role.slice(1)} account
-        </span>
-        <h2 style={{ margin: '12px 0 4px', color: '#fff', fontFamily: 'Poppins, sans-serif', fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', fontWeight: 800 }}>
-          {getGreeting()}{firstName ? `, ${firstName}` : ''}
-        </h2>
-        <p style={{ margin: 0, color: 'rgba(214,255,205,0.8)', fontSize: '0.95rem' }}>Welcome back to VegeLink Ghana</p>
-      </div>
-      <div className="quick-actions-row">
-        {tiles.map((a) => (
-          <Link key={a.label} to={a.to} className="quick-action-tile" style={{ textDecoration: 'none' }}>
-            <div className="quick-action-icon" style={{ background: a.bg }}>
-              <span style={{ color: a.color, display: 'flex' }}><Icon name={a.icon} /></span>
-            </div>
-            <span className="quick-action-label">{a.label}</span>
-          </Link>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function MarketPulseWidget() {
-  return (
-    <section className="section-card">
-      <div className="section-heading">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(249,115,22,0.1)', display: 'grid', placeItems: 'center' }}><Icon name="pulse" /></div>
-          <div><p className="eyebrow" style={{ color: '#6b7280' }}>Live prices</p><h3 style={{ margin: 0 }}>Market Pulse</h3></div>
-        </div>
-        <span style={{ fontSize: '0.78rem', color: '#9ca3af', fontWeight: 600 }}>Today</span>
-      </div>
-      <div className="pulse-grid">
-        {MARKET_PULSE.map((item) => (
-          <div key={item.crop} className="pulse-card" style={{ borderColor: item.accent + '22', background: item.tint }}>
-            <div className="pulse-dot" style={{ background: item.accent }} />
-            <div style={{ flex: 1 }}>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: '0.95rem', color: '#1f2937' }}>{item.crop}</p>
-              <p style={{ margin: '2px 0 0', fontWeight: 800, fontSize: '1.05rem', color: '#264123' }}>{item.price}</p>
-            </div>
-            <span className={`pulse-change ${item.change.startsWith('+') ? 'up' : 'down'}`}>{item.change}</span>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function RoleDashboard({ role }: { role: string }) {
-  const { data: orders, isLoading: ordersLoading } = useMyOrders()
-  const { data: listings, isLoading: listingsLoading } = useMyListings()
-  const recentOrders   = Array.isArray(orders)   ? orders.slice(0, 5)   : []
-  const recentListings = Array.isArray(listings) ? listings.slice(0, 5) : []
-
-  return (
-    <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-      {/* Orders — all roles */}
-      <div className="dashboard-panel">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <p className="dashboard-panel-label" style={{ margin: 0 }}>Recent Orders</p>
-          <Link to="/orders" style={{ fontSize: '0.78rem', color: '#264123', fontWeight: 700, textDecoration: 'none' }}>View all →</Link>
-        </div>
-        {ordersLoading ? <Spinner /> : recentOrders.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <p style={{ color: '#9ca3af', fontSize: '0.9rem', margin: '0 0 14px' }}>No orders yet.</p>
-            {role === 'buyer' && <Link to="/marketplace" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '0 16px', fontSize: '0.85rem' }}>Browse Produce</Link>}
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gap: 8 }}>
-            {recentOrders.map((o: Order) => (
-              <Link to="/orders" key={o.id} style={{ textDecoration: 'none' }}>
-                <div className="dashboard-row">
-                  <StatusBadge status={o.status} />
-                  <span style={{ color: '#374151', fontWeight: 600, fontSize: '0.88rem' }}>GH₵ {o.total_ghs}</span>
-                  <span style={{ color: '#9ca3af', fontSize: '0.8rem', marginLeft: 'auto' }}>{o.quantity_kg} kg</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {role === 'farmer' && (
-        <div className="dashboard-panel">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <p className="dashboard-panel-label" style={{ margin: 0 }}>My Listings</p>
-            <Link to="/listings" style={{ fontSize: '0.78rem', color: '#264123', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
-          </div>
-          {listingsLoading ? <Spinner /> : recentListings.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <p style={{ color: '#9ca3af', fontSize: '0.9rem', margin: '0 0 14px' }}>No listings yet.</p>
-              <Link to="/listings" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '0 16px', fontSize: '0.85rem' }}>Create first listing</Link>
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gap: 8 }}>
-              {recentListings.map((l: Listing) => (
-                <div key={l.id} className="dashboard-row">
-                  <StatusBadge status={l.status} />
-                  <span style={{ color: '#374151', fontWeight: 600, fontSize: '0.88rem' }}>{l.vegetable_type}</span>
-                  <span style={{ color: '#9ca3af', fontSize: '0.8rem', marginLeft: 'auto' }}>GH₵ {l.price_per_kg_ghs}/kg</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {role === 'buyer' && (
-        <div className="dashboard-panel" style={{ background: 'rgba(214,255,205,0.18)', borderColor: 'rgba(38,65,35,0.12)' }}>
-          <p className="dashboard-panel-label">Browse Produce</p>
-          <p style={{ color: '#374151', fontSize: '0.9rem', margin: '0 0 16px', lineHeight: 1.6 }}>Fresh produce from farmers across the Kumasi Vegetable Belt — order direct.</p>
-          <Link to="/marketplace" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '0 16px', fontSize: '0.85rem' }}>Browse now</Link>
-        </div>
-      )}
-
-      {role === 'transporter' && (
-        <div className="dashboard-panel" style={{ background: 'rgba(239,246,255,0.6)', borderColor: 'rgba(29,78,216,0.12)' }}>
-          <p className="dashboard-panel-label">Transport Jobs</p>
-          <p style={{ color: '#374151', fontSize: '0.9rem', margin: '0 0 16px', lineHeight: 1.6 }}>Available delivery jobs near you — claim a job, start transit, confirm delivery.</p>
-          <Link to="/jobs" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '0 16px', fontSize: '0.85rem' }}>View Jobs</Link>
-        </div>
-      )}
-
-      {role === 'agent' && (
-        <div className="dashboard-panel">
-          <p className="dashboard-panel-label">Client Management</p>
-          <p style={{ color: '#374151', fontSize: '0.9rem', margin: '0 0 16px', lineHeight: 1.6 }}>Register and manage farmer clients, create listings on their behalf.</p>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <Link to="/clients"  className="primary-button"   style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '0 16px', fontSize: '0.85rem' }}>My Clients</Link>
-            <Link to="/listings" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '0 16px', fontSize: '0.85rem' }}>Client Listings</Link>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Guest landing ─────────────────────────────────────────────────────────────
-
-function GuestHome() {
-  const { data } = useAllListings()
-  const listings: Listing[] = Array.isArray(data) ? data.slice(0, 4) : []
   const TINTS   = ['rgba(220,38,38,0.07)', 'rgba(180,83,9,0.07)', 'rgba(22,101,52,0.07)', 'rgba(29,78,216,0.07)']
   const ACCENTS = ['#DC2626', '#B45309', '#166534', '#1D4ED8']
 
   return (
     <div className="page-stack">
+      {/* ── Hero Banner ── */}
       <section className="overview-hero">
         <div className="overview-hero-copy">
           <span className="status-pill" style={{ alignSelf: 'flex-start' }}>Kumasi Vegetable Belt</span>
           <h2 className="overview-hero-title">VegeLink Ghana</h2>
-          <p className="overview-hero-sub">A farmer-to-buyer digital marketplace. Direct connections, smart logistics, mobile money payments — built for the field.</p>
-          <div className="hero-actions">
-            <Link to="/auth/register" className="primary-button"   style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 22px' }}>Get Started</Link>
-            <Link to="/auth/login"    className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 22px' }}>Log In</Link>
-          </div>
+          <p className="overview-hero-sub">
+            A farmer-to-buyer digital marketplace. Direct connections, smart logistics, mobile money payments — built for the field.
+          </p>
+          {!user && (
+            <div className="hero-actions">
+              <Link to="/auth/register" className="primary-button"   style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 22px' }}>Get Started</Link>
+              <Link to="/auth/login"    className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 22px' }}>Log In</Link>
+            </div>
+          )}
         </div>
         <div className="overview-hero-visual" aria-hidden="true">
           <div className="overview-mockup">
@@ -245,12 +116,16 @@ function GuestHome() {
                 </div>
               ))}
               <div className="mockup-divider" />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#6b7280' }}><span>3 active listings</span><span>2 orders pending</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#6b7280' }}>
+                <span>Active Listings</span>
+                <span>Real-time GPS Match</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
+      {/* ── Stats Grid ── */}
       <div className="stats-grid">
         {PLATFORM_STATS.map((s) => (
           <div key={s.label} className="stat-card">
@@ -261,33 +136,131 @@ function GuestHome() {
         ))}
       </div>
 
-      {listings.length > 0 && (
-        <section className="section-card">
-          <div className="section-heading">
-            <div><p className="eyebrow" style={{ color: '#6b7280' }}>Available now</p><h3>Fresh Today</h3></div>
-            <Link to="/marketplace" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '0 16px', fontSize: '0.85rem' }}>See all →</Link>
-          </div>
-          <div className="produce-card-grid">
-            {listings.map((l, i) => (
-              <div key={l.id} className="produce-card">
-                <div className="produce-card-visual" style={{ background: TINTS[i % TINTS.length] }}>
-                  <div style={{ width: 52, height: 52, borderRadius: '50%', background: ACCENTS[i % ACCENTS.length], boxShadow: `0 4px 12px ${ACCENTS[i % ACCENTS.length]}40`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.3)' }} />
-                  </div>
-                </div>
-                <div className="produce-card-body">
-                  <p className="produce-card-name">{l.vegetable_type}</p>
-                  <p className="produce-card-price">GH₵{l.price_per_kg_ghs}<span className="produce-card-unit"> /kg</span></p>
-                  {l.farmer && <p className="produce-card-farmer">{l.farmer.firstName}</p>}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
+      {/* ── Dynamic Produce Browser ── */}
       <section className="section-card">
-        <div className="section-heading"><div><p className="eyebrow" style={{ color: '#6b7280' }}>Who it serves</p><h3>Four roles, one platform.</h3></div></div>
+        <div className="section-heading" style={{ flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <p className="eyebrow" style={{ color: '#6b7280' }}>Available now</p>
+            <h3 style={{ margin: 0 }}>Browse Produce</h3>
+          </div>
+
+          {/* Search bar */}
+          <div className="mp-search-wrap" style={{ minWidth: 260, flex: 1, maxWidth: 400, margin: 0 }}>
+            <span className="mp-search-icon"><Icon name="shopping" /></span>
+            <input
+              className="mp-search"
+              type="search"
+              placeholder="Search crop or farmer…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Filter strip */}
+        <div className="mp-filter-strip" style={{ marginTop: 10, paddingBottom: 6 }}>
+          {FILTERS.map((f) => (
+            <button
+              key={f}
+              type="button"
+              className={`mp-filter-chip ${filter === f ? 'active' : ''}`}
+              onClick={() => setFilter(f)}
+            >
+              {f !== 'All' && <span>{getCropConfig(f).emoji}</span>}
+              {f}
+            </button>
+          ))}
+        </div>
+
+        {/* Results grid */}
+        {isLoading && <Spinner />}
+        {error && <ErrorAlert message="Could not load produce listings." />}
+        {!isLoading && !error && listings.length === 0 && (
+          <EmptyState message={search ? `No results for "${search}"` : 'No listings available right now.'} />
+        )}
+
+        {listings.length > 0 && (
+          <div className="mp-card-grid" style={{ marginTop: 20 }}>
+            {listings.map((listing) => {
+              const cfg = getCropConfig(listing.vegetable_type)
+              return (
+                <article key={listing.id} className="mp-card">
+                  <div className="mp-card-visual" style={{ background: cfg.tint }}>
+                    <span className="mp-card-emoji">{cfg.emoji}</span>
+                    {listing.agriScore && (
+                      <div className="mp-agriscore" title={`AgriScore: ${listing.agriScore}`}>
+                        <AgriRing score={listing.agriScore} />
+                      </div>
+                    )}
+                    {listing.isUrgent && (
+                      <span className="mp-urgent-badge">🔥 Urgent</span>
+                    )}
+                  </div>
+                  <div className="mp-card-body">
+                    {listing.freshness && (
+                      <div style={{ marginBottom: 8 }}>
+                        <FreshnessBar freshness={listing.freshness} />
+                      </div>
+                    )}
+                    <h3 className="mp-card-name">{listing.vegetable_type}</h3>
+                    {listing.farmer && (
+                      <p className="mp-card-farmer">
+                        <span style={{ opacity: 0.5, marginRight: 4 }}>by</span>
+                        {listing.farmer.firstName}
+                      </p>
+                    )}
+                    <div className="mp-card-meta">
+                      <div>
+                        <span className="mp-card-price">GH₵ {listing.price_per_kg_ghs}</span>
+                        <span className="mp-card-per"> /kg</span>
+                      </div>
+                      <div className="mp-card-qty">
+                        <span>{listing.quantity_kg} kg</span>
+                      </div>
+                    </div>
+                    {listing.harvest_date && (
+                      <p className="mp-card-date">
+                        <span style={{ opacity: 0.55 }}>Harvest:</span>{' '}
+                        {new Date(listing.harvest_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
+                    )}
+                    
+                    {/* Dynamic Order Placement */}
+                    {user?.role === 'buyer' ? (
+                      <button
+                        type="button"
+                        className="mp-order-btn"
+                        onClick={() => setSelected(listing)}
+                        style={{ background: cfg.accent }}
+                      >
+                        Place Order
+                      </button>
+                    ) : !user ? (
+                      <button
+                        type="button"
+                        className="mp-order-btn"
+                        onClick={() => navigate('/auth/login')}
+                        style={{ background: '#264123' }}
+                      >
+                        Log in to Order
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* ── Who it Serves ── */}
+      <section className="section-card">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow" style={{ color: '#6b7280' }}>Who it serves</p>
+            <h3>Four roles, one platform.</h3>
+          </div>
+        </div>
         <div className="roles-grid">
           {ROLES.map((r) => (
             <div key={r.id} className="role-card" style={{ background: r.bg, borderColor: '#e5e7eb' }}>
@@ -299,8 +272,14 @@ function GuestHome() {
         </div>
       </section>
 
+      {/* ── How it Works ── */}
       <section className="section-card">
-        <div className="section-heading"><div><p className="eyebrow" style={{ color: '#6b7280' }}>How it works</p><h3>End-to-end produce journey.</h3></div></div>
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow" style={{ color: '#6b7280' }}>How it works</p>
+            <h3>End-to-end produce journey.</h3>
+          </div>
+        </div>
         <div className="workflow-list">
           {WORKFLOW.map((w) => (
             <div className="workflow-step" key={w.step}>
@@ -311,9 +290,15 @@ function GuestHome() {
         </div>
       </section>
 
+      {/* ── Bottom Info & Coverage ── */}
       <div className="overview-bottom-grid">
         <div className="section-card">
-          <div className="section-heading"><div><p className="eyebrow" style={{ color: '#6b7280' }}>Navigate</p><h3>Quick access.</h3></div></div>
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow" style={{ color: '#6b7280' }}>Navigate</p>
+              <h3>Quick access.</h3>
+            </div>
+          </div>
           <div className="quick-links">
             <Link to="/marketplace"   className="quick-link" style={{ textDecoration: 'none' }}><Icon name="shopping" /> Marketplace</Link>
             <Link to="/auth/register" className="quick-link" style={{ textDecoration: 'none' }}><Icon name="user" />     Register</Link>
@@ -327,7 +312,103 @@ function GuestHome() {
           <div className="mini-badges" style={{ marginTop: 0 }}><span>MTN MoMo</span><span>Telecel Cash</span><span>AirtelTigo</span></div>
         </div>
       </div>
+
+      {selected && (
+        <OrderModal listing={selected} onClose={() => setSelected(null)} />
+      )}
     </div>
   )
 }
-// Refreshed to trigger language server re-parse
+
+// ── AgriScore ring ──
+function AgriRing({ score }: { score: number }) {
+  const r = 13, sw = 3, circ = 2 * Math.PI * r
+  const offset = circ - (score / 100) * circ
+  const color = score >= 85 ? '#10b981' : score >= 70 ? '#f59e0b' : '#ef4444'
+  return (
+    <div style={{ position: 'relative', width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <svg width="34" height="34" style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx="17" cy="17" r={r} stroke="rgba(255,255,255,0.3)" strokeWidth={sw} fill="none" />
+        <circle cx="17" cy="17" r={r} stroke={color} strokeWidth={sw} fill="none"
+          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
+      </svg>
+      <span style={{ position: 'absolute', fontSize: '0.6rem', fontWeight: 800, color }}>{score}</span>
+    </div>
+  )
+}
+
+// ── Freshness bar ──
+function FreshnessBar({ freshness }: { freshness: 'High' | 'Medium' | 'Low' }) {
+  const map = {
+    High:   { color: '#10b981', bg: 'rgba(16,185,129,0.1)',  fill: 100, label: 'High freshness' },
+    Medium: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  fill: 60,  label: 'Medium freshness' },
+    Low:    { color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   fill: 28,  label: 'Low freshness' },
+  }[freshness]
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ flex: 1, height: 4, borderRadius: 99, background: map.bg, overflow: 'hidden' }}>
+        <div style={{ width: `${map.fill}%`, height: '100%', borderRadius: 99, background: map.color, transition: 'width 0.4s ease' }} />
+      </div>
+      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: map.color, whiteSpace: 'nowrap' }}>{map.label}</span>
+    </div>
+  )
+}
+
+// ── Order Modal ──
+function OrderModal({ listing, onClose }: { listing: Listing; onClose: () => void }) {
+  const cfg = getCropConfig(listing.vegetable_type)
+  const { mutate, isPending, error, isSuccess } = usePlaceOrder(listing.id)
+  const { register, handleSubmit, formState: { errors } } = useForm<PlaceOrderFormData, unknown, PlaceOrderFormData>({
+    resolver: zodResolver(placeOrderSchema) as never,
+    defaultValues: { mode: 'delivery' },
+  })
+  const onSubmit = (data: PlaceOrderFormData) => mutate(data, { onSuccess: onClose })
+  const apiError = getApiErrorMessage(error)
+
+  return (
+    <Modal onClose={onClose} maxWidth={480}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '20px 20px 16px', borderBottom: '1px solid #f0f2f4' }}>
+        <div style={{ width: 52, height: 52, borderRadius: 14, background: cfg.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', flexShrink: 0 }}>
+          {cfg.emoji}
+        </div>
+        <div style={{ flex: 1 }}>
+          <p style={{ margin: 0, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#9ca3af', fontWeight: 600 }}>Place Order</p>
+          <h3 style={{ margin: '2px 0 0', color: '#264123', fontFamily: 'Poppins, sans-serif', fontSize: '1.15rem', fontWeight: 700 }}>{listing.vegetable_type}</h3>
+          <p style={{ margin: '2px 0 0', color: cfg.accent, fontWeight: 800, fontSize: '0.95rem' }}>GH₵ {listing.price_per_kg_ghs}/kg</p>
+        </div>
+        <button type="button" onClick={onClose} style={{ background: '#f3f4f6', border: 'none', borderRadius: 10, width: 36, height: 36, cursor: 'pointer', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+      </div>
+
+      <div style={{ padding: '20px' }}>
+        {isSuccess ? (
+          <div style={{ textAlign: 'center', padding: '24px 0' }}>
+            <div style={{ fontSize: '3rem', marginBottom: 12 }}>✅</div>
+            <h3 style={{ color: '#264123', margin: '0 0 6px', fontFamily: 'Poppins, sans-serif' }}>Order placed!</h3>
+            <p style={{ color: '#6b7280', margin: 0 }}>You'll receive an update when the farmer confirms.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'grid', gap: 14 }}>
+            <Field label="Quantity (kg)" type="number" min="1" placeholder="e.g. 50" error={errors.quantity_kg} {...register('quantity_kg')} />
+            <Field label="Delivery Address" placeholder="e.g. Kumasi Central Market" error={errors.delivery_address} {...register('delivery_address')} />
+
+            <div>
+              <p style={{ margin: '0 0 10px', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#374151', fontWeight: 600 }}>Fulfillment</p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                {(['delivery', 'pickup'] as const).map((m) => (
+                  <label key={m} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', border: '1.5px solid #e5e7eb', borderRadius: 12, cursor: 'pointer', background: '#f9fafb' }}>
+                    <input type="radio" value={m} {...register('mode')} style={{ accentColor: cfg.accent }} />
+                    <span style={{ fontWeight: 600, fontSize: '0.9rem', textTransform: 'capitalize', color: '#374151' }}>{m}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {apiError && <ErrorAlert message={apiError} />}
+            <FormActions onCancel={onClose} submitLabel="Confirm Order" pendingLabel="Placing…" isPending={isPending} />
+          </form>
+        )}
+      </div>
+    </Modal>
+  )
+}

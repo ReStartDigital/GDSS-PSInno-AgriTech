@@ -3,6 +3,7 @@ import { RequireAuth, RedirectIfAuth } from './components/RequireAuth'
 import { Layout } from './components/layout/Layout'
 
 import HomePage from './pages/HomePage'
+import OverviewPage from './pages/OverviewPage'
 import MarketplacePage from './pages/MarketplacePage'
 import ListingsPage from './pages/ListingsPage'
 import OrdersPage from './pages/OrdersPage'
@@ -29,6 +30,7 @@ export function AppRouter() {
       <Route path="/profile"    element={<Layout><ProfilePage /></Layout>} />
 
       <Route element={<RequireAuth />}>
+        <Route path="/overview" element={<Layout><OverviewPage /></Layout>} />
         <Route path="/listings" element={<Layout><ListingsPage /></Layout>} />
         <Route path="/clients"  element={<Layout><ClientsPage /></Layout>} />
         <Route path="/jobs"     element={<Layout><JobsPage /></Layout>} />
