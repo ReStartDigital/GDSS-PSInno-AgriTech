@@ -37,6 +37,8 @@ export default function ProfilePage() {
             {[
               { label: 'Role', value: user?.role ?? '—' },
               { label: 'Phone', value: user?.phone ?? '—' },
+              { label: 'Region', value: user?.region ?? '—' },
+              { label: 'Language', value: user?.language ?? '—' },
               { label: 'Verification', value: 'SMS verified' },
               { label: 'Session', value: user ? 'Active' : 'Not logged in' },
             ].map((item) => (
@@ -76,6 +78,13 @@ export default function ProfilePage() {
             <div style={{ marginBottom: 16 }}>
               <Link to="/marketplace" className="quick-link" style={{ textDecoration: 'none', display: 'inline-flex', width: '100%', justifyContent: 'flex-start' }}>
                 <Icon name="shopping" /> Marketplace
+              </Link>
+            </div>
+          )}
+          {user?.role === 'agent' && (
+            <div style={{ marginBottom: 16 }}>
+              <Link to="/clients" className="quick-link" style={{ textDecoration: 'none', display: 'inline-flex', width: '100%', justifyContent: 'flex-start' }}>
+                <Icon name="user" /> My Clients
               </Link>
             </div>
           )}

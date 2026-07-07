@@ -8,7 +8,7 @@ import { placeOrderSchema, type PlaceOrderFormData } from '../schemas'
 import type { Listing } from '../types/api'
 import { getApiErrorMessage } from '../lib/errors'
 import { Icon } from '../components/Icon'
-import { Spinner, ErrorAlert, EmptyState, StatusBadge } from '../components/ui/Feedback'
+import { Spinner, ErrorAlert, EmptyState } from '../components/ui/Feedback'
 import { Field } from '../components/ui/Field'
 import { Modal } from '../components/ui/Modal'
 import { PageHero } from '../components/ui/PageHero'
@@ -54,22 +54,47 @@ export default function MarketplacePage() {
       {listings.length > 0 && (
         <section className="listing-grid">
           {listings.map((listing) => (
-            <article key={listing.id} className="listing-card">
-              <div className="listing-top">
-                <StatusBadge status={listing.status} />
-                <Icon name="leaf" />
+            <article key={listing.id} className="listing-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '280px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e5e7eb', padding: '20px', boxShadow: '0 4px 6px -1px rgba(38, 65, 35, 0.06)' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                  <div>
+                    <h3 style={{ margin: '0 0 4px', fontSize: '1.2rem', fontWeight: 600, color: '#264123' }}>{listing.vegetable_type}</h3>
+                    <p style={{ margin: 0, color: '#6b7280', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ width: 14, height: 14, display: 'inline-flex' }}><Icon name="user" /></span> {listing.farmer?.firstName ?? 'Farmer'}
+                    </p>
+                  </div>
+                  {listing.agriScore && <AgriScoreCircle score={listing.agriScore} />}
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+                  {listing.isUrgent && <UrgentSaleBadge />}
+                  {listing.freshness && <FreshnessBadge freshness={listing.freshness} />}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, background: '#f8faf5', padding: '12px', borderRadius: '12px', border: '1px solid #e5e7eb', marginBottom: 12 }}>
+                  <div>
+                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#6b7280', display: 'block', letterSpacing: '0.05em' }}>Price</span>
+                    <strong style={{ fontSize: '0.95rem', color: '#264123' }}>GH₵ {listing.price_per_kg_ghs}/kg</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#6b7280', display: 'block', letterSpacing: '0.05em' }}>Available</span>
+                    <strong style={{ fontSize: '0.95rem', color: '#264123' }}>{listing.quantity_kg} kg</strong>
+                  </div>
+                </div>
+
+                {listing.harvest_date && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b7280', fontSize: '0.8rem', marginBottom: 12 }}>
+                    <span style={{ width: 14, height: 14, display: 'inline-flex' }}><Icon name="clock" /></span>
+                    <span>Harvest: {new Date(listing.harvest_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                )}
               </div>
-              <h3>{listing.vegetable_type}</h3>
-              <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>{listing.farmer?.firstName ?? 'Farmer'}</p>
-              <div className="listing-meta">
-                <span style={{ fontWeight: 700, color: '#264123' }}>GH₵ {listing.price_per_kg_ghs}/kg</span>
-                <span>{listing.quantity_kg} kg available</span>
-              </div>
+
               {user?.role === 'buyer' && (
                 <button
                   type="button"
                   className="primary-button"
-                  style={{ marginTop: 12, width: '100%', justifyContent: 'center' }}
+                  style={{ width: '100%', justifyContent: 'center', borderRadius: '12px', minHeight: '44px', fontWeight: 600 }}
                   onClick={() => setSelectedListing(listing)}
                 >
                   Place Order
@@ -139,5 +164,93 @@ function OrderModal({ listing, onClose }: { listing: Listing; onClose: () => voi
         </form>
       )}
     </Modal>
+  )
+}
+
+function AgriScoreCircle({ score }: { score: number }) {
+  const radius = 14
+  const strokeWidth = 3
+  const circumference = 2 * Math.PI * radius
+  const strokeDashoffset = circumference - (score / 100) * circumference
+
+  return (
+    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36 }} title={`AgriScore: ${score}%`}>
+      <svg width="36" height="36" style={{ transform: 'rotate(-90deg)' }}>
+        <circle
+          cx="18"
+          cy="18"
+          r={radius}
+          stroke="rgba(38,65,35,0.08)"
+          strokeWidth={strokeWidth}
+          fill="transparent"
+        />
+        <circle
+          cx="18"
+          cy="18"
+          r={radius}
+          stroke="url(#agriScoreGradient)"
+          strokeWidth={strokeWidth}
+          fill="transparent"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+        />
+        <defs>
+          <linearGradient id="agriScoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#10b981" />
+            <stop offset="100%" stopColor="#047857" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <span style={{ position: 'absolute', fontSize: '0.65rem', fontWeight: 800, color: '#047857' }}>
+        {score}
+      </span>
+    </div>
+  )
+}
+
+function FreshnessBadge({ freshness }: { freshness: 'High' | 'Medium' | 'Low' }) {
+  const styles = {
+    High: { bg: 'rgba(16, 185, 129, 0.08)', color: '#047857', border: 'rgba(16, 185, 129, 0.15)' },
+    Medium: { bg: 'rgba(245, 158, 11, 0.08)', color: '#b45309', border: 'rgba(245, 158, 11, 0.15)' },
+    Low: { bg: 'rgba(239, 68, 68, 0.08)', color: '#b91c1c', border: 'rgba(239, 68, 68, 0.15)' },
+  }[freshness]
+
+  return (
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 5,
+      padding: '4px 10px',
+      borderRadius: '999px',
+      fontSize: '0.7rem',
+      fontWeight: 600,
+      background: styles.bg,
+      color: styles.color,
+      border: `1px solid ${styles.border}`
+    }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: styles.color }} />
+      Freshness: {freshness}
+    </span>
+  )
+}
+
+function UrgentSaleBadge() {
+  return (
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      padding: '4px 8px',
+      borderRadius: '6px',
+      fontSize: '0.68rem',
+      fontWeight: 700,
+      background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
+      color: '#ffffff',
+      letterSpacing: '0.03em',
+      textTransform: 'uppercase',
+      boxShadow: '0 2px 4px rgba(239, 68, 68, 0.15)'
+    }}>
+      🔥 Urgent
+    </span>
   )
 }
