@@ -5,6 +5,7 @@ import { validate } from "../../common/middleware/validate.middleware.js";
 import { authenticate as authenticateJwt } from "../../common/middleware/authenticate.middleware.js";
 import { authorize as authorizeRoles } from "../../common/middleware/authorization.middleware.js";
 import { uploadSingleImage as upload } from "../../common/middleware/upload.middleware.js";
+import { asyncHandler } from "../../common/utils/async-handler.util.js";
 
 import { UserRole } from "../../common/constants/roles.enums.js";
 import {
@@ -37,7 +38,7 @@ router.use(authenticateJwt); // All routes require valid JWT
  *       200: { description: Profile retrieved successfully. }
  *       401: { description: Unauthorized - Invalid or expired token. }
  */
-router.get("/me", usersController.getMyProfile);
+router.get("/me", asyncHandler(usersController.getMyProfile));
 
 /**
  * @swagger
@@ -61,7 +62,7 @@ router.get("/me", usersController.getMyProfile);
 router.patch(
   "/me",
   validate(updateProfileSchema),
-  usersController.updateMyProfile,
+  asyncHandler(usersController.updateMyProfile),
 );
 
 /**
@@ -87,7 +88,11 @@ router.patch(
  *       200: { description: Avatar uploaded successfully. }
  *       422: { description: Invalid or missing image file. }
  */
-router.post("/me/photo", upload("avatar"), usersController.uploadAvatar);
+router.post(
+  "/me/photo",
+  upload("avatar"),
+  asyncHandler(usersController.uploadAvatar),
+);
 
 /**
  * @swagger
@@ -108,7 +113,11 @@ router.post("/me/photo", upload("avatar"), usersController.uploadAvatar);
  *       200: { description: PIN changed successfully. }
  *       401: { description: Current PIN verification failed. }
  */
-router.patch("/me/pin", validate(changePinSchema), usersController.changeMyPin);
+router.patch(
+  "/me/pin",
+  validate(changePinSchema),
+  asyncHandler(usersController.changeMyPin),
+);
 
 // ── MERCHANT / FINANCIAL ────────────────────────────────────────────────────
 
@@ -137,7 +146,7 @@ router.post(
   "/me/payment-details",
   authorizeRoles(UserRole.FARMER, UserRole.TRANSPORTER),
   validate(paymentDetailsSchema),
-  usersController.configurePaymentDetails,
+  asyncHandler(usersController.configurePaymentDetails),
 );
 
 /**
@@ -157,7 +166,7 @@ router.post(
 router.get(
   "/me/earnings",
   authorizeRoles(UserRole.FARMER, UserRole.TRANSPORTER),
-  usersController.getMyEarnings,
+  asyncHandler(usersController.getMyEarnings),
 );
 
 // ── PUBLIC PROFILES ─────────────────────────────────────────────────────────
@@ -182,7 +191,7 @@ router.get(
  *       200: { description: Public profile retrieved successfully. }
  *       404: { description: User not found. }
  */
-router.get("/:id", usersController.getPublicProfile);
+router.get("/:id", asyncHandler(usersController.getPublicProfile));
 
 // ── AGENT MANAGEMENT ────────────────────────────────────────────────────────
 
@@ -211,7 +220,7 @@ router.post(
   "/agent/clients",
   authorizeRoles(UserRole.AGENT),
   validate(registerClientSchema),
-  usersController.registerManagedClient,
+  asyncHandler(usersController.registerManagedClient),
 );
 
 /**
@@ -238,7 +247,7 @@ router.get(
   "/agent/clients",
   authorizeRoles(UserRole.AGENT),
   validate(paginationSchema, "query"),
-  usersController.getMyManagedClients,
+  asyncHandler(usersController.getMyManagedClients),
 );
 
 /**
@@ -264,7 +273,7 @@ router.get(
 router.patch(
   "/agent/clients/:id/unassign",
   authorizeRoles(UserRole.AGENT),
-  usersController.unassignManagedClient,
+  asyncHandler(usersController.unassignManagedClient),
 );
 
 export { router as usersRouter };

@@ -21,6 +21,8 @@ export const registerSchema = z.object({
   firstName: z.string().trim().min(1, 'First name is required'),
   lastName: z.string().trim().min(1, 'Last name is required'),
   role: z.enum(['farmer', 'buyer', 'transporter', 'agent'], { message: 'Select a role' }),
+  region: z.string().min(1, 'Region is required'),
+  language: z.string().min(1, 'Preferred language is required'),
 })
 export type RegisterFormData = z.infer<typeof registerSchema>
 

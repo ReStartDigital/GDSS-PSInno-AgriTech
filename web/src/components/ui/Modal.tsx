@@ -11,7 +11,7 @@ export function Modal({ children, onClose, maxWidth = 520 }: ModalProps) {
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ background: '#fff', borderRadius: 12, padding: 28,
+      <div style={{ background: '#fff', borderRadius: 24, padding: 28,
         width: '100%', maxWidth, maxHeight: '90vh', overflowY: 'auto' }}>
         {children}
       </div>

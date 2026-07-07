@@ -41,8 +41,23 @@ export class User {
   @Column({ type: "varchar", name: "pin_hash", length: 255, nullable: true })
   pinHash: string | null;
 
-  @Column({ type: "text", name: "profile_photo_url", nullable: true })
+  @Column({ type: "varchar", name: "profile_photo_url", nullable: true })
   profilePhotoUrl: string | null;
+
+  @Column({ type: "varchar", nullable: true, default: null })
+  region: string | null;
+
+  @Column({ type: "varchar", length: 50, default: "en" })
+  language: string;
+
+  // Inside your User entity file
+  @Column({
+    name: "order_mode",
+    type: "enum",
+    enum: ["auto", "agent", "sms_reply"],
+    default: "auto",
+  })
+  orderMode!: "auto" | "agent" | "sms_reply";
 
   // 🌍 PostGIS Location definition mapping
   @Column({

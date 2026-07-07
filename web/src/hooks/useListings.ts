@@ -1,12 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { listingsApi } from '../lib/apiCalls'
+import { useAuthStore } from '../store/auth.store'
 import type { CreateListingFormData } from '../schemas'
 import type { Listing } from '../types/api'
 
-export function useMyListings() {
+export function useMyListings(selectedFarmerId?: string) {
+  const user = useAuthStore((s) => s.user)
+  const farmerId = user?.role === 'farmer' ? user.id : selectedFarmerId
+
   return useQuery<Listing[]>({
-    queryKey: ['listings', 'mine'],
-    queryFn: () => listingsApi.getMyListings().then((r) => r.data.data as Listing[]),
+    queryKey: ['listings', 'mine', farmerId],
+    queryFn: () => {
+      if (farmerId) {
+        return listingsApi.getAll({ farmer_id: farmerId }).then((r) => r.data.data as Listing[])
+      }
+      return Promise.resolve([])
+    },
+    enabled: !!farmerId,
   })
 }
 

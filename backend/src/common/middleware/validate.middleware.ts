@@ -25,8 +25,9 @@ export function validate(
       );
     }
 
-    // Replace with parsed data so defaults/transforms (e.g. phone normalisation) take effect
-    req[target] = result.data;
+    // Instead of overwriting req.query, req.body, etc.,
+    // we attach the validated/parsed data to a new property to avoid errors.
+    req.validatedData = result.data;
     next();
   };
 }

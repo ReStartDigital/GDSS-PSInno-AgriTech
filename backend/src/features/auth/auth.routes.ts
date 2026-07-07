@@ -143,6 +143,8 @@ router.post(
  *     summary: Step 3 - Finalize Account Registration
  *     description: Encrypts incoming credential lock parameters and commits a whitelist state in Redis.
  *     tags: [Authentication]
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
