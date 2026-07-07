@@ -32,6 +32,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
 
   const visibleNav = NAV_ITEMS.filter((item) => {
+    if (item.to === '/' && user) return false
     if (item.to === '/overview' && !user) return false
     if (item.to === '/listings' && role !== 'farmer' && role !== 'agent') return false
     if (item.to === '/clients' && role !== 'agent') return false

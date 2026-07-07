@@ -221,8 +221,20 @@
   display: flex;
 }
 
-.topbar,
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin: -28px -28px 20px -28px;
+  padding: 20px 28px;
+  background: linear-gradient(135deg, #264123 0%, #1f321c 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
 .section-heading {
+  display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
@@ -230,7 +242,8 @@
 
 .topbar h2 {
   font-size: 1.5rem;
-  color: #1f2937;
+  color: #f8faf5;
+  margin: 0;
 }
 
 .topbar-actions {
@@ -247,7 +260,7 @@
 
 .topbar-nav-link {
   text-decoration: none;
-  color: #6b7280;
+  color: rgba(248, 250, 245, 0.75);
   font-weight: 600;
   font-size: 0.88rem;
   padding: 8px 12px;
@@ -256,8 +269,33 @@
 }
 
 .topbar-nav-link:hover {
+  color: #d6ffcd;
+  background: rgba(214, 255, 205, 0.12);
+}
+
+.topbar-actions .primary-button {
+  background: #d6ffcd;
   color: #264123;
-  background: rgba(38, 65, 35, 0.06);
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.topbar-actions .primary-button:hover {
+  background: #bbf7a7;
+}
+
+.topbar-actions .secondary-button {
+  color: #f8faf5;
+  border-color: rgba(248, 250, 245, 0.4);
+}
+
+.topbar-actions .secondary-button:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.topbar-actions .avatar {
+  background: #d6ffcd;
+  color: #264123;
 }
 
 .icon-button,
@@ -893,8 +931,11 @@
   }
 
   .topbar {
-    align-items: flex-start;
+    margin: -16px -16px 20px -16px;
+    padding: 16px;
+    align-items: stretch;
     flex-direction: column;
+    gap: 12px;
   }
 
   .hero-card {
