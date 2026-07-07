@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View, ActivityIndicator } from "react-native";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { findMarketplaceListing, MarketplaceListing } from "@/lib/marketplace-data";
 import { useUserSettingsStore } from "@/lib/user-settings-store";
 import { vlClassNames } from "@/lib/design-system";
 import { initials, getProduceEmoji } from "@/lib/utils";
+import { useListingDetails, mapBackendListingToClient } from "@/lib/listings-api";
+import { MarketplaceListing } from "@/lib/marketplace-data";
 import {
   NavArrowLeft,
   Heart,
@@ -23,8 +24,13 @@ export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const listing = findMarketplaceListing(id);
   const [quantity, setQuantity] = useState(1);
+  const { toggleSaveListing, isSaved } = useUserSettingsStore();
+
+  const { data: rawListing, isLoading } = useListingDetails(id || "");
+  const listing = useMemo(() => {
+    return rawListing ? mapBackendListingToClient(rawListing) : null;
+  }, [rawListing]);
 
   const transportFee = useMemo(() => {
     if (!listing) {
@@ -42,6 +48,14 @@ export default function ListingDetailScreen() {
 
     router.replace("/(tabs)/marketplace");
   };
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="large" color="#15803D" />
+      </View>
+    );
+  }
 
   if (!listing) {
     return (
@@ -67,7 +81,6 @@ export default function ListingDetailScreen() {
   const subtotal = listing.pricePerUnit * quantity;
   const total = subtotal + transportFee * quantity;
 
-  const { toggleSaveListing, isSaved } = useUserSettingsStore();
   const saved = listing ? isSaved(listing.id) : false;
 
   const decrement = () => setQuantity((current) => Math.max(1, current - 1));

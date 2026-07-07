@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, Text, View, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { findMarketplaceListing, MarketplaceListing } from "@/lib/marketplace-data";
 import { vlClassNames } from "@/lib/design-system";
 import { initials } from "@/lib/utils";
 import {
@@ -14,13 +13,22 @@ import {
   Minus,
   Plus,
 } from "iconoir-react-native";
+import { useListingDetails, mapBackendListingToClient } from "@/lib/listings-api";
+import { useCreateOrder } from "@/lib/orders-api";
+import { MarketplaceListing } from "@/lib/marketplace-data";
 
 export default function ListingOrderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const listing = findMarketplaceListing(id);
   const [quantity, setQuantity] = useState(1);
+
+  const { data: rawListing, isLoading } = useListingDetails(id || "");
+  const createOrderMutation = useCreateOrder();
+
+  const listing = useMemo(() => {
+    return rawListing ? mapBackendListingToClient(rawListing) : null;
+  }, [rawListing]);
 
   const transportFee = useMemo(() => {
     if (!listing) {
@@ -38,6 +46,14 @@ export default function ListingOrderScreen() {
 
     router.replace("/(tabs)/marketplace");
   };
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="large" color="#15803D" />
+      </View>
+    );
+  }
 
   if (!listing) {
     return (
@@ -66,13 +82,34 @@ export default function ListingOrderScreen() {
 
   const decrement = () => setQuantity((current) => Math.max(1, current - 1));
   const increment = () =>
-    setQuantity((current) => Math.min(listing.availableQuantity, current + 1));
+    setQuantity((current) => Math.min(listing ? listing.availableQuantity : 9999, current + 1));
 
   const handleOrder = () => {
-    Alert.alert(
-      "Order prepared",
-      `${quantity} ${listing.unitOfMeasure} of ${listing.cropName} is ready for farmer confirmation.`,
-    );
+    if (!listing || !rawListing) return;
+
+    createOrderMutation.mutate({
+      listing_id: rawListing.id,
+      quantity_kg: quantity,
+      mode: rawListing.supportsDelivery ? "delivery" : "pickup",
+      delivery_address: "Deliver to customer location",
+      packaging_type_id: rawListing.recommendedPackagingId || null,
+    }, {
+      onSuccess: (createdOrder) => {
+        Alert.alert(
+          "Order Placed",
+          `${quantity} kg of ${listing.cropName} has been successfully ordered.`,
+          [
+            {
+              text: "View Order",
+              onPress: () => router.replace(`/orders/${createdOrder.id}`),
+            }
+          ]
+        );
+      },
+      onError: (err: any) => {
+        Alert.alert("Checkout Failed", err.error?.message || "Could not place order.");
+      }
+    });
   };
 
   return (
@@ -185,8 +222,16 @@ export default function ListingOrderScreen() {
       </ScrollView>
 
       <View className="absolute bottom-0 left-0 right-0 bg-white px-5 pt-4 shadow-2xl" style={{ paddingBottom: Math.max(insets.bottom, 28) }}>
-        <Pressable className={vlClassNames.primaryButton} onPress={handleOrder}>
-          <Text className={vlClassNames.primaryButtonText}>Order - GHC{total}</Text>
+        <Pressable
+          className={vlClassNames.primaryButton}
+          onPress={handleOrder}
+          disabled={createOrderMutation.isPending}
+        >
+          {createOrderMutation.isPending ? (
+            <ActivityIndicator color="white" size="small" />
+          ) : (
+            <Text className={vlClassNames.primaryButtonText}>Order - GHC{total}</Text>
+          )}
         </Pressable>
       </View>
     </View>

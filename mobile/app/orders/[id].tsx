@@ -1,30 +1,48 @@
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { useAuthStore } from "@vegelink/shared";
 import {
-  findMobileOrder,
-  getConfirmationLabel,
-  getStatusLabel,
-  MobileOrder,
-} from "@/lib/orders-data";
+  useOrderDetails,
+  useConfirmOrder,
+  useDeclineOrder,
+  usePackOrder,
+  useCancelOrder,
+  mapBackendOrderToClient,
+} from "@/lib/orders-api";
+import { getConfirmationLabel, getStatusLabel } from "@/lib/orders-data";
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const role = useAuthStore((state) => state.user?.role);
-  const order = findMobileOrder(id);
+
+  const { data: rawOrder, isLoading } = useOrderDetails(id || "");
+  const confirmMutation = useConfirmOrder();
+  const declineMutation = useDeclineOrder();
+  const packMutation = usePackOrder();
+  const cancelMutation = useCancelOrder();
 
   const handleBack = () => {
     if (router.canGoBack()) {
       router.back();
       return;
     }
-
     router.replace("/(tabs)/orders");
   };
 
-  if (!order) {
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-white">
+        <ScreenHeader title="Order Details" />
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#15803D" />
+        </View>
+      </View>
+    );
+  }
+
+  if (!rawOrder) {
     return (
       <View className="flex-1 bg-white">
         <ScreenHeader title="Order Details" />
@@ -46,7 +64,113 @@ export default function OrderDetailScreen() {
     );
   }
 
-  const primaryAction = getPrimaryAction(order, role);
+  const order = mapBackendOrderToClient(rawOrder);
+  const isMutating =
+    confirmMutation.isPending ||
+    declineMutation.isPending ||
+    packMutation.isPending ||
+    cancelMutation.isPending;
+
+  // ── Action handlers ─────────────────────────────────────────────────
+
+  const handleConfirm = () => {
+    Alert.alert("Confirm Order", "Accept this order and commit the stock?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Confirm",
+        onPress: () =>
+          confirmMutation.mutate(id!, {
+            onSuccess: () => Alert.alert("Confirmed", "Order has been confirmed."),
+            onError: (err: any) =>
+              Alert.alert("Error", err.error?.message || "Could not confirm order."),
+          }),
+      },
+    ]);
+  };
+
+  const handleDecline = () => {
+    if (Alert.prompt) {
+      Alert.prompt(
+        "Decline Order",
+        "Provide a reason for declining:",
+        (reason) => {
+          if (!reason || reason.length < 4) {
+            Alert.alert("Validation", "Reason must be at least 4 characters.");
+            return;
+          }
+          declineMutation.mutate(
+            { id: id!, reason },
+            {
+              onSuccess: () => Alert.alert("Declined", "Order has been declined."),
+              onError: (err: any) =>
+                Alert.alert("Error", err.error?.message || "Could not decline order."),
+            }
+          );
+        },
+        "plain-text"
+      );
+    } else {
+      Alert.alert("Decline Order", "Are you sure you want to decline this order?", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Decline",
+          style: "destructive",
+          onPress: () =>
+            declineMutation.mutate(
+              { id: id!, reason: "Farmer declined via app" },
+              {
+                onSuccess: () => Alert.alert("Declined", "Order has been declined."),
+                onError: (err: any) =>
+                  Alert.alert("Error", err.error?.message || "Could not decline order."),
+              }
+            ),
+        },
+      ]);
+    }
+  };
+
+  const handlePack = () => {
+    Alert.alert("Mark as Packed", "Confirm this order is packed and ready?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Mark Packed",
+        onPress: () =>
+          packMutation.mutate(id!, {
+            onSuccess: () => Alert.alert("Packed", "Order marked as packed."),
+            onError: (err: any) =>
+              Alert.alert("Error", err.error?.message || "Could not mark as packed."),
+          }),
+      },
+    ]);
+  };
+
+  const handleCancel = () => {
+    Alert.alert("Cancel Order", "Are you sure you want to cancel this order?", [
+      { text: "No", style: "cancel" },
+      {
+        text: "Yes, Cancel",
+        style: "destructive",
+        onPress: () =>
+          cancelMutation.mutate(
+            { id: id!, reason: "Cancelled via mobile app" },
+            {
+              onSuccess: () => Alert.alert("Cancelled", "Order has been cancelled."),
+              onError: (err: any) =>
+                Alert.alert("Error", err.error?.message || "Could not cancel order."),
+            }
+          ),
+      },
+    ]);
+  };
+
+  // ── Derive visible actions based on role + status ───────────────────
+
+  const actions = getActions(order, role, {
+    onConfirm: handleConfirm,
+    onDecline: handleDecline,
+    onPack: handlePack,
+    onCancel: handleCancel,
+  });
 
   return (
     <View className="flex-1 bg-white">
@@ -102,7 +226,7 @@ export default function OrderDetailScreen() {
         <View className="mt-4 rounded-2xl border border-gray-200 bg-white p-4">
           <Text className="text-lg font-black text-green-950">Timeline</Text>
           <View className="mt-3 gap-4">
-            {order.timeline.map((event) => (
+            {order.timeline.map((event: any) => (
               <View key={event.title} className="flex-row gap-3">
                 <View
                   className={`mt-1 h-4 w-4 rounded-full ${
@@ -120,16 +244,38 @@ export default function OrderDetailScreen() {
           </View>
         </View>
 
-        {primaryAction ? (
-          <Pressable
-            className="mt-5 rounded-2xl bg-green-800 py-4 active:bg-green-900"
-            onPress={() => Alert.alert(primaryAction.title, primaryAction.message)}
-          >
-            <Text className="text-center text-base font-black text-white">
-              {primaryAction.label}
-            </Text>
-          </Pressable>
-        ) : null}
+        {/* Action Buttons */}
+        {actions.length > 0 && (
+          <View className="mt-5 gap-3">
+            {actions.map((action) => (
+              <Pressable
+                key={action.label}
+                className={`rounded-2xl py-4 active:opacity-80 ${
+                  action.destructive
+                    ? "border border-red-200 bg-red-50"
+                    : "bg-green-800"
+                }`}
+                disabled={isMutating}
+                onPress={action.onPress}
+              >
+                {isMutating ? (
+                  <ActivityIndicator
+                    color={action.destructive ? "#991B1B" : "white"}
+                    size="small"
+                  />
+                ) : (
+                  <Text
+                    className={`text-center text-base font-black ${
+                      action.destructive ? "text-red-700" : "text-white"
+                    }`}
+                  >
+                    {action.label}
+                  </Text>
+                )}
+              </Pressable>
+            ))}
+          </View>
+        )}
 
         <Pressable
           className="mt-3 rounded-2xl border border-gray-300 py-4"
@@ -153,46 +299,59 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function getPrimaryAction(order: MobileOrder, role: string | undefined) {
-  if (role === "farmer" && order.status === "pending_payment") {
-    return {
-      label: "Confirm Order",
-      title: "Order confirmation",
-      message: "Farmer confirmation is ready to be submitted.",
-    };
+interface ActionItem {
+  label: string;
+  destructive?: boolean;
+  onPress: () => void;
+}
+
+function getActions(
+  order: any,
+  role: string | undefined,
+  handlers: {
+    onConfirm: () => void;
+    onDecline: () => void;
+    onPack: () => void;
+    onCancel: () => void;
+  }
+): ActionItem[] {
+  const actions: ActionItem[] = [];
+
+  // Farmer / Agent can confirm pending orders
+  if (
+    (role === "farmer" || role === "agent") &&
+    order.status === "pending_payment"
+  ) {
+    actions.push({ label: "Confirm Order", onPress: handlers.onConfirm });
+    actions.push({
+      label: "Decline Order",
+      destructive: true,
+      onPress: handlers.onDecline,
+    });
   }
 
-  if (role === "buyer" && order.status === "pending_payment") {
-    return {
-      label: "Pay with MoMo",
-      title: "Payment",
-      message: "Mobile money checkout is ready for this order.",
-    };
+  // Farmer / Agent can mark confirmed orders as packed
+  if (
+    (role === "farmer" || role === "agent") &&
+    order.status === "paid"
+  ) {
+    actions.push({ label: "Mark as Packed", onPress: handlers.onPack });
   }
 
-  if (role === "transporter" && order.status === "paid") {
-    return {
-      label: "Mark Picked Up",
-      title: "Transport update",
-      message: "Pickup status is ready to be recorded.",
-    };
+  // Any involved party can cancel non-completed orders
+  if (
+    order.status !== "completed" &&
+    order.status !== "cancelled"
+  ) {
+    // Only add cancel if we haven't already added decline above
+    if (order.status !== "pending_payment" || role === "buyer") {
+      actions.push({
+        label: "Cancel Order",
+        destructive: true,
+        onPress: handlers.onCancel,
+      });
+    }
   }
 
-  if (role === "transporter" && order.status === "in_transit") {
-    return {
-      label: "Enter Delivery OTP",
-      title: "Delivery OTP",
-      message: "Enter the buyer code before completing delivery.",
-    };
-  }
-
-  if (role === "agent" && order.confirmationMode === "agent_proxy") {
-    return {
-      label: "Confirm for Farmer",
-      title: "Agent confirmation",
-      message: "Confirm only after the farmer gives consent.",
-    };
-  }
-
-  return null;
+  return actions;
 }
