@@ -188,18 +188,12 @@ function RegisterClientForm({ onClose }: { onClose: () => void }) {
             </span>
             <select
               {...register('region')}
-              style={{
-                minHeight: 50, padding: '0 14px', borderRadius: 12,
-                border: `1px solid ${errors.region ? '#ef4444' : 'rgba(255,255,255,0.14)'}`,
-                background: 'rgba(255,255,255,0.1)',
-                color: '#f8faf5',
-                fontSize: '1rem', width: '100%', boxSizing: 'border-box',
-                outline: 'none',
-              }}
+              className="form-select dark"
+              style={errors.region ? { borderColor: '#ef4444' } : undefined}
             >
-              <option value="" style={{ background: '#264123', color: '#f8faf5' }}>Select Region</option>
+              <option value="">Select Region</option>
               {REGIONS.map(r => (
-                <option key={r.value} value={r.value} style={{ background: '#264123', color: '#f8faf5' }}>{r.label}</option>
+                <option key={r.value} value={r.value}>{r.label}</option>
               ))}
             </select>
             {errors.region && (
@@ -213,18 +207,12 @@ function RegisterClientForm({ onClose }: { onClose: () => void }) {
             </span>
             <select
               {...register('language')}
-              style={{
-                minHeight: 50, padding: '0 14px', borderRadius: 12,
-                border: `1px solid ${errors.language ? '#ef4444' : 'rgba(255,255,255,0.14)'}`,
-                background: 'rgba(255,255,255,0.1)',
-                color: '#f8faf5',
-                fontSize: '1rem', width: '100%', boxSizing: 'border-box',
-                outline: 'none',
-              }}
+              className="form-select dark"
+              style={errors.language ? { borderColor: '#ef4444' } : undefined}
             >
-              <option value="" style={{ background: '#264123', color: '#f8faf5' }}>Select Language</option>
+              <option value="">Select Language</option>
               {LANGUAGES.map(l => (
-                <option key={l.value} value={l.value} style={{ background: '#264123', color: '#f8faf5' }}>{l.label}</option>
+                <option key={l.value} value={l.value}>{l.label}</option>
               ))}
             </select>
             {errors.language && (

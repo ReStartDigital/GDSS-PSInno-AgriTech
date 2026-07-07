@@ -2031,3 +2031,82 @@
   color: #264123;
   font-weight: 600;
 }
+
+/* ── Standardized Select Dropdowns ───────────────────────────────────────── */
+.form-select {
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #1f2937;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23264123' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  padding-right: 40px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.form-select:focus {
+  border-color: #264123;
+  box-shadow: 0 0 0 3px rgba(38, 65, 35, 0.08);
+}
+
+/* Dark variant for selects inside .accent-card */
+.form-select.dark {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f8faf5;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d6ffcd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+.form-select.dark:focus {
+  border-color: #d6ffcd;
+  box-shadow: 0 0 0 3px rgba(214, 255, 205, 0.15);
+}
+
+.form-select.dark option {
+  background-color: #264123;
+  color: #f8faf5;
+}
+
+/* ── Standardized Textareas ──────────────────────────────────────────────── */
+.form-textarea {
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #1f2937;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.form-textarea:focus {
+  border-color: #264123;
+  box-shadow: 0 0 0 3px rgba(38, 65, 35, 0.08);
+}
+
+.form-textarea.dark {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f8faf5;
+}
+
+.form-textarea.dark:focus {
+  border-color: #d6ffcd;
+  box-shadow: 0 0 0 3px rgba(214, 255, 205, 0.15);
+}

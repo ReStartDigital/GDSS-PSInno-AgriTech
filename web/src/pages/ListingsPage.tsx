@@ -71,14 +71,8 @@ export default function ListingsPage() {
               <select 
                 value={selectedFarmerId} 
                 onChange={(e) => setSelectedFarmerId(e.target.value)}
-                style={{ 
-                  padding: '8px 12px', 
-                  borderRadius: '12px', 
-                  border: '1px solid #E5E7EB', 
-                  background: '#fff',
-                  fontSize: '0.9rem',
-                  color: '#374151'
-                }}
+                className="form-select"
+                style={{ maxWidth: 300, minHeight: 40 }}
               >
                 {clients.map(c => (
                   <option key={c.id} value={c.id}>{c.firstName} {c.lastName} ({c.phone})</option>
@@ -278,19 +272,10 @@ function CreateListingForm({
             <select 
               value={formFarmerId}
               onChange={(e) => setFormFarmerId(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '6px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.1)',
-                color: '#fff',
-                fontSize: '0.9rem',
-                outline: 'none',
-              }}
+              className="form-select dark"
             >
               {clients.map(c => (
-                <option key={c.id} value={c.id} style={{ color: '#000' }}>{c.firstName} {c.lastName} ({c.phone})</option>
+                <option key={c.id} value={c.id}>{c.firstName} {c.lastName} ({c.phone})</option>
               ))}
             </select>
           </div>
@@ -340,19 +325,7 @@ function CreateListingForm({
             {...register('description')}
             placeholder="e.g. Freshly harvested, sorted, and ready for pickup"
             rows={3}
-            style={{
-              padding: '12px 14px',
-              borderRadius: 12,
-              border: '1px solid rgba(255,255,255,0.14)',
-              background: 'rgba(255,255,255,0.1)',
-              color: '#f8faf5',
-              fontSize: '1rem',
-              width: '100%',
-              boxSizing: 'border-box',
-              outline: 'none',
-              resize: 'vertical',
-              fontFamily: 'inherit',
-            }}
+            className="form-textarea dark"
           />
         </div>
 
