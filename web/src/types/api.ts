@@ -9,6 +9,9 @@ export interface Listing {
   status: 'active' | 'sold' | 'cancelled'
   location?: string
   farmer?: { firstName: string }
+  freshness?: 'High' | 'Medium' | 'Low'
+  agriScore?: number
+  isUrgent?: boolean
 }
 
 export interface Order {

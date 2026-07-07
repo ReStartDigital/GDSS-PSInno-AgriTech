@@ -7,6 +7,8 @@ export interface AuthUser {
   id: string
   phone: string
   role: UserRole
+  region?: string
+  language?: string
 }
 
 interface AuthState {
