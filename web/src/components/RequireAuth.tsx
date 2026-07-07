@@ -8,5 +8,5 @@ export function RequireAuth() {
 
 export function RedirectIfAuth() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  return isAuthenticated ? <Navigate to="/" replace /> : <Outlet />
+  return isAuthenticated ? <Navigate to="/overview" replace /> : <Outlet />
 }

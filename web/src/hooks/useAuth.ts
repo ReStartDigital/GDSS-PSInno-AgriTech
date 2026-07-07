@@ -28,7 +28,7 @@ export function useSetPin() {
     onSuccess: (res) => {
       const { user, accessToken } = res.data.data
       setAuth({ id: user.id, phone: pendingPhone ?? user.phone, role: user.role, fullName: user.fullName, region: user.region, language: user.language }, accessToken)
-      navigate('/')
+      navigate('/overview')
     },
   })
 }
@@ -41,7 +41,7 @@ export function useLogin() {
     onSuccess: (res) => {
       const { user, accessToken } = res.data.data
       setAuth({ id: user.id, phone: user.phone, role: user.role, fullName: user.fullName, region: user.region, language: user.language }, accessToken)
-      navigate('/')
+      navigate('/overview')
     },
   })
 }

@@ -7,7 +7,7 @@ import { useAuthStore } from '../../store/auth.store'
 import { Field } from '../../components/ui/Field'
 import { ErrorAlert } from '../../components/ui/Feedback'
 import { authApi } from '../../lib/apiCalls'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function VerifyPage() {
   const navigate = useNavigate()
@@ -19,8 +19,13 @@ export default function VerifyPage() {
     resolver: zodResolver(verifyOtpSchema),
   })
 
+  useEffect(() => {
+    if (!pendingPhone) {
+      navigate('/auth/register')
+    }
+  }, [pendingPhone, navigate])
+
   if (!pendingPhone) {
-    navigate('/auth/register')
     return null
   }
 
