@@ -13,6 +13,8 @@ import { Field } from '../components/ui/Field'
 import { PageHero } from '../components/ui/PageHero'
 import { FormActions } from '../components/ui/FormActions'
 
+const UNIT_OPTIONS = ['kg', 'crate', 'basket', 'bunch', 'sack', 'head'] as const
+
 export default function ListingsPage() {
   const user = useAuthStore((s) => s.user)
   const isAgent = user?.role === 'agent'
@@ -134,13 +136,19 @@ function ListingCard({ listing }: { listing: Listing }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, background: '#f8faf5', padding: '12px', borderRadius: '12px', border: '1px solid #e5e7eb', marginBottom: 12 }}>
           <div>
             <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#6b7280', display: 'block', letterSpacing: '0.05em' }}>Price</span>
-            <strong style={{ fontSize: '0.95rem', color: '#264123' }}>GH₵ {listing.price_per_kg_ghs}/kg</strong>
+            <strong style={{ fontSize: '0.95rem', color: '#264123' }}>GH₵ {listing.price_per_kg_ghs}/{(listing as any).unit_of_measure ?? 'kg'}</strong>
           </div>
           <div>
             <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#6b7280', display: 'block', letterSpacing: '0.05em' }}>Available</span>
-            <strong style={{ fontSize: '0.95rem', color: '#264123' }}>{listing.quantity_kg} kg</strong>
+            <strong style={{ fontSize: '0.95rem', color: '#264123' }}>{listing.quantity_kg} {(listing as any).unit_of_measure ?? 'kg'}</strong>
           </div>
         </div>
+
+        {(listing as any).description && (
+          <p style={{ color: '#6b7280', fontSize: '0.85rem', margin: '0 0 12px', lineHeight: 1.5 }}>
+            {(listing as any).description}
+          </p>
+        )}
 
         {listing.harvest_date && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b7280', fontSize: '0.8rem', marginBottom: 12 }}>
@@ -175,11 +183,13 @@ function CreateListingForm({
   selectedFarmerId: string
 }) {
   const { mutate, isPending, error, isSuccess } = useCreateListing()
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateListingFormData, unknown, CreateListingFormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors }, reset } = useForm<CreateListingFormData, unknown, CreateListingFormData>({
     resolver: zodResolver(createListingSchema) as never,
+    defaultValues: { unit_of_measure: 'kg' }
   })
   
   const [formFarmerId, setFormFarmerId] = useState(selectedFarmerId)
+  const selectedUnit = watch('unit_of_measure')
 
   const onSubmit = (data: CreateListingFormData) => {
     const payload = {
@@ -229,10 +239,65 @@ function CreateListingForm({
         )}
         <div className="form-grid">
           <Field label="Crop Type" dark placeholder="e.g. Tomatoes" error={errors.vegetable_type} {...register('vegetable_type')} />
-          <Field label="Quantity (kg)" dark type="number" min="1" placeholder="e.g. 200" error={errors.quantity_kg} {...register('quantity_kg')} />
-          <Field label="Price per kg (GH₵)" dark type="number" step="0.01" min="0.01" placeholder="e.g. 4.50" error={errors.price_per_kg_ghs} {...register('price_per_kg_ghs')} />
+          <Field label="Quantity" dark type="number" min="1" placeholder="e.g. 200" error={errors.quantity_kg} {...register('quantity_kg')} />
+          <Field label="Price per unit (GH₵)" dark type="number" step="0.01" min="0.01" placeholder="e.g. 4.50" error={errors.price_per_kg_ghs} {...register('price_per_kg_ghs')} />
           <Field label="Harvest Date" dark type="date" error={errors.harvest_date} {...register('harvest_date')} />
         </div>
+
+        {/* Unit of measure */}
+        <div>
+          <span style={{ color: 'rgba(248,250,245,0.86)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8 }}>
+            Unit of Measure
+          </span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {UNIT_OPTIONS.map((unit) => (
+              <button
+                key={unit}
+                type="button"
+                onClick={() => setValue('unit_of_measure', unit, { shouldValidate: true })}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 20,
+                  border: `2px solid ${selectedUnit === unit ? '#d6ffcd' : 'rgba(255,255,255,0.2)'}`,
+                  background: selectedUnit === unit ? 'rgba(214,255,205,0.2)' : 'rgba(255,255,255,0.06)',
+                  color: '#f8faf5',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  textTransform: 'capitalize',
+                }}
+              >
+                {unit}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Description */}
+        <div style={{ display: 'grid', gap: 6 }}>
+          <span style={{ color: 'rgba(248,250,245,0.86)', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Description <span style={{ opacity: 0.5 }}>(optional)</span>
+          </span>
+          <textarea
+            {...register('description')}
+            placeholder="e.g. Freshly harvested, sorted, and ready for pickup"
+            rows={3}
+            style={{
+              padding: '12px 14px',
+              borderRadius: 12,
+              border: '1px solid rgba(255,255,255,0.14)',
+              background: 'rgba(255,255,255,0.1)',
+              color: '#f8faf5',
+              fontSize: '1rem',
+              width: '100%',
+              boxSizing: 'border-box',
+              outline: 'none',
+              resize: 'vertical',
+              fontFamily: 'inherit',
+            }}
+          />
+        </div>
+
         {apiError && <ErrorAlert message={apiError} />}
         {isSuccess && <div style={{ color: '#d6ffcd', fontWeight: 600 }}>Listing created ✓</div>}
         <FormActions
@@ -255,25 +320,8 @@ function AgriScoreCircle({ score }: { score: number }) {
   return (
     <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36 }} title={`AgriScore: ${score}%`}>
       <svg width="36" height="36" style={{ transform: 'rotate(-90deg)' }}>
-        <circle
-          cx="18"
-          cy="18"
-          r={radius}
-          stroke="rgba(38,65,35,0.08)"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-        />
-        <circle
-          cx="18"
-          cy="18"
-          r={radius}
-          stroke="url(#agriScoreGradient)"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-        />
+        <circle cx="18" cy="18" r={radius} stroke="rgba(38,65,35,0.08)" strokeWidth={strokeWidth} fill="transparent" />
+        <circle cx="18" cy="18" r={radius} stroke="url(#agriScoreGradient)" strokeWidth={strokeWidth} fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
         <defs>
           <linearGradient id="agriScoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#10b981" />
@@ -281,9 +329,7 @@ function AgriScoreCircle({ score }: { score: number }) {
           </linearGradient>
         </defs>
       </svg>
-      <span style={{ position: 'absolute', fontSize: '0.65rem', fontWeight: 800, color: '#047857' }}>
-        {score}
-      </span>
+      <span style={{ position: 'absolute', fontSize: '0.65rem', fontWeight: 800, color: '#047857' }}>{score}</span>
     </div>
   )
 }
@@ -296,18 +342,7 @@ function FreshnessBadge({ freshness }: { freshness: 'High' | 'Medium' | 'Low' })
   }[freshness]
 
   return (
-    <span style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 5,
-      padding: '4px 10px',
-      borderRadius: '999px',
-      fontSize: '0.7rem',
-      fontWeight: 600,
-      background: styles.bg,
-      color: styles.color,
-      border: `1px solid ${styles.border}`
-    }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 600, background: styles.bg, color: styles.color, border: `1px solid ${styles.border}` }}>
       <span style={{ width: 6, height: 6, borderRadius: '50%', background: styles.color }} />
       Freshness: {freshness}
     </span>
@@ -316,19 +351,7 @@ function FreshnessBadge({ freshness }: { freshness: 'High' | 'Medium' | 'Low' })
 
 function UrgentSaleBadge() {
   return (
-    <span style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      padding: '4px 8px',
-      borderRadius: '6px',
-      fontSize: '0.68rem',
-      fontWeight: 700,
-      background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
-      color: '#ffffff',
-      letterSpacing: '0.03em',
-      textTransform: 'uppercase',
-      boxShadow: '0 2px 4px rgba(239, 68, 68, 0.15)'
-    }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 700, background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)', color: '#ffffff', letterSpacing: '0.03em', textTransform: 'uppercase', boxShadow: '0 2px 4px rgba(239, 68, 68, 0.15)' }}>
       🔥 Urgent
     </span>
   )
