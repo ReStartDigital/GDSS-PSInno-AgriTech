@@ -71,30 +71,32 @@ export class OrdersRepository {
     userId: string,
     role: string,
     limit: number,
-    offset: number
+    offset: number,
   ): Promise<{ orders: OrderEntity[]; total: number }> {
     // Determine column ownership based on role strategy
-    const whereCondition = role === 'buyer' 
-      ? { buyerId: userId } 
-      : { farmerId: userId };
+    const whereCondition =
+      role === "buyer" ? { buyerId: userId } : { farmerId: userId };
 
     const [orders, total] = await this.repo.findAndCount({
       where: whereCondition,
-      relations: {listing:{farmer: true}}, // Include relational joins if needed for the dashboard
-      order: { createdAt: 'DESC' },
+      relations: { listing: { farmer: true } }, // Include relational joins if needed for the dashboard
+      order: { createdAt: "DESC" },
       take: limit,
       skip: offset,
     });
 
     return { orders, total };
   }
-  async findByShortIdAndFarmer(shortId: string, farmerId: string): Promise<OrderEntity | null> {
+  async findByShortIdAndFarmer(
+    shortId: string,
+    farmerId: string,
+  ): Promise<OrderEntity | null> {
     return await this.repo.findOne({
       where: {
         id: shortId, // Swap for numeric short-code matching column if tracking via an incremental token sequence
         farmerId,
-        status: OrderStatus.PENDING_SMS_CONFIRMATION
-      }
+        status: OrderStatus.PENDING_SMS_CONFIRMATION,
+      },
     });
   }
 }

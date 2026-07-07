@@ -323,16 +323,16 @@ export class UserRepository {
       where: { agentId, userId, unassignedAt: IsNull() },
     });
   }
-    /**
+  /**
    * Locates an active user record matching an incoming mobile signature string
    */
   async findByMobile(mobile: string): Promise<User | null> {
-    // If your DB stores numbers locally as "024..." or "+23324...", you may need 
+    // If your DB stores numbers locally as "024..." or "+23324...", you may need
     // a normalization utility here to match Arkesel's "23324..." formatting.
     return await this.user.findOne({
-      where: { 
+      where: {
         phone: mobile,
-        isActive: true 
+        isActive: true,
       },
     });
   }
