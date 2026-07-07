@@ -33,7 +33,7 @@ export default function VerifyScreen() {
     }
 
     router.push({
-      pathname: "/(auth)/details",
+      pathname: "/(auth)/pin" as any,
       params: {
         firstName,
         lastName,
@@ -73,7 +73,11 @@ export default function VerifyScreen() {
 
     router.replace({
       pathname: "/(auth)/phone",
-      params: { role: safeRole },
+      params: {
+        firstName,
+        lastName,
+        role: safeRole,
+      },
     });
   };
 
@@ -92,10 +96,10 @@ export default function VerifyScreen() {
             <View className="flex-row gap-2">
               <ProgressStep active />
               <ProgressStep active />
-              <ProgressStep />
+              <ProgressStep active />
               <ProgressStep />
             </View>
-            <Text className="text-xs font-black text-gray-400">Step 2 of 4</Text>
+            <Text className="text-xs font-black text-gray-400">Step 3 of 4</Text>
           </View>
         </View>
 

@@ -19,7 +19,11 @@ const roleLabels: Record<UserRole, string> = {
 export default function PhoneScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { role } = useLocalSearchParams<{ role?: UserRole }>();
+  const { firstName, lastName, role } = useLocalSearchParams<{
+    firstName?: string;
+    lastName?: string;
+    role?: UserRole;
+  }>();
   const [phone, setPhone] = useState("");
   const safeRole: UserRole = role ?? "farmer";
   const phoneDigits = phone.replace(/\D/g, "").slice(0, 9);
@@ -45,7 +49,10 @@ export default function PhoneScreen() {
       return;
     }
 
-    router.replace("/(auth)/register");
+    router.replace({
+      pathname: "/(auth)/details",
+      params: { role: safeRole },
+    });
   };
 
   const handleContinue = () => {
@@ -56,6 +63,8 @@ export default function PhoneScreen() {
     router.push({
       pathname: "/(auth)/verify",
       params: {
+        firstName,
+        lastName,
         phone: `+233${phoneDigits}`,
         role: safeRole,
       },
@@ -80,11 +89,11 @@ export default function PhoneScreen() {
             <View className="flex-1 gap-2">
               <View className="flex-row gap-2">
                 <ProgressStep active />
-                <ProgressStep />
+                <ProgressStep active />
                 <ProgressStep />
                 <ProgressStep />
               </View>
-              <Text className="text-xs font-black text-gray-400">Step 1 of 4</Text>
+              <Text className="text-xs font-black text-gray-400">Step 2 of 4</Text>
             </View>
           </View>
 

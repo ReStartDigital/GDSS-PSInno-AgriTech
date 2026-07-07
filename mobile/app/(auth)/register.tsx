@@ -63,7 +63,7 @@ export default function RegisterScreen() {
 
   const handleContinue = () => {
     router.push({
-      pathname: "/(auth)/phone",
+      pathname: "/(auth)/details",
       params: { role },
     });
   };
