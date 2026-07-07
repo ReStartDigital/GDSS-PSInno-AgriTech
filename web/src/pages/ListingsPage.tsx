@@ -23,6 +23,12 @@ export default function ListingsPage() {
   const [selectedFarmerId, setSelectedFarmerId] = useState<string>('')
   
   const [showForm, setShowForm] = useState(false)
+  const [toastMsg, setToastMsg] = useState<string | null>(null)
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg)
+    setTimeout(() => setToastMsg(null), 3500)
+  }
   
   if (isAgent && !selectedFarmerId && clients.length > 0) {
     setSelectedFarmerId(clients[0].id)
@@ -67,7 +73,7 @@ export default function ListingsPage() {
                 onChange={(e) => setSelectedFarmerId(e.target.value)}
                 style={{ 
                   padding: '8px 12px', 
-                  borderRadius: '6px', 
+                  borderRadius: '12px', 
                   border: '1px solid #E5E7EB', 
                   background: '#fff',
                   fontSize: '0.9rem',
@@ -84,12 +90,27 @@ export default function ListingsPage() {
       )}
 
       {showForm && (
-        <CreateListingForm 
-          onClose={() => setShowForm(false)} 
+        <CreateListingForm
+          onClose={() => setShowForm(false)}
           isAgent={isAgent}
           clients={clients}
           selectedFarmerId={selectedFarmerId}
+          onSuccess={(name) => showToast(`"${name}" listing created successfully!`)}
         />
+      )}
+
+      {/* Success toast */}
+      {toastMsg && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          background: '#264123', color: '#d6ffcd', padding: '12px 24px',
+          borderRadius: 12, fontWeight: 600, fontSize: '0.92rem',
+          boxShadow: '0 8px 24px rgba(38,65,35,0.2)', zIndex: 100,
+          display: 'flex', alignItems: 'center', gap: 10,
+          animation: 'fadeSlideUp 0.25s ease',
+        }}>
+          ✅ {toastMsg}
+        </div>
       )}
 
       {isLoading && <Spinner />}
@@ -175,14 +196,16 @@ function CreateListingForm({
   onClose, 
   isAgent, 
   clients,
-  selectedFarmerId 
+  selectedFarmerId,
+  onSuccess,
 }: { 
   onClose: () => void
   isAgent: boolean
   clients: any[]
   selectedFarmerId: string
+  onSuccess?: (cropName: string) => void
 }) {
-  const { mutate, isPending, error, isSuccess } = useCreateListing()
+  const { mutate, isPending, error } = useCreateListing()
   const { register, handleSubmit, watch, setValue, formState: { errors }, reset } = useForm<CreateListingFormData, unknown, CreateListingFormData>({
     resolver: zodResolver(createListingSchema) as never,
     defaultValues: { unit_of_measure: 'kg' }
@@ -202,7 +225,13 @@ function CreateListingForm({
       supports_pickup: true,
       ...(isAgent ? { farmer_id: formFarmerId } : {})
     }
-    mutate(payload as any, { onSuccess: () => { reset(); onClose() } })
+    mutate(payload as any, {
+      onSuccess: () => {
+        reset()
+        onClose()
+        onSuccess?.(data.vegetable_type || 'Produce')
+      }
+    })
   }
 
   const apiError = getApiErrorMessage(error)
@@ -299,7 +328,6 @@ function CreateListingForm({
         </div>
 
         {apiError && <ErrorAlert message={apiError} />}
-        {isSuccess && <div style={{ color: '#d6ffcd', fontWeight: 600 }}>Listing created ✓</div>}
         <FormActions
           onCancel={onClose}
           submitLabel="Create Listing"
@@ -336,15 +364,15 @@ function AgriScoreCircle({ score }: { score: number }) {
 
 function FreshnessBadge({ freshness }: { freshness: 'High' | 'Medium' | 'Low' }) {
   const styles = {
-    High: { bg: 'rgba(16, 185, 129, 0.08)', color: '#047857', border: 'rgba(16, 185, 129, 0.15)' },
-    Medium: { bg: 'rgba(245, 158, 11, 0.08)', color: '#b45309', border: 'rgba(245, 158, 11, 0.15)' },
-    Low: { bg: 'rgba(239, 68, 68, 0.08)', color: '#b91c1c', border: 'rgba(239, 68, 68, 0.15)' },
+    High:   { bg: 'rgba(16, 185, 129, 0.08)', color: '#047857', border: 'rgba(16, 185, 129, 0.15)' },
+    Medium: { bg: 'rgba(245, 158, 11, 0.08)',  color: '#b45309', border: 'rgba(245, 158, 11, 0.15)' },
+    Low:    { bg: 'rgba(239, 68, 68, 0.08)',   color: '#b91c1c', border: 'rgba(239, 68, 68, 0.15)' },
   }[freshness]
 
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 600, background: styles.bg, color: styles.color, border: `1px solid ${styles.border}` }}>
       <span style={{ width: 6, height: 6, borderRadius: '50%', background: styles.color }} />
-      Freshness: {freshness}
+      {freshness} freshness
     </span>
   )
 }

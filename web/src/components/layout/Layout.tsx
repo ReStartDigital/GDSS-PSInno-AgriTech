@@ -3,14 +3,14 @@ import { useAuthStore } from '../../store/auth.store'
 import { Icon } from '../Icon'
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Home', icon: 'home' as const, exact: true },
-  { to: '/overview', label: 'Overview', icon: 'leaf' as const },
-  { to: '/marketplace', label: 'Marketplace', icon: 'shopping' as const },
-  { to: '/listings', label: 'Listings', icon: 'bag' as const },
-  { to: '/clients', label: 'My Clients', icon: 'user' as const },
-  { to: '/jobs', label: 'Transport Jobs', icon: 'truck' as const },
-  { to: '/orders', label: 'Orders', icon: 'truck' as const },
-  { to: '/profile', label: 'Profile', icon: 'user' as const },
+  { to: '/',           label: 'Home',           icon: 'home'     as const, exact: true },
+  { to: '/overview',   label: 'Overview',        icon: 'leaf'     as const },
+  { to: '/marketplace',label: 'Marketplace',     icon: 'shopping' as const },
+  { to: '/listings',   label: 'Listings',        icon: 'bag'      as const },
+  { to: '/clients',    label: 'My Clients',      icon: 'user'     as const },
+  { to: '/jobs',       label: 'Transport Jobs',  icon: 'truck'    as const },
+  { to: '/orders',     label: 'Orders',          icon: 'bag'      as const },
+  { to: '/profile',    label: 'Profile',         icon: 'shield'   as const },
 ]
 
 function getPageTitle(path: string): string {
@@ -24,6 +24,17 @@ function getPageTitle(path: string): string {
   if (path.startsWith('/profile')) return 'Profile'
   if (path.startsWith('/auth')) return 'Authentication'
   return 'VegeLink Ghana'
+}
+
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+function formatPhone(phone: string) {
+  // Format 10-digit Ghana phone: 0244 123 456
+  const digits = phone.replace(/\D/g, '')
+  if (digits.length === 10) return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`
+  return phone
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -40,6 +51,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
     if (item.to === '/marketplace' && role === 'farmer') return false
     return true
   })
+
+  // Mobile nav shows max 4 items BUT always ensures Profile is included
+  const mobileNav = (() => {
+    if (visibleNav.length <= 4) return visibleNav
+    const profileItem = visibleNav.find(i => i.to === '/profile')
+    const rest = visibleNav.filter(i => i.to !== '/profile').slice(0, 3)
+    return profileItem ? [...rest, profileItem] : visibleNav.slice(0, 4)
+  })()
 
   return (
     <div className={`app-shell ${!user ? 'guest-shell' : ''}`}>
@@ -61,6 +80,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 end={item.exact}
                 className={({ isActive }) => isActive ? 'active' : undefined}
               >
+                <span className="sidebar-nav-icon" aria-hidden="true"><Icon name={item.icon} /></span>
                 {item.label}
               </NavLink>
             ))}
@@ -68,11 +88,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           <div className="sidebar-panel">
             <p className="panel-label">Session</p>
-            <h2>{`${role} account`}</h2>
-            <p>{`Phone: ${user.phone}`}</p>
+            <h2>{capitalize(role ?? 'guest')} account</h2>
+            <p>{user.phone ? formatPhone(user.phone) : ''}</p>
             <div className="mini-badges">
               <span>Authenticated</span>
-              <span>{role}</span>
+              <span>{capitalize(role ?? '')}</span>
             </div>
           </div>
         </aside>
@@ -88,15 +108,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span style={{ fontWeight: 800, color: '#f8faf5', fontSize: '1.25rem', fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>VegeLink</span>
             </Link>
           ) : (
-            <div>
+            <div className="topbar-title">
               <h2>{getPageTitle(location.pathname)}</h2>
             </div>
           )}
           {location.pathname === '/' && (
             <nav className="topbar-nav" aria-label="Homepage sections">
-              <a href="#hero" className="topbar-nav-link">Home</a>
-              <a href="#browse" className="topbar-nav-link">Browse Produce</a>
-              <a href="#about" className="topbar-nav-link">About Platform</a>
+              <a href="#hero"     className="topbar-nav-link">Home</a>
+              <a href="#browse"   className="topbar-nav-link">Browse</a>
+              <a href="#about"    className="topbar-nav-link">About</a>
               <a href="#workflow" className="topbar-nav-link">How it Works</a>
               <a href="#coverage" className="topbar-nav-link">Coverage</a>
             </nav>
@@ -104,11 +124,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="topbar-actions">
             {!user ? (
               <>
-                <Link to="/auth/login" className="secondary-button" style={{ minHeight: 38, padding: '0 16px', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', borderRadius: 10 }}>Log In</Link>
-                <Link to="/auth/register" className="primary-button" style={{ minHeight: 38, padding: '0 16px', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', borderRadius: 10 }}>Register</Link>
+                <Link to="/auth/login"    className="secondary-button" style={{ minHeight: 38, padding: '0 16px', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', borderRadius: 10 }}>Log In</Link>
+                <Link to="/auth/register" className="primary-button"   style={{ minHeight: 38, padding: '0 16px', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', borderRadius: 10 }}>Register</Link>
               </>
             ) : (
-              <div className="avatar" aria-hidden="true">{user?.phone?.slice(-2) ?? 'VG'}</div>
+              <Link to="/profile" className="avatar" aria-label="Profile" style={{ textDecoration: 'none' }}>
+                {user?.phone?.slice(-2) ?? 'VG'}
+              </Link>
             )}
           </div>
         </header>
@@ -117,7 +139,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {user && (
           <nav className="mobile-nav" aria-label="Mobile shortcuts">
-            {visibleNav.slice(0, 4).map((item) => (
+            {mobileNav.map((item) => (
               <NavLink key={item.to} to={item.to} end={item.exact}>
                 <Icon name={item.icon} />
                 <span>{item.label}</span>

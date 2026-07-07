@@ -89,7 +89,7 @@ export default function RegisterPage() {
           <p>Phone-only registration. No email required.</p>
         </div>
         <Link to="/auth/login" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px' }}>
-          Already have an account
+          Log in instead →
         </Link>
       </section>
 

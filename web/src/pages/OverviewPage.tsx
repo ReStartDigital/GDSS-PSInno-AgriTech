@@ -5,13 +5,8 @@ import { useMyListings } from '../hooks/useListings'
 import type { Order, Listing } from '../types/api'
 import { Icon } from '../components/Icon'
 import { Spinner, StatusBadge } from '../components/ui/Feedback'
+import { MARKET_PULSE } from '../lib/produceUtils'
 
-const MARKET_PULSE = [
-  { crop: 'Tomatoes', price: 'GH₵ 4.50/kg', change: '+8%', accent: '#DC2626', tint: 'rgba(220,38,38,0.08)' },
-  { crop: 'Yam',      price: 'GH₵ 15/kg',   change: '+3%', accent: '#B45309', tint: 'rgba(180,83,9,0.08)' },
-  { crop: 'Pepper',   price: 'GH₵ 6.00/kg', change: '-2%', accent: '#EF4444', tint: 'rgba(239,68,68,0.08)' },
-  { crop: 'Onions',   price: 'GH₵ 3.50/kg', change: '+5%', accent: '#D97706', tint: 'rgba(217,119,6,0.08)' },
-]
 
 function getGreeting() {
   const h = new Date().getHours()

@@ -50,12 +50,23 @@ export default function LoginPage() {
 
         <div className="section-card">
           <div className="section-heading">
-            <div><p className="eyebrow">New here?</p><h3>Register in 3 steps.</h3></div>
+            <div><p className="eyebrow">Platform</p><h3>How VegeLink works.</h3></div>
           </div>
-          <p>Phone number, OTP verification, then set a PIN. No email needed.</p>
+          <div className="workflow-list">
+            {[
+              { n: '01', t: 'Register & verify', d: 'Phone number + OTP. No email required.' },
+              { n: '02', t: 'Browse or list produce', d: 'Live prices, GPS-matched farmers, and real-time stock.' },
+              { n: '03', t: 'Pay via MoMo', d: 'MTN, Telecel, AirtelTigo — instant mobile money settlement.' },
+            ].map((s) => (
+              <div className="workflow-step" key={s.n}>
+                <div className="step-index">{s.n}</div>
+                <div><h4 style={{ marginBottom: 2 }}>{s.t}</h4><p style={{ margin: 0 }}>{s.d}</p></div>
+              </div>
+            ))}
+          </div>
           <div style={{ marginTop: 20 }}>
-            <Link to="/auth/register" className="primary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px' }}>
-              Get started
+            <Link to="/auth/register" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 18px', fontSize: '0.9rem' }}>
+              Create account →
             </Link>
           </div>
         </div>

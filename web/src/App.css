@@ -13,6 +13,13 @@
   grid-template-columns: 1fr;
 }
 
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
 .sidebar {
   position: sticky;
   top: 0;
@@ -119,6 +126,24 @@
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.04);
   transition: transform 180ms ease, background-color 180ms ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-nav-icon {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.sidebar-nav-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .sidebar-nav a:hover,
@@ -356,9 +381,9 @@
 .hero-card,
 .section-card,
 .stat-card {
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 6px -1px rgba(38, 65, 35, 0.1);
+  box-shadow: 0 4px 8px -1px rgba(38, 65, 35, 0.08);
 }
 
 .hero-card,
@@ -476,6 +501,7 @@
 }
 
 .stats-grid {
+  display: flex;
   gap: 16px;
   flex-wrap: wrap;
 }
@@ -948,9 +974,16 @@
     align-items: center;
   }
   
-  .topbar-brand {
+  .topbar-brand,
+  .topbar-title {
     grid-area: brand;
     align-self: center;
+  }
+  
+  .topbar-title h2 {
+    font-size: 1.1rem;
+    color: #f8faf5;
+    margin: 0;
   }
   
   .topbar-actions {
@@ -964,11 +997,9 @@
     white-space: nowrap;
     padding-bottom: 6px;
     width: 100%;
-    scrollbar-width: none; /* Firefox */
-  }
-  
-  .topbar-nav::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
+    /* Show a subtle scroll shadow hint */
+    -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    mask-image: linear-gradient(to right, black 80%, transparent 100%);
   }
   
   .topbar-nav-link {
@@ -1037,10 +1068,10 @@
   gap: 32px;
   align-items: stretch;
   padding: 36px;
-  border-radius: 12px;
+  border-radius: 16px;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 6px -1px rgba(38, 65, 35, 0.1);
+  box-shadow: 0 4px 8px -1px rgba(38, 65, 35, 0.08);
   overflow: hidden;
 }
 
@@ -1154,7 +1185,7 @@
 
 .role-card {
   padding: 20px;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
@@ -1369,11 +1400,15 @@
 }
 
 .quick-action-label {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: rgba(214, 255, 205, 0.85);
   text-align: center;
   letter-spacing: 0.02em;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── Market Pulse ─────────────────────────────────────────────────────────── */
@@ -1649,13 +1684,13 @@
   background: #ffffff;
   border: 1px solid #e5e7eb;
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(38, 65, 35, 0.04);
+  box-shadow: 0 4px 8px -1px rgba(38, 65, 35, 0.08);
   transition: transform 150ms ease, box-shadow 150ms ease;
 }
 
 .mp-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(38, 65, 35, 0.08);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(38, 65, 35, 0.1);
 }
 
 .mp-card-visual {
@@ -1837,4 +1872,35 @@
   }
 }
 
+/* ── Light-mode search bar variant (for white card backgrounds) ───────────── */
 
+.mp-search-icon--light {
+  color: #6b7280;
+}
+
+.mp-search--light {
+  background: #f9fafb;
+  border-color: rgba(38, 65, 35, 0.15);
+  color: #1f2937;
+}
+
+.mp-search--light::placeholder {
+  color: #9ca3af;
+}
+
+.mp-search--light:focus {
+  background: #ffffff;
+  border-color: #264123;
+  box-shadow: 0 0 0 3px rgba(38, 65, 35, 0.08);
+  color: #1f2937;
+}
+
+/* ── Dashboard panel consistent shadow ────────────────────────────────────── */
+
+.dashboard-panel {
+  padding: 20px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 8px -1px rgba(38, 65, 35, 0.06);
+}
