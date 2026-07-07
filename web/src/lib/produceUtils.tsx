@@ -104,7 +104,24 @@ export function OrderModal({ listing, onClose }: { listing: Listing; onClose: ()
           <h3 style={{ margin: '2px 0 0', color: '#264123', fontFamily: 'Poppins, sans-serif', fontSize: '1.15rem', fontWeight: 700 }}>{listing.vegetable_type}</h3>
           <p style={{ margin: '2px 0 0', color: cfg.accent, fontWeight: 800, fontSize: '0.95rem' }}>GH₵ {listing.price_per_kg_ghs}/kg</p>
         </div>
-        <button type="button" onClick={onClose} style={{ background: '#f3f4f6', border: 'none', borderRadius: 12, width: 36, height: 36, cursor: 'pointer', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '1.6rem',
+            cursor: 'pointer',
+            color: '#9ca3af',
+            lineHeight: 1,
+            padding: '4px 8px',
+            transition: 'color 150ms ease',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#264123')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#9ca3af')}
+        >
+          ×
+        </button>
       </div>
 
       <div style={{ padding: '20px' }}>

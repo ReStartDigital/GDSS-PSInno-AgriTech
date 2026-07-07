@@ -173,7 +173,24 @@ function RegisterClientForm({ onClose }: { onClose: () => void }) {
     <section className="section-card accent-card">
       <div className="section-heading">
         <div><p className="eyebrow">Onboard Farmer</p><h3>Register a new client.</h3></div>
-        <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', color: '#f8faf5', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'rgba(248, 250, 245, 0.65)',
+            fontSize: '1.6rem',
+            cursor: 'pointer',
+            lineHeight: 1,
+            padding: '4px 8px',
+            transition: 'color 150ms ease',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#f8faf5')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(248, 250, 245, 0.65)')}
+        >
+          ×
+        </button>
       </div>
       <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'grid', gap: 14 }}>
         <div className="form-grid">
