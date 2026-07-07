@@ -255,22 +255,26 @@
 .topbar-nav {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .topbar-nav-link {
   text-decoration: none;
-  color: rgba(248, 250, 245, 0.75);
+  color: rgba(248, 250, 245, 0.9);
   font-weight: 600;
-  font-size: 0.88rem;
-  padding: 8px 12px;
-  border-radius: 8px;
-  transition: all 180ms ease;
+  font-size: 0.84rem;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
 }
 
 .topbar-nav-link:hover {
+  transform: translateY(-1px);
   color: #d6ffcd;
-  background: rgba(214, 255, 205, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(214, 255, 205, 0.3);
 }
 
 .topbar-actions .primary-button {
