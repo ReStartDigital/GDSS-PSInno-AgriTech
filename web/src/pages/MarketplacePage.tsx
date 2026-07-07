@@ -11,7 +11,6 @@ import { Icon } from '../components/Icon'
 import { Spinner, ErrorAlert, EmptyState } from '../components/ui/Feedback'
 import { Field } from '../components/ui/Field'
 import { Modal } from '../components/ui/Modal'
-import { ModalHeader } from '../components/ui/ModalHeader'
 import { FormActions } from '../components/ui/FormActions'
 
 // ── Crop visual config ────────────────────────────────────────────────────────

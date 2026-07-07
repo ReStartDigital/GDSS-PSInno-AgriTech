@@ -3,7 +3,6 @@ import { useLogout } from '../hooks/useAuth'
 import { useMyOrders } from '../hooks/useOrders'
 import { Icon } from '../components/Icon'
 import { Link } from 'react-router-dom'
-import { Spinner } from '../components/ui/Feedback'
 
 function getInitials(fullName?: string, phone?: string): string {
   if (fullName && fullName.trim()) {
