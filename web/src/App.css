@@ -993,18 +993,14 @@
   .topbar {
     margin: -16px -16px 20px -16px;
     padding: 16px;
-    display: grid;
-    grid-template-areas:
-      "brand actions"
-      "nav nav";
-    grid-template-columns: 1fr auto;
-    gap: 12px;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
+    gap: 16px;
   }
   
   .topbar-brand,
   .topbar-title {
-    grid-area: brand;
     align-self: center;
   }
   
@@ -1015,7 +1011,6 @@
   }
   
   .topbar-actions {
-    grid-area: actions;
     align-self: center;
     display: flex;
     gap: 6px;
@@ -1033,15 +1028,15 @@
     }
   }
   
-  .topbar-nav {
-    grid-area: nav;
-    overflow-x: auto;
-    white-space: nowrap;
-    padding-bottom: 6px;
-    width: 100%;
-    /* Show a subtle scroll shadow hint */
-    -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
-    mask-image: linear-gradient(to right, black 80%, transparent 100%);
+  /* Hide guest links & topbar buttons on mobile */
+  .guest-shell .topbar-nav,
+  .guest-shell .topbar-actions {
+    display: none !important;
+  }
+  
+  /* Show hamburger button for guest on mobile */
+  .guest-shell .topbar-hamburger {
+    display: flex !important;
   }
   
   .topbar-nav-link {
@@ -1945,4 +1940,98 @@
   background: #ffffff;
   border: 1px solid #e5e7eb;
   box-shadow: 0 4px 8px -1px rgba(38, 65, 35, 0.06);
+}
+
+/* ── Guest Hamburger Toggle button ───────────────────────────────────────── */
+.topbar-hamburger {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #f8faf5;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 150ms ease;
+}
+
+.topbar-hamburger svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.topbar-hamburger:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Mobile Dropdown Menu Container ──────────────────────────────────────── */
+.topbar-mobile-menu {
+  display: flex;
+  background: #264123;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px 20px 24px 20px;
+  margin: -20px -28px 20px -28px;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  animation: fadeSlideDown 200ms ease-out forwards;
+}
+
+@media (max-width: 760px) {
+  .topbar-mobile-menu {
+    margin: -20px -16px 20px -16px;
+  }
+}
+
+/* Mobile menu links */
+.mobile-menu-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-menu-link {
+  color: rgba(248, 250, 245, 0.85);
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 10px;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.mobile-menu-link.active,
+.mobile-menu-link:hover {
+  color: #d6ffcd;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Mobile menu action buttons stack */
+.mobile-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mobile-menu-btn {
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+}
+
+.mobile-menu-actions .secondary-button {
+  color: #f8faf5;
+  border-color: rgba(248, 250, 245, 0.3);
+}
+
+.mobile-menu-actions .primary-button {
+  background: #d6ffcd;
+  color: #264123;
+  font-weight: 600;
 }

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth.store'
 import { Icon } from '../Icon'
@@ -109,7 +110,11 @@ const ROLE_ICON: Record<string, IconName> = {
 export function Layout({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
   const role = user?.role
-  const location = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname])
 
   const roleNav = getRoleNav(role)
 
@@ -224,7 +229,36 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </Link>
             )}
           </div>
+
+          {/* Hamburger toggle button (visible only on mobile for guest view) */}
+          {!user && (
+            <button
+              type="button"
+              className="topbar-hamburger"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-expanded={menuOpen}
+              aria-label="Toggle navigation menu"
+            >
+              <Icon name={menuOpen ? 'close' : 'menu'} />
+            </button>
+          )}
         </header>
+
+        {/* Mobile Dropdown menu (guest only, when open) */}
+        {!user && menuOpen && (
+          <div className="topbar-mobile-menu">
+            <nav className="mobile-menu-nav">
+              <NavLink to="/" end className={({ isActive }) => `mobile-menu-link ${isActive ? 'active' : ''}`}>Home</NavLink>
+              <NavLink to="/marketplace" className={({ isActive }) => `mobile-menu-link ${isActive ? 'active' : ''}`}>Marketplace</NavLink>
+              <NavLink to="/how-it-works" className={({ isActive }) => `mobile-menu-link ${isActive ? 'active' : ''}`}>How it Works</NavLink>
+              <NavLink to="/about" className={({ isActive }) => `mobile-menu-link ${isActive ? 'active' : ''}`}>About</NavLink>
+            </nav>
+            <div className="mobile-menu-actions">
+              <Link to="/auth/login" className="secondary-button mobile-menu-btn">Log In</Link>
+              <Link to="/auth/register" className="primary-button mobile-menu-btn">Register</Link>
+            </div>
+          </div>
+        )}
 
         {children}
 
