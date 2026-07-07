@@ -81,12 +81,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main className="content" id="main">
         <header className="topbar">
           {!user ? (
-            <div className="topbar-brand" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Link to="/" className="topbar-brand" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
               <div className="brand-mark" style={{ width: 36, height: 36, borderRadius: 8, background: '#264123', color: '#d6ffcd', display: 'grid', placeItems: 'center' }} aria-hidden="true">
                 <Icon name="leaf" />
               </div>
-              <span style={{ fontWeight: 800, color: '#264123', fontSize: '1.25rem', fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>VegeLink</span>
-            </div>
+              <span style={{ fontWeight: 800, color: '#f8faf5', fontSize: '1.25rem', fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>VegeLink</span>
+            </Link>
           ) : (
             <div>
               <h2>{getPageTitle(location.pathname)}</h2>

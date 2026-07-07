@@ -937,9 +937,40 @@
   .topbar {
     margin: -16px -16px 20px -16px;
     padding: 16px;
-    align-items: stretch;
-    flex-direction: column;
+    display: grid;
+    grid-template-areas:
+      "brand actions"
+      "nav nav";
+    grid-template-columns: 1fr auto;
     gap: 12px;
+    align-items: center;
+  }
+  
+  .topbar-brand {
+    grid-area: brand;
+    align-self: center;
+  }
+  
+  .topbar-actions {
+    grid-area: actions;
+    align-self: center;
+  }
+  
+  .topbar-nav {
+    grid-area: nav;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 6px;
+    width: 100%;
+    scrollbar-width: none; /* Firefox */
+  }
+  
+  .topbar-nav::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+  
+  .topbar-nav-link {
+    flex-shrink: 0;
   }
 
   .hero-card {
