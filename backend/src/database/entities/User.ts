@@ -50,6 +50,15 @@ export class User {
   @Column({ type: "varchar", length: 50, default: "en" })
   language: string;
 
+  // Inside your User entity file
+  @Column({
+    name: "order_mode",
+    type: "enum",
+    enum: ["auto", "agent", "sms_reply"],
+    default: "auto",
+  })
+  orderMode!: "auto" | "agent" | "sms_reply";
+
   // 🌍 PostGIS Location definition mapping
   @Column({
     type: "geometry",

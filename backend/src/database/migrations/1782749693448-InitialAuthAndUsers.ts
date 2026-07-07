@@ -18,7 +18,6 @@ export class InitialAuthAndUsers1782749693448 implements MigrationInterface {
 
         -- Global Application Context Enums
         CREATE TYPE user_role AS ENUM ('farmer', 'buyer', 'transporter', 'agent', 'admin');
-        CREATE TYPE order_status AS ENUM ('pending', 'negotiating', 'confirmed', 'packed', 'in_transit', 'delivered', 'cancelled');
         CREATE TYPE fulfillment_mode AS ENUM ('pickup', 'delivery');
         CREATE TYPE payment_status AS ENUM ('pending', 'success', 'failed', 'refunded');
         CREATE TYPE payment_channel AS ENUM ('mobile_money', 'card');
@@ -138,7 +137,6 @@ export class InitialAuthAndUsers1782749693448 implements MigrationInterface {
         DROP TYPE IF EXISTS payment_channel;
         DROP TYPE IF EXISTS payment_status;
         DROP TYPE IF EXISTS fulfillment_mode;
-        DROP TYPE IF EXISTS order_status;
         DROP TYPE IF EXISTS listing_status;
         DROP TYPE IF EXISTS user_role;
     `);

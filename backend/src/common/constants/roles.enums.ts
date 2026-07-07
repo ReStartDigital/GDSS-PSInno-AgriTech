@@ -21,11 +21,23 @@ export enum ListingStatus {
 }
 
 export enum OrderStatus {
-  PENDING_PAYMENT = "pending_payment",
-  PAID = "paid",
+  PENDING = "pending",
+  PENDING_AGENT_CONFIRMATION = "pending_agent_confirmation",
+  PENDING_SMS_CONFIRMATION = "pending_sms_confirmation",
+  NEGOTIATING = "negotiating",
+  CONFIRMED = "confirmed",
+  PACKED = "packed",
   IN_TRANSIT = "in_transit",
-  COMPLETED = "completed",
+  DELIVERED = "delivered",
+  COLLECTED = "collected", // pickup fulfilment
   CANCELLED = "cancelled",
+  CANCELLED_EXPIRED = "cancelled_expired",
+  FARMER_DISPUTED = "farmer_disputed",
+}
+
+export enum FulfilmentMode {
+  DELIVERY = "delivery",
+  PICKUP = "pickup",
 }
 
 export enum TransactionType {

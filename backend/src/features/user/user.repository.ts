@@ -83,6 +83,8 @@ export class UserRepository {
     role: UserRole;
     email: string;
     location: { type: "Point"; coordinates: [number, number] } | null;
+    region?: string | null;
+    language?: string;
   }): Promise<User> {
     const entity = this.user.create({
       phone: params.phone,
@@ -92,6 +94,8 @@ export class UserRepository {
       role: params.role,
       email: params.email,
       location: params.location ?? null,
+      region: params.region ?? null,
+      language: params.language ?? "en",
       phoneVerifiedAt: null,
       pinHash: null,
       isActive: false,
@@ -110,6 +114,8 @@ export class UserRepository {
       email?: string;
       profilePhotoUrl?: string;
       location?: { type: "Point"; coordinates: [number, number] } | null;
+      region?: string | null;
+      language?: string;
     },
   ): Promise<User> {
     await this.user.update(id, {
@@ -122,6 +128,8 @@ export class UserRepository {
       }),
       ...(params.email && { email: params.email }),
       ...(params.location !== undefined && { location: params.location }),
+      ...(params.region !== undefined && { region: params.region }),
+      ...(params.language && { language: params.language }),
     });
 
     const updatedUser = await this.findById(id);
@@ -297,6 +305,8 @@ export class UserRepository {
         "u.phone",
         "u.role",
         "u.profilePhotoUrl",
+        "u.region",
+        "u.language",
         "u.isActive",
         "u.createdAt",
       ])
@@ -311,6 +321,19 @@ export class UserRepository {
   ): Promise<AgentAssignment | null> {
     return this.assignments.findOne({
       where: { agentId, userId, unassignedAt: IsNull() },
+    });
+  }
+  /**
+   * Locates an active user record matching an incoming mobile signature string
+   */
+  async findByMobile(mobile: string): Promise<User | null> {
+    // If your DB stores numbers locally as "024..." or "+23324...", you may need
+    // a normalization utility here to match Arkesel's "23324..." formatting.
+    return await this.user.findOne({
+      where: {
+        phone: mobile,
+        isActive: true,
+      },
     });
   }
 }
