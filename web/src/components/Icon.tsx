@@ -12,6 +12,8 @@ type IconName =
   | 'map'
   | 'pulse'
   | 'home'
+  | 'search'
+  | 'check'
 
 const paths: Record<IconName, string> = {
   leaf: 'M6 16c7-1 12-6 14-14-8 0-14 6-14 14 0 5 3 8 8 8 8 0 14-6 14-14 0-5-3-8-8-8-3 0-6 1-8 4',
@@ -29,6 +31,8 @@ const paths: Record<IconName, string> = {
   map: 'M4 6l5-2 6 2 5-2v14l-5 2-6-2-5 2V6zm5-2v14m6-12v14',
   pulse: 'M3 12h4l3-7 4 14 3-7h4',
   home: 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z',
+  search: 'M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z',
+  check: 'M20 6L9 17l-5-5',
 }
 
 export function Icon({ name }: { name: IconName }) {
