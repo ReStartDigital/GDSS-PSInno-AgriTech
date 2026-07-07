@@ -1237,11 +1237,7 @@
 .role-card-icon svg {
   width: 20px;
   height: 20px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  fill: currentColor;
 }
 
 .role-card-list {
@@ -2109,4 +2105,78 @@
 .form-textarea.dark:focus {
   border-color: #d6ffcd;
   box-shadow: 0 0 0 3px rgba(214, 255, 205, 0.15);
+}
+
+/* ── Standardized Form Fields & Inputs ────────────────────────────────────── */
+.form-field-label {
+  color: #374151;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.form-field-label.dark {
+  color: rgba(248, 250, 245, 0.86);
+}
+
+.form-input {
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(38, 65, 35, 0.18);
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 0.95rem;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.form-input:focus {
+  border-color: #264123;
+  box-shadow: 0 0 0 3px rgba(38, 65, 35, 0.08);
+}
+
+.form-input.error {
+  border-color: #ef4444;
+}
+
+.form-input.error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+}
+
+/* Dark variant input */
+.form-input.dark {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f8faf5;
+}
+
+.form-input.dark:focus {
+  border-color: #d6ffcd;
+  box-shadow: 0 0 0 3px rgba(214, 255, 205, 0.15);
+}
+
+.form-input.dark.error {
+  border-color: #fca5a5;
+}
+
+.form-input.dark.error:focus {
+  border-color: #fca5a5;
+  box-shadow: 0 0 0 3px rgba(252, 165, 165, 0.2);
+}
+
+.form-field-error {
+  color: #ef4444;
+  font-size: 0.78rem;
+  margin-top: 4px;
+  display: block;
+}
+
+.form-field-error.dark {
+  color: #fca5a5;
 }

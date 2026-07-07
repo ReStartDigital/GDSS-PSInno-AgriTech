@@ -84,10 +84,11 @@ export function FreshnessBar({ freshness }: { freshness: 'High' | 'Medium' | 'Lo
 export function OrderModal({ listing, onClose }: { listing: Listing; onClose: () => void }) {
   const cfg = getCropConfig(listing.vegetable_type)
   const { mutate, isPending, error, isSuccess } = usePlaceOrder(listing.id)
-  const { register, handleSubmit, formState: { errors } } = useForm<PlaceOrderFormData, unknown, PlaceOrderFormData>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<PlaceOrderFormData, unknown, PlaceOrderFormData>({
     resolver: zodResolver(placeOrderSchema) as never,
     defaultValues: { mode: 'delivery' },
   })
+  const currentMode = watch('mode')
   const onSubmit = (data: PlaceOrderFormData) => mutate(data, { onSuccess: onClose })
   const apiError = getApiErrorMessage(error)
 
@@ -121,12 +122,29 @@ export function OrderModal({ listing, onClose }: { listing: Listing; onClose: ()
             <div>
               <p style={{ margin: '0 0 10px', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#374151', fontWeight: 600 }}>Fulfillment</p>
               <div style={{ display: 'flex', gap: 10 }}>
-                {(['delivery', 'pickup'] as const).map((m) => (
-                  <label key={m} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', border: '1.5px solid #e5e7eb', borderRadius: 12, cursor: 'pointer', background: '#f9fafb' }}>
-                    <input type="radio" value={m} {...register('mode')} style={{ accentColor: cfg.accent }} />
-                    <span style={{ fontWeight: 600, fontSize: '0.9rem', textTransform: 'capitalize', color: '#374151' }}>{m}</span>
-                  </label>
-                ))}
+                {(['delivery', 'pickup'] as const).map((m) => {
+                  const isSelected = currentMode === m
+                  return (
+                    <label
+                      key={m}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '12px 14px',
+                        border: `2px solid ${isSelected ? cfg.accent : '#e5e7eb'}`,
+                        borderRadius: 12,
+                        cursor: 'pointer',
+                        background: isSelected ? cfg.tint : '#ffffff',
+                        transition: 'border-color 150ms ease, background-color 150ms ease',
+                      }}
+                    >
+                      <input type="radio" value={m} {...register('mode')} style={{ accentColor: cfg.accent }} />
+                      <span style={{ fontWeight: 600, fontSize: '0.9rem', textTransform: 'capitalize', color: '#374151' }}>{m}</span>
+                    </label>
+                  )
+                })}
               </div>
             </div>
 
