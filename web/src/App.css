@@ -951,15 +951,7 @@
 }
 
 @media (max-width: 1120px) {
-  .app-shell {
-    grid-template-columns: 1fr;
-  }
 
-  .sidebar {
-    position: static;
-    height: auto;
-    border-right: none;
-  }
 
   .bottom-grid {
     grid-template-columns: 1fr;
@@ -976,12 +968,16 @@
 }
 
 @media (max-width: 760px) {
-  .content {
-    padding: 16px 16px 96px;
+  .app-shell {
+    grid-template-columns: 1fr;
   }
 
   .sidebar {
-    padding: 20px 16px;
+    display: none !important;
+  }
+
+  .content {
+    padding: 16px 16px 96px;
   }
 
   .hero-card,
