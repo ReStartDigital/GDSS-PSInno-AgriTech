@@ -52,3 +52,11 @@ export enum TransactionStatus {
   SUCCESSFUL = "successful",
   FAILED = "failed",
 }
+
+export enum TransportStatus {
+  OPEN = "open",
+  ACCEPTED = "accepted",
+  IN_TRANSIT = "in_transit",
+  DELIVERED = "delivered",
+  CANCELLED = "cancelled",
+}

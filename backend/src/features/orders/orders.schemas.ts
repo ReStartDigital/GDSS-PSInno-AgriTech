@@ -30,11 +30,13 @@ export const createOrderSchema = z
 
     // Optional metadata tracking hook
     packaging_type_id: z.string().uuid().optional().nullable(),
+    packaging_type_name: z.string().trim().max(255).optional(),
+    special_handling: z.string().trim().max(1000).optional(),
   })
   .refine(
     (data) => {
       if (data.mode === FulfilmentMode.DELIVERY) {
-        return !!data.delivery_address;
+        return !!data.delivery_address && !!data.delivery_location;
       }
       return true;
     },

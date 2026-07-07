@@ -95,4 +95,7 @@ export enum ErrorCode {
 
   // ── Ratings ────────────────────────────────────────────────────────────────
   RATING_ALREADY_EXISTS = "RATING_ALREADY_EXISTS",
+
+  // ── Transport Request ────────────────────────────────────────────────────────────────
+  TRANSPORT_ALREADY_EXISTS = "TRANSPORT_ALREADY_EXISTS",
 }

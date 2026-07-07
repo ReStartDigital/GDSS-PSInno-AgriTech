@@ -16,7 +16,12 @@ const ratingsRouter = Router();
 const ordersRepo = new OrdersRepository(AppDataSource);
 const listingsRepo = new ListingsRepository();
 const usersRepo = new UserRepository();
-const ordersService = new OrdersService(ordersRepo, listingsRepo, usersRepo);
+const ordersService = new OrdersService(
+  ordersRepo,
+  listingsRepo,
+  usersRepo,
+  AppDataSource,
+);
 const ratingsRepo = new RatingsRepository();
 
 // Reuses your existing ordersService context
