@@ -67,15 +67,29 @@ function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
       <div className="mp-card-visual" style={{ background: cfg.tint }}>
         <span className="mp-card-emoji">{cfg.emoji}</span>
 
-        {/* Status badge */}
-        <StatusBadge status={order.status} />
+        {/* Status badge — top left */}
+        <div style={{ position: 'absolute', top: 12, left: 12 }}>
+          <StatusBadge status={order.status} />
+        </div>
 
         {/* Mode badge — top right */}
-        <div className="mp-agriscore" style={{ background: 'rgba(255,255,255,0.9)', borderRadius: 8, padding: '2px 8px', display: 'flex', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.65rem', fontWeight: 800, color: cfg.accent, whiteSpace: 'nowrap', textTransform: 'capitalize' }}>
-            {order.mode}
-          </span>
-        </div>
+        {order.mode && (
+          <div style={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            background: 'rgba(255,255,255,0.9)',
+            borderRadius: 8,
+            padding: '4px 8px',
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+          }}>
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: cfg.accent, whiteSpace: 'nowrap', textTransform: 'capitalize' }}>
+              {order.mode}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Body */}

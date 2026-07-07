@@ -866,6 +866,7 @@
   min-width: 72px;
   height: 72px;
   font-size: 1.1rem;
+  padding: 0;
 }
 
 .profile-summary {
@@ -1575,9 +1576,10 @@
     display: flex;
     overflow-x: auto;
     white-space: nowrap;
-    padding-bottom: 8px;
-    width: 100%;
-    gap: 12px;
+    padding: 0 16px 8px 16px;
+    margin: 0 -16px;
+    width: calc(100% + 32px);
+    gap: 10px;
     scrollbar-width: none; /* Firefox */
   }
 
@@ -1587,7 +1589,10 @@
 
   .pulse-card {
     flex-shrink: 0;
-    width: 130px;
+    width: auto;
+    min-width: 160px;
+    padding: 10px 14px;
+    gap: 8px;
     margin: 0;
   }
 
@@ -1895,7 +1900,7 @@
   }
 }
 
-@media (max-width: 400px) {
+@media (max-width: 580px) {
   .mp-card-grid {
     grid-template-columns: 1fr;
   }
