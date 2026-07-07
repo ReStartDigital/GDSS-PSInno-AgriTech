@@ -42,10 +42,6 @@ export default function LoginPage() {
               {isPending ? 'Logging in…' : 'Log In'}
             </button>
           </form>
-          <div style={{ marginTop: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <span className="status-pill">HttpOnly refresh cookie</span>
-            <span className="status-pill">Role-gated navigation</span>
-          </div>
         </div>
 
         <div className="section-card">
