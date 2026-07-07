@@ -48,15 +48,15 @@ export default function DetailsScreen() {
       return;
     }
 
-    const user: AuthUser = {
-      id: `demo-${safeRole}`,
-      phone: safePhone,
-      role: safeRole,
-      fullName: `${first.trim()} ${last.trim()}`,
-    };
-
-    setAuth(user, "demo-token");
-    router.replace("/(auth)/success");
+    router.push({
+      pathname: "/(auth)/pin",
+      params: {
+        firstName: first.trim(),
+        lastName: last.trim(),
+        phone: safePhone,
+        role: safeRole,
+      },
+    });
   };
 
   return (
@@ -79,8 +79,9 @@ export default function DetailsScreen() {
               <ProgressStep active />
               <ProgressStep active />
               <ProgressStep active />
+              <ProgressStep />
             </View>
-            <Text className="text-xs font-black text-gray-400">Step 3 of 3</Text>
+            <Text className="text-xs font-black text-gray-400">Step 3 of 4</Text>
           </View>
         </View>
 
@@ -154,7 +155,7 @@ export default function DetailsScreen() {
                     : vlClassNames.mutedButtonText
                 }
               >
-                Create Account
+                Continue
               </Text>
               <NavArrowRight
                 color={canCreate ? "#FFFFFF" : "#9CA3AF"}

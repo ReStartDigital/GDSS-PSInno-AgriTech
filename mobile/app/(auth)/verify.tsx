@@ -93,8 +93,9 @@ export default function VerifyScreen() {
               <ProgressStep active />
               <ProgressStep active />
               <ProgressStep />
+              <ProgressStep />
             </View>
-            <Text className="text-xs font-black text-gray-400">Step 2 of 3</Text>
+            <Text className="text-xs font-black text-gray-400">Step 2 of 4</Text>
           </View>
         </View>
 

@@ -82,8 +82,9 @@ export default function PhoneScreen() {
                 <ProgressStep active />
                 <ProgressStep />
                 <ProgressStep />
+                <ProgressStep />
               </View>
-              <Text className="text-xs font-black text-gray-400">Step 1 of 3</Text>
+              <Text className="text-xs font-black text-gray-400">Step 1 of 4</Text>
             </View>
           </View>
 

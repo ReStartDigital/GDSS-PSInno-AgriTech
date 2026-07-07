@@ -3,7 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
 import { vlClassNames, vlStyles } from "@/lib/design-system";
-import { Farm, Shop, Truck, Check, NavArrowRight } from "iconoir-react-native";
+import { Farm, Shop, Truck, User, Check, NavArrowRight } from "iconoir-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type RoleColors = {
@@ -13,7 +13,7 @@ type RoleColors = {
 };
 
 type RoleOption = {
-  id: Extract<UserRole, "farmer" | "buyer" | "transporter">;
+  id: Extract<UserRole, "farmer" | "buyer" | "transporter" | "agent">;
   label: string;
   localLabel: string;
   description: string;
@@ -45,6 +45,14 @@ const roles: RoleOption[] = [
     description: "I deliver produce",
     Icon: Truck,
     colors: { border: "#1D4ED8", bg: "#EFF6FF", iconBg: "#1D4ED8" },
+  },
+  {
+    id: "agent",
+    label: "Agent",
+    localLabel: "Nnanibea",
+    description: "I represent farmers",
+    Icon: User,
+    colors: { border: "#7C3AED", bg: "#F5F3FF", iconBg: "#7C3AED" },
   },
 ];
 
