@@ -74,14 +74,16 @@ export const createListingSchema = z
     harvest_date: z.string().min(1, 'Harvest date is required'),
     images: z.array(z.string().url('Invalid image URL')).default([]),
     location: z.object({
-      lat: z.number({ required_error: 'Latitude is required' }),
-      lng: z.number({ required_error: 'Longitude is required' }),
+      lat: z.number({ message: 'Latitude is required' }),
+      lng: z.number({ message: 'Longitude is required' }),
     }),
     supports_delivery: z.boolean().default(true),
     supports_pickup: z.boolean().default(true),
     recommended_packaging_id: z.string().uuid().optional(),
     // Agent-only: supply when creating on behalf of a farmer
     farmer_id: z.string().uuid().optional(),
+    unit_of_measure: z.string().optional(),
+    description: z.string().optional(),
   })
   .refine((d) => d.supports_delivery || d.supports_pickup, {
     message: 'At least one fulfilment mode must be selected',

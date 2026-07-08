@@ -19,6 +19,9 @@ export interface Listing {
   recommendedPackagingId?: string | null
   createdAt: string
   updatedAt: string
+  agriScore?: number
+  isUrgent?: boolean
+  freshness?: 'High' | 'Medium' | 'Low'
   farmer?: {
     id: string
     firstName: string

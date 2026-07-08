@@ -1,5 +1,5 @@
 import { useJobs, useAcceptJob, useUpdateJobStatus, type Job } from '../hooks/useJobs'
-import { Spinner, ErrorAlert, EmptyState, StatusBadge } from '../components/ui/Feedback'
+import { Spinner, ErrorAlert, EmptyState } from '../components/ui/Feedback'
 import { PageHero } from '../components/ui/PageHero'
 import { getCropConfig } from '../lib/produceUtils'
 
