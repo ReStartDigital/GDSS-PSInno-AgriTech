@@ -8,22 +8,10 @@
       }
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/assets/(.*)",
-      "dest": "web/dist/assets/$1"
-    },
-    {
-      "src": "/favicon.svg",
-      "dest": "web/dist/favicon.svg"
-    },
-    {
-      "src": "/icons.svg",
-      "dest": "web/dist/icons.svg"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "web/dist/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
