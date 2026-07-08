@@ -12,6 +12,7 @@ import { Field } from '../components/ui/Field'
 import { PageHero } from '../components/ui/PageHero'
 import { FormActions } from '../components/ui/FormActions'
 import { getCropConfig } from '../lib/produceUtils'
+import { Icon } from '../components/Icon'
 
 const UNIT_OPTIONS = ['kg', 'crate', 'basket', 'bunch', 'sack', 'head'] as const
 
@@ -231,22 +232,55 @@ function CreateListingForm({
   const { mutate, isPending, error } = useCreateListing()
   const { register, handleSubmit, watch, setValue, formState: { errors }, reset } = useForm<CreateListingFormData, unknown, CreateListingFormData>({
     resolver: zodResolver(createListingSchema) as never,
-    defaultValues: { unit_of_measure: 'kg' } // Need to check if this needs to change to camelCase too
+    defaultValues: {
+      unit_of_measure: 'kg',
+      location: {
+        lat: 6.6745,
+        lng: -1.5644,
+      },
+    }
   })
   
   const [formFarmerId, setFormFarmerId] = useState(selectedFarmerId)
   const selectedUnit = watch('unit_of_measure')
 
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setUploading(true)
+    setUploadProgress(10)
+
+    // Simulate progress
+    const interval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval)
+          setUploading(false)
+          
+          const file = files[0]
+          const objectUrl = URL.createObjectURL(file)
+          setImagePreviews((p) => [...p, objectUrl])
+          
+          const currentImages = watch('images') || []
+          setValue('images', [...currentImages, 'https://images.unsplash.com/photo-1595855759920-86582396756a?w=600'], { shouldValidate: true })
+          return 100
+        }
+        return prev + 30
+      })
+    }, 150)
+  }
+
   const onSubmit = (data: CreateListingFormData) => {
     const payload = {
       ...data,
-      location: {
-        lat: 6.6745,
-        lng: -1.5644,
-      },
-      supportsDelivery: true,
-      supportsPickup: true,
-      ...(isAgent ? { farmerId: formFarmerId } : {})
+      supports_delivery: true,
+      supports_pickup: true,
+      ...(isAgent ? { farmer_id: formFarmerId } : {})
     }
     mutate(payload as any, {
       onSuccess: () => {
@@ -298,10 +332,118 @@ function CreateListingForm({
           </div>
         )}
         <div className="form-grid">
-          <Field label="Crop Type" dark placeholder="e.g. Tomatoes" error={errors.vegetableType} {...register('vegetableType')} />
-          <Field label="Quantity" dark type="number" min="1" placeholder="e.g. 200" error={errors.quantityKg} {...register('quantityKg')} />
-          <Field label="Price per unit (GH₵)" dark type="number" step="0.01" min="0.01" placeholder="e.g. 4.50" error={errors.pricePerKgGhs} {...register('pricePerKgGhs')} />
-          <Field label="Harvest Date" dark type="date" error={errors.harvestDate} {...register('harvestDate')} />
+          <Field label="Crop Type" dark placeholder="e.g. Tomatoes" error={errors.vegetable_type} {...register('vegetable_type')} />
+          <Field label="Quantity" dark type="number" min="1" placeholder="e.g. 200" error={errors.quantity_kg} {...register('quantity_kg')} />
+          <Field label="Price per unit (GH₵)" dark type="number" step="0.01" min="0.01" placeholder="e.g. 4.50" error={errors.price_per_kg_ghs} {...register('price_per_kg_ghs')} />
+          <Field label="Harvest Date" dark type="date" error={errors.harvest_date} {...register('harvest_date')} />
+        </div>
+
+        {/* GPS Coordinates & Geolocation Picker */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: 12,
+          padding: 14,
+          display: 'grid',
+          gap: 12
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: 'rgba(248, 250, 245, 0.86)', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>
+              GPS Farm Coordinates
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                      setValue('location.lat', parseFloat(position.coords.latitude.toFixed(6)))
+                      setValue('location.lng', parseFloat(position.coords.longitude.toFixed(6)))
+                    },
+                    (error) => {
+                      alert('Geolocation failed: ' + error.message)
+                    }
+                  );
+                } else {
+                  alert('Geolocation is not supported by this browser.')
+                }
+              }}
+              style={{
+                background: 'rgba(214, 255, 205, 0.25)',
+                border: '1px solid #d6ffcd',
+                borderRadius: 8,
+                color: '#d6ffcd',
+                fontSize: '0.75rem',
+                padding: '6px 12px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4
+              }}
+            >
+              <Icon name="map" /> Detect location
+            </button>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <Field label="Latitude" dark type="number" step="0.000001" error={errors.location?.lat} {...register('location.lat', { valueAsNumber: true })} />
+            <Field label="Longitude" dark type="number" step="0.000001" error={errors.location?.lng} {...register('location.lng', { valueAsNumber: true })} />
+          </div>
+        </div>
+
+        {/* Crop Photograph Uploader */}
+        <div style={{ display: 'grid', gap: 6 }}>
+          <span style={{ color: 'rgba(248,250,245,0.86)', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>
+            Crop Photographs
+          </span>
+          
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            {imagePreviews.map((url, i) => (
+              <div key={i} style={{ position: 'relative', width: 70, height: 70, borderRadius: 10, overflow: 'hidden', border: '2px dashed rgba(255,255,255,0.2)' }}>
+                <img src={url} alt="crop preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImagePreviews(p => p.filter((_, idx) => idx !== i))
+                    const current = watch('images') || []
+                    setValue('images', current.filter((_, idx) => idx !== i), { shouldValidate: true })
+                  }}
+                  style={{
+                    position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%',
+                    width: 18, height: 18, color: '#fff', fontSize: '0.7rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+
+            {uploading ? (
+              <div style={{
+                width: 70, height: 70, borderRadius: 10, background: 'rgba(255,255,255,0.05)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.1)'
+              }}>
+                <span style={{ fontSize: '0.7rem', color: '#d6ffcd', fontWeight: 600 }}>{uploadProgress}%</span>
+                <div style={{ width: '80%', height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
+                  <div style={{ width: `${uploadProgress}%`, height: '100%', background: '#d6ffcd', transition: 'width 100ms ease' }} />
+                </div>
+              </div>
+            ) : (
+              <label style={{
+                width: 70, height: 70, borderRadius: 10, border: '2px dashed rgba(255,255,255,0.3)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                background: 'rgba(255,255,255,0.05)', transition: 'border-color 150ms ease'
+              }}>
+                <span style={{ fontSize: '1.5rem', color: 'rgba(248,250,245,0.65)' }}>+</span>
+                <span style={{ fontSize: '0.65rem', color: 'rgba(248,250,245,0.5)', fontWeight: 600 }}>Upload</span>
+                <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+              </label>
+            )}
+          </div>
+          {errors.images && (
+            <span style={{ color: '#fca5a5', fontSize: '0.78rem' }}>{errors.images.message}</span>
+          )}
         </div>
 
         {/* Unit of measure */}

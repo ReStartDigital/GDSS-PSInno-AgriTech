@@ -92,6 +92,14 @@ export function OrderModal({ listing, onClose }: { listing: Listing; onClose: ()
   const onSubmit = (data: PlaceOrderFormData) => mutate(data, { onSuccess: onClose })
   const apiError = getApiErrorMessage(error)
 
+  const quantityStr = watch('quantity_kg')
+  const quantity = parseFloat(String(quantityStr || '0'))
+  const subtotal = quantity > 0 ? quantity * listing.pricePerKgGhs : 0
+  const processingFee = subtotal * 0.015
+  const deliveryDistance = 12
+  const transportCost = currentMode === 'delivery' ? deliveryDistance * 2.00 : 0
+  const totalGhs = subtotal + processingFee + transportCost
+
   return (
     <Modal onClose={onClose} maxWidth={480}>
       {/* Header */}
@@ -162,6 +170,73 @@ export function OrderModal({ listing, onClose }: { listing: Listing; onClose: ()
                     </label>
                   )
                 })}
+              </div>
+            </div>
+
+            {/* Real-time price breakdown panel */}
+            <div style={{
+              background: '#f8faf5',
+              border: '1px solid rgba(38,65,35,0.08)',
+              borderRadius: 12,
+              padding: 14,
+              display: 'grid',
+              gap: 8,
+              fontSize: '0.85rem',
+              color: '#374151'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Subtotal ({quantity || 0} kg × GH₵ {listing.pricePerKgGhs})</span>
+                <span style={{ fontWeight: 600 }}>GH₵ {subtotal.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', opacity: 0.8 }}>
+                <span>AgriSettle Split Fee (1.5%)</span>
+                <span>GH₵ {processingFee.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', opacity: 0.8 }}>
+                <span>Logistics Fee ({currentMode === 'delivery' ? `${deliveryDistance} km` : 'Pickup'})</span>
+                <span>GH₵ {transportCost.toFixed(2)}</span>
+              </div>
+              <div style={{ height: 1, background: '#e5e7eb', margin: '4px 0' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem', fontWeight: 800, color: '#264123' }}>
+                <span>Estimated Total</span>
+                <span>GH₵ {totalGhs.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Trade flow timeline */}
+            <div style={{
+              padding: 12,
+              background: 'rgba(38,65,35,0.03)',
+              borderRadius: 12,
+              border: '1px solid rgba(38,65,35,0.05)',
+            }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'rgba(38,65,35,0.6)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 10 }}>
+                Trade Settlement Sequence
+              </span>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
+                {[
+                  { title: 'Checkout', active: true },
+                  { title: 'Confirm', active: false },
+                  { title: 'Logistics', active: false },
+                  { title: 'Payout', active: false }
+                ].map((step, idx) => (
+                  <div key={idx} style={{ textAlign: 'center', flex: 1 }}>
+                    <div style={{
+                      width: 20, height: 20, borderRadius: '50%',
+                      background: step.active ? '#264123' : '#e5e7eb',
+                      color: step.active ? '#fff' : '#9ca3af',
+                      fontSize: '0.65rem', fontWeight: 700,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      margin: '0 auto 6px'
+                    }}>
+                      {idx + 1}
+                    </div>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 600, color: step.active ? '#264123' : '#9ca3af', display: 'block' }}>
+                      {step.title}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
 

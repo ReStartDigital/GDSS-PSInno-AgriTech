@@ -34,7 +34,7 @@ export function useRegisterClient() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: RegisterClientData) =>
-      usersApi.registerClient(data),
+      usersApi.registerClient({ ...data, role: 'farmer' }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['clients'] })
     },

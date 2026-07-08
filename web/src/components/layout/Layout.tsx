@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { NavLink, Link, useLocation } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth.store'
 import { Icon } from '../Icon'
 import type { IconName } from '../Icon'
@@ -60,11 +60,7 @@ function getRoleNav(role: string | undefined): NavItem[] {
   }
 }
 
-/** Guest nav shown in topbar for unauthenticated users */
-const GUEST_NAV: NavItem[] = [
-  { to: '/',            label: 'Home',       icon: 'home',     exact: true },
-  { to: '/marketplace', label: 'Marketplace',icon: 'shopping'              },
-]
+
 
 function getPageTitle(path: string, role?: string): string {
   if (path === '/') return 'Home'

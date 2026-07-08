@@ -6,8 +6,8 @@ const phone = z
   .string()
   .min(1, 'Phone number is required')
   .regex(
-    /^\+233\d{9}$/,
-    'Enter a valid Ghanaian phone number, e.g. +233244123456',
+    /^(\+?233|0)?\d{9}$/,
+    'Enter a valid Ghanaian phone number, e.g. 0244123456 or +233244123456',
   )
 
 // ── PIN: 4–6 numeric digits ───────────────────────────────────────────────────
@@ -71,14 +71,16 @@ export const createListingSchema = z
     harvestDate: z.string().min(1, 'Harvest date is required'),
     images: z.array(z.string().url('Invalid image URL')).default([]),
     location: z.object({
-      lat: z.number({ required_error: 'Latitude is required' }),
-      lng: z.number({ required_error: 'Longitude is required' }),
+      lat: z.number({ message: 'Latitude is required' }),
+      lng: z.number({ message: 'Longitude is required' }),
     }),
     supportsDelivery: z.boolean().default(true),
     supportsPickup: z.boolean().default(true),
     recommendedPackagingId: z.string().uuid().optional(),
     // Agent-only: supply when creating on behalf of a farmer
-    farmerId: z.string().uuid().optional(),
+    farmer_id: z.string().uuid().optional(),
+    unit_of_measure: z.string().optional(),
+    description: z.string().optional(),
   })
   .refine((d) => d.supportsDelivery || d.supportsPickup, {
     message: 'At least one fulfilment mode must be selected',

@@ -14,12 +14,11 @@ export interface Listing {
   location: { type: 'Point'; coordinates: [number, number] }
   supportsDelivery: boolean
   supportsPickup: boolean
-  autoConfirmUntilKg: number | null
-  autoConfirmPriceFloorGhs: number | null
-  recommendedPackagingId: string | null
-  committedKg: number
-  createdAt: string
-  updatedAt: string
+  autoConfirmUntilKg?: number | null
+  autoConfirmPriceFloorGhs?: number | null
+  recommended_packaging_id?: string | null
+  created_at: string
+  updated_at: string
   farmer?: {
     id: string
     firstName: string

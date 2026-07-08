@@ -10,6 +10,9 @@ export interface AuthUser {
   fullName?: string
   region?: string
   language?: string
+  paymentDetailsSet?: boolean
+  mobileMoneyNumber?: string | null
+  mobileMoneyNetwork?: string | null
 }
 
 interface AuthState {
