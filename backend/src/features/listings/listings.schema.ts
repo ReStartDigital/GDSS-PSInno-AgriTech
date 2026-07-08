@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export interface LocationDto {
-  lat: number;
-  lng: number;
+  latitude: number;
+  longitude: number;
 }
 
 export interface CreateListingRequest {
