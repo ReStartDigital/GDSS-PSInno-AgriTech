@@ -73,6 +73,8 @@ export const registerSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required").max(255),
   middleName: z.string().trim().max(255).optional().nullable(),
   lastName: z.string().trim().min(1, "Last name is required").max(255),
+  region: z.string().trim().max(255).default("Ashanti"),
+  language: z.string().trim().max(255).default("en"),
   role: z.nativeEnum(UserRole, {
     message: "Invalid platform group role provided.",
   }),
