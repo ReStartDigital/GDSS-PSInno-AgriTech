@@ -61,7 +61,7 @@ export class OrdersService {
         OrderStatus.PENDING,
         OrderStatus.PENDING_AGENT_CONFIRMATION,
         OrderStatus.PENDING_SMS_CONFIRMATION,
-        OrderStatus.NEGOTIATING
+        OrderStatus.NEGOTIATING,
       ];
       // Use transactional managers instead of global unsynced repositories
       const txListingsRepo = manager.getRepository(ProduceListingEntity);
@@ -88,20 +88,20 @@ export class OrdersService {
           ErrorCode.ORDER_FORBIDDEN,
         );
       }
-      
+
       // Check if an active contract already exists for this buyer/listing pair
       const existingOrder = await txOrdersRepo.findOne({
         where: {
           buyerId,
           listingId: dto.listing_id,
-          status: In(activeStatuses)
-        }
+          status: In(activeStatuses),
+        },
       });
-      console.log(existingOrder)
+      console.log(existingOrder);
       if (existingOrder) {
         throw new BadRequestException(
           "You already have an active order pending confirmation for this listing.",
-          ErrorCode.BAD_REQUEST
+          ErrorCode.BAD_REQUEST,
         );
       }
 
