@@ -64,8 +64,11 @@ export default function DetailsScreen() {
         firstName: first.trim(),
         lastName: last.trim(),
         role: safeRole,
+        region,
+        language,
       },
     });
+
   };
 
   return (

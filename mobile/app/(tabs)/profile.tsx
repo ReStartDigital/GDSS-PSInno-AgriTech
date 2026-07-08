@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { UserRole, useAuthStore } from "@vegelink/shared";
@@ -8,6 +8,7 @@ import { marketplaceListings } from "@/lib/marketplace-data";
 import { getProduceEmoji } from "@/lib/utils";
 import { BottomSheet } from "@/components/layout/BottomSheet";
 import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
+import { useUpdateProfile, useMyEarnings } from "@/lib/user-api";
 import {
   User,
   Bell,
@@ -83,24 +84,45 @@ export default function ProfileScreen() {
   const [editPhone, setEditPhone] = useState(user?.phone ?? "");
   const [editRegionState, setEditRegionState] = useState(region);
 
+  const updateProfileMutation = useUpdateProfile();
+  const { data: earningsData } = useMyEarnings();
+
   const handleLogout = () => {
     clearAuth();
     router.replace("/(auth)/login");
   };
 
   const handleSaveProfile = () => {
-    if (user && accessToken) {
-      setAuth(
-        {
-          ...user,
-          fullName: editFullName.trim(),
-          phone: editPhone.trim(),
+    if (!user || !accessToken) return;
+
+    const nameParts = editFullName.trim().split(" ");
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "";
+
+    updateProfileMutation.mutate(
+      {
+        first_name: firstName,
+        last_name: lastName,
+        region: editRegionState,
+      },
+      {
+        onSuccess: () => {
+          setAuth(
+            {
+              ...user,
+              fullName: editFullName.trim(),
+              phone: editPhone.trim(),
+            },
+            accessToken
+          );
+          setRegion(editRegionState);
+          setActiveModal(null);
         },
-        accessToken
-      );
-      setRegion(editRegionState);
-      setActiveModal(null);
-    }
+        onError: (err: any) => {
+          Alert.alert("Update Failed", err.error?.message || "Could not update profile.");
+        },
+      }
+    );
   };
 
   const savedListings = marketplaceListings.filter((l) =>
@@ -131,7 +153,7 @@ export default function ProfileScreen() {
           </View>
 
           <View className="mt-6 flex-row gap-3">
-            <StatTile value="3" label="Orders" />
+            <StatTile value={(earningsData?.totalOrders ?? 0).toString()} label="Orders" />
             <StatTile value={savedListingIds.length.toString()} label="Saved" />
             <View className="h-16 flex-1 items-center justify-center rounded-2xl bg-green-50">
               <View className="flex-row items-center gap-1">

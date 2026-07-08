@@ -16,7 +16,12 @@ const ordersRepo = new OrdersRepository(AppDataSource);
 const listingsRepo = new ListingsRepository();
 const usersRepo = new UserRepository();
 
-const ordersService = new OrdersService(ordersRepo, listingsRepo, usersRepo);
+const ordersService = new OrdersService(
+  ordersRepo,
+  listingsRepo,
+  usersRepo,
+  AppDataSource,
+);
 const ordersController = new OrdersController(ordersService);
 
 // 2. Route Declarations (All protected via authentication)

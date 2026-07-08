@@ -1,23 +1,28 @@
 import { useRef, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View, ActivityIndicator, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthUser, UserRole, useAuthStore } from "@vegelink/shared";
 import { vlClassNames, vlStyles } from "@/lib/design-system";
 import { ProgressStep } from "@/components/common/ProgressStep";
 import { NavArrowLeft, NavArrowRight, Lock } from "iconoir-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as SecureStore from "expo-secure-store";
+import { apiClient } from "@/lib/api-client";
 
-const PIN_LENGTH = 6;
+const PIN_LENGTH = 4;
 
 export default function PinScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const { firstName, lastName, phone, role } = useLocalSearchParams<{
+  const { firstName, lastName, phone, role, region, language, registrationToken } = useLocalSearchParams<{
     firstName?: string;
     lastName?: string;
     phone?: string;
     role?: UserRole;
+    region?: string;
+    language?: string;
+    registrationToken?: string;
   }>();
 
   const safeRole: UserRole = role ?? "farmer";
@@ -28,6 +33,7 @@ export default function PinScreen() {
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [pinError, setPinError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const pinRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
@@ -47,11 +53,11 @@ export default function PinScreen() {
     setPinError("");
   };
 
-  const isPinValid = pin.length >= 4 && pin.length <= 6;
-  const isConfirmValid = confirmPin.length >= 4 && confirmPin.length <= 6;
-  const canCreate = isPinValid && isConfirmValid;
+  const isPinValid = pin.length === PIN_LENGTH;
+  const isConfirmValid = confirmPin.length === PIN_LENGTH;
+  const canCreate = isPinValid && isConfirmValid && !loading;
 
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
     if (!canCreate) return;
 
     if (pin !== confirmPin) {
@@ -60,15 +66,59 @@ export default function PinScreen() {
       return;
     }
 
-    const user: AuthUser = {
-      id: `demo-${safeRole}`,
-      phone: safePhone,
-      role: safeRole,
-      fullName: `${safeFirst} ${safeLast}`,
-    };
+    setLoading(true);
+    setPinError("");
+    try {
+      if (!registrationToken) {
+        throw new Error("Missing registration verification handshake token. Please verify OTP first.");
+      }
 
-    setAuth(user, "demo-token");
-    router.replace("/(auth)/success");
+      // Complete PIN setup
+      const res = await apiClient.post("/auth/set-pin", { pin }, {
+        headers: {
+          Authorization: `Bearer ${registrationToken}`
+        }
+      }) as any;
+
+      const { user, accessToken, refreshToken } = res.data;
+
+      // Save refresh token
+      await SecureStore.setItemAsync("vegelink_refresh_token", refreshToken);
+
+      // Save credentials in memory store
+      const mappedUser: AuthUser = {
+        id: user.id,
+        phone: user.phone,
+        role: user.role as UserRole,
+        fullName: `${safeFirst} ${safeLast}`,
+      };
+      setAuth(mappedUser, accessToken);
+
+      // Post-onboarding update profile (region & preferred language)
+      if (region || language) {
+        try {
+          await apiClient.patch("/users/me", {
+            firstName: safeFirst,
+            lastName: safeLast,
+            region: region || undefined,
+            language: language || undefined,
+          }, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            }
+          });
+        } catch (profileErr) {
+          console.warn("Failed to set onboarding region/language", profileErr);
+        }
+      }
+
+      router.replace("/(auth)/success");
+    } catch (err: any) {
+      const errMsg = err.error?.message || "Could not set security PIN. Please try again.";
+      setPinError(errMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -175,23 +225,30 @@ export default function PinScreen() {
             className={canCreate ? vlClassNames.primaryButton : vlClassNames.mutedButton}
             style={canCreate ? vlStyles.primaryButtonShadow : undefined}
             onPress={handleCreateAccount}
+            disabled={loading}
           >
             <View className="flex-row items-center justify-center gap-2">
-              <Text
-                className={
-                  canCreate
-                    ? vlClassNames.primaryButtonText
-                    : vlClassNames.mutedButtonText
-                }
-              >
-                Create account
-              </Text>
-              <NavArrowRight
-                color={canCreate ? "#FFFFFF" : "#9CA3AF"}
-                width={18}
-                height={18}
-                strokeWidth={2.5}
-              />
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <>
+                  <Text
+                    className={
+                      canCreate
+                        ? vlClassNames.primaryButtonText
+                        : vlClassNames.mutedButtonText
+                    }
+                  >
+                    Create account
+                  </Text>
+                  <NavArrowRight
+                    color={canCreate ? "#FFFFFF" : "#9CA3AF"}
+                    width={18}
+                    height={18}
+                    strokeWidth={2.5}
+                  />
+                </>
+              )}
             </View>
           </Pressable>
         </View>

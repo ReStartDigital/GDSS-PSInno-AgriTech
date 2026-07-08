@@ -33,6 +33,7 @@ export enum OrderStatus {
   CANCELLED = "cancelled",
   CANCELLED_EXPIRED = "cancelled_expired",
   FARMER_DISPUTED = "farmer_disputed",
+  ARRIVED_AT_DOORSTEP = "arrived_at_doorstep",
 }
 
 export enum FulfilmentMode {
@@ -51,4 +52,13 @@ export enum TransactionStatus {
   PENDING = "pending",
   SUCCESSFUL = "successful",
   FAILED = "failed",
+}
+
+export enum TransportStatus {
+  OPEN = "open",
+  ACCEPTED = "accepted",
+  IN_TRANSIT = "in_transit",
+  DELIVERED = "delivered",
+  CANCELLED = "cancelled",
+  EN_ROUTE = "en_route",
 }

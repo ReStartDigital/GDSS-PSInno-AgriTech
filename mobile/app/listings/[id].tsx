@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View, ActivityIndicator, Image, Dimensions } from "react-native";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { findMarketplaceListing, MarketplaceListing } from "@/lib/marketplace-data";
 import { useUserSettingsStore } from "@/lib/user-settings-store";
 import { vlClassNames } from "@/lib/design-system";
 import { initials, getProduceEmoji } from "@/lib/utils";
+import { useListingDetails, mapBackendListingToClient } from "@/lib/listings-api";
+import { MarketplaceListing } from "@/lib/marketplace-data";
+
 import {
   NavArrowLeft,
   Heart,
@@ -19,12 +21,20 @@ import {
   Plus,
 } from "iconoir-react-native";
 
+const { width: screenWidth } = Dimensions.get("window");
+const carouselWidth = screenWidth - 40;
+
 export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const listing = findMarketplaceListing(id);
   const [quantity, setQuantity] = useState(1);
+  const { toggleSaveListing, isSaved } = useUserSettingsStore();
+
+  const { data: rawListing, isLoading } = useListingDetails(id || "");
+  const listing = useMemo(() => {
+    return rawListing ? mapBackendListingToClient(rawListing) : null;
+  }, [rawListing]);
 
   const transportFee = useMemo(() => {
     if (!listing) {
@@ -42,6 +52,14 @@ export default function ListingDetailScreen() {
 
     router.replace("/(tabs)/marketplace");
   };
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="large" color="#15803D" />
+      </View>
+    );
+  }
 
   if (!listing) {
     return (
@@ -67,7 +85,6 @@ export default function ListingDetailScreen() {
   const subtotal = listing.pricePerUnit * quantity;
   const total = subtotal + transportFee * quantity;
 
-  const { toggleSaveListing, isSaved } = useUserSettingsStore();
   const saved = listing ? isSaved(listing.id) : false;
 
   const decrement = () => setQuantity((current) => Math.max(1, current - 1));
@@ -112,7 +129,7 @@ export default function ListingDetailScreen() {
           </View>
 
           <View className="items-center">
-            <ProduceHero listing={listing} />
+            <ProduceImageCarousel listing={listing} />
           </View>
 
           <View className="mb-5 flex-row items-center justify-between">
@@ -258,6 +275,57 @@ export default function ListingDetailScreen() {
           </Pressable>
         </Link>
       </View>
+    </View>
+  );
+}
+
+function ProduceImageCarousel({ listing }: { listing: MarketplaceListing }) {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const images = listing.imageUrls || [];
+
+  if (images.length === 0) {
+    return <ProduceHero listing={listing} />;
+  }
+
+  return (
+    <View className="items-center my-4" style={{ width: carouselWidth }}>
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={(e) => {
+          const slide = Math.round(e.nativeEvent.contentOffset.x / carouselWidth);
+          if (slide !== activeSlide) {
+            setActiveSlide(slide);
+          }
+        }}
+        scrollEventThrottle={16}
+        className="rounded-3xl"
+        style={{ width: carouselWidth, height: 180 }}
+      >
+        {images.map((imgUrl) => (
+          <View key={imgUrl} style={{ width: carouselWidth, height: 180 }} className="rounded-3xl overflow-hidden bg-gray-100">
+            <Image
+              source={{ uri: imgUrl }}
+              style={{ width: "100%", height: "100%", resizeMode: "cover" }}
+            />
+          </View>
+        ))}
+      </ScrollView>
+      
+      {/* Pagination Dots */}
+      {images.length > 1 && (
+        <View className="flex-row justify-center gap-1.5 mt-3">
+          {images.map((_, index) => (
+            <View
+              key={index}
+              className={`h-2 rounded-full ${
+                index === activeSlide ? "w-5 bg-green-800" : "w-2 bg-gray-300"
+              }`}
+            />
+          ))}
+        </View>
+      )}
     </View>
   );
 }

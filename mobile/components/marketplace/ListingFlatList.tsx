@@ -1,13 +1,13 @@
 import { Link } from "expo-router";
 import { useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, TextInput, View, ActivityIndicator, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   listingCategories,
   ListingCategoryFilter,
   MarketplaceListing,
-  marketplaceListings,
 } from "@/lib/marketplace-data";
+import { useMarketplaceListings, mapBackendListingToClient } from "@/lib/listings-api";
 import { vlClassNames, vlColors } from "@/lib/design-system";
 import { getProduceEmoji } from "@/lib/utils";
 import {
@@ -58,6 +58,12 @@ export function ListingFlatList() {
   );
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  const { data: listingsData, isLoading, refetch, isFetching } = useMarketplaceListings();
+  const marketplaceListings = useMemo(() => {
+    const raw = listingsData?.data || [];
+    return raw.map(mapBackendListingToClient);
+  }, [listingsData?.data]);
+
   const activeSortLabel =
     sortOptions.find((option) => option.value === sortMode)?.label ?? "Nearest First";
 
@@ -99,7 +105,7 @@ export function ListingFlatList() {
 
         return left.distanceKm - right.distanceKm;
       });
-  }, [searchQuery, selectedCategory, selectedRegion, sortMode]);
+  }, [searchQuery, selectedCategory, selectedRegion, sortMode, marketplaceListings]);
 
   const resetFilters = () => {
     setSelectedCategory("All");
@@ -110,21 +116,29 @@ export function ListingFlatList() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: 112,
-          paddingTop: Math.max(insets.top, 16),
-        }}
-      >
-        <View className="flex-row items-start justify-between">
-          <View>
-            <Text className="text-3xl font-black text-gray-950">Browse Produce</Text>
-            <Text className="mt-1 text-sm font-black text-gray-400">
-              {marketplaceListings.length} products available
-            </Text>
-          </View>
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#15803D" />
+        </View>
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingBottom: 112,
+            paddingTop: Math.max(insets.top, 16),
+          }}
+          refreshControl={
+            <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor="#15803D" />
+          }
+        >
+          <View className="flex-row items-start justify-between">
+            <View>
+              <Text className="text-3xl font-black text-gray-950">Browse Produce</Text>
+              <Text className="mt-1 text-sm font-black text-gray-400">
+                {marketplaceListings.length} products available
+              </Text>
+            </View>
 
           <Pressable
             accessibilityLabel={viewMode === "grid" ? "Show list view" : "Show grid view"}
@@ -198,7 +212,8 @@ export function ListingFlatList() {
             ))}
           </View>
         )}
-      </ScrollView>
+        </ScrollView>
+      )}
 
       <FilterSheet
         visible={isFilterOpen}
