@@ -7,6 +7,7 @@ import { useRegister } from '../../hooks/useAuth'
 import { useAuthStore } from '../../store/auth.store'
 import { Field } from '../../components/ui/Field'
 import { ErrorAlert } from '../../components/ui/Feedback'
+import { getDisplayError } from '../../lib/errors'
 
 const ROLES = [
   { value: 'farmer', label: 'Farmer', desc: 'List and sell produce' },
@@ -72,13 +73,21 @@ export default function RegisterPage() {
   const onSubmit = (data: RegisterFormData) => {
     mutate(data, {
       onSuccess: () => {
+        // Store phone for the OTP verify step
         useAuthStore.setState({ pendingPhone: data.phone })
+        // Store region + language so SetPinPage can forward them to the backend
+        // after the PIN is set (via PATCH /users/me)
+        useAuthStore.setState((s) => ({
+          user: s.user
+            ? { ...s.user, region: data.region, language: data.language }
+            : { id: '', phone: data.phone, role: 'farmer', region: data.region, language: data.language },
+        }))
         navigate('/auth/verify')
       },
     })
   }
 
-  const apiError = error && (error as any).response?.data?.error?.message
+  const apiError = getDisplayError(error, '')
 
   return (
     <div className="page-stack">
@@ -103,7 +112,7 @@ export default function RegisterPage() {
               <Field label="First Name" dark placeholder="Abena" error={errors.firstName} {...register('firstName')} />
               <Field label="Last Name" dark placeholder="Mensah" error={errors.lastName} {...register('lastName')} />
             </div>
-            <Field label="Phone Number" dark type="tel" placeholder="0244123456" error={errors.phone} {...register('phone')} />
+            <Field label="Phone Number" dark type="tel" placeholder="+233244123456" error={errors.phone} {...register('phone')} />
 
             <div className="form-grid">
               <div style={{ display: 'grid', gap: 6 }}>

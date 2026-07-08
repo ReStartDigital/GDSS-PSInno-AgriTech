@@ -1,38 +1,92 @@
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { authApi } from '../lib/apiCalls'
+import { authApi, usersApi } from '../lib/apiCalls'
 import { useAuthStore } from '../store/auth.store'
 import type { RegisterFormData, LoginFormData } from '../schemas'
 
+/**
+ * POST /auth/register
+ * Sends name/phone/role. On success caller navigates to /auth/verify.
+ * region + language are saved via PATCH /users/me after set-pin completes.
+ */
 export function useRegister() {
   return useMutation({
     mutationFn: (data: RegisterFormData) => authApi.register(data),
   })
 }
 
+/**
+ * POST /auth/verify-otp
+ * On success stores the short-lived registration token and pending phone
+ * in Zustand so set-pin page can read them.
+ * Backend response: { success, data: { message, registration_token } }
+ */
 export function useVerifyOtp() {
   const setRegistrationToken = useAuthStore((s) => s.setRegistrationToken)
   return useMutation({
-    mutationFn: ({ phone, otp }: { phone: string; otp: string }) => authApi.verifyOtp(phone, otp),
+    mutationFn: ({ phone, otp }: { phone: string; otp: string }) =>
+      authApi.verifyOtp(phone, otp),
     onSuccess: (res, vars) => {
       setRegistrationToken(res.data.data.registration_token, vars.phone)
     },
   })
 }
 
+/**
+ * POST /auth/set-pin
+ * After setting the PIN, immediately patches /users/me with region + language
+ * that were collected during registration so they are persisted.
+ * Backend response: { success, data: { user, accessToken, refreshToken } }
+ */
 export function useSetPin() {
-  const { setAuth, registrationToken, pendingPhone } = useAuthStore()
+  const { setAuth, registrationToken, pendingPhone, user } = useAuthStore()
   const navigate = useNavigate()
   return useMutation({
-    mutationFn: (pin: string) => authApi.setPin(pin, registrationToken!),
+    mutationFn: async ({
+      pin,
+      region,
+      language,
+    }: {
+      pin: string
+      region?: string
+      language?: string
+    }) => {
+      // Step 1: finalise registration with PIN
+      const setPinRes = await authApi.setPin(pin, registrationToken!)
+      const { accessToken } = setPinRes.data.data
+
+      // Step 2: persist region + language if provided (non-blocking — ignore errors)
+      if ((region || language) && accessToken) {
+        try {
+          await usersApi.updateProfile({ region, language })
+        } catch {
+          // Profile update failure should not block login
+        }
+      }
+
+      return setPinRes
+    },
     onSuccess: (res) => {
-      const { user, accessToken } = res.data.data
-      setAuth({ id: user.id, phone: pendingPhone ?? user.phone, role: user.role, fullName: user.fullName, region: user.region, language: user.language }, accessToken)
+      const { user: responseUser, accessToken } = res.data.data
+      setAuth(
+        {
+          id: responseUser.id,
+          phone: pendingPhone ?? responseUser.phone,
+          role: responseUser.role,
+          region: user?.region,
+          language: user?.language,
+        },
+        accessToken,
+      )
       navigate('/overview')
     },
   })
 }
 
+/**
+ * POST /auth/login
+ * Backend response: { success, data: { user, accessToken, refreshToken } }
+ */
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth)
   const navigate = useNavigate()
@@ -40,12 +94,23 @@ export function useLogin() {
     mutationFn: (data: LoginFormData) => authApi.login(data),
     onSuccess: (res) => {
       const { user, accessToken } = res.data.data
-      setAuth({ id: user.id, phone: user.phone, role: user.role, fullName: user.fullName, region: user.region, language: user.language }, accessToken)
+      setAuth(
+        {
+          id: user.id,
+          phone: user.phone,
+          role: user.role,
+        },
+        accessToken,
+      )
       navigate('/overview')
     },
   })
 }
 
+/**
+ * POST /auth/logout
+ * Clears auth state regardless of API outcome (onSettled).
+ */
 export function useLogout() {
   const clearAuth = useAuthStore((s) => s.clearAuth)
   const navigate = useNavigate()

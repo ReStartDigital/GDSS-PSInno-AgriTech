@@ -5,6 +5,7 @@ import { loginSchema, type LoginFormData } from '../../schemas'
 import { useLogin } from '../../hooks/useAuth'
 import { Field } from '../../components/ui/Field'
 import { ErrorAlert } from '../../components/ui/Feedback'
+import { getDisplayError } from '../../lib/errors'
 
 export default function LoginPage() {
   const { mutate, isPending, error } = useLogin()
@@ -14,7 +15,7 @@ export default function LoginPage() {
   })
 
   const onSubmit = (data: LoginFormData) => mutate(data)
-  const apiError = error && (error as any).response?.data?.error?.message
+  const apiError = getDisplayError(error, '')
 
   return (
     <div className="page-stack">
@@ -35,7 +36,7 @@ export default function LoginPage() {
             <div><p className="eyebrow">Login</p><h3>Enter your credentials.</h3></div>
           </div>
           <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'grid', gap: 16 }}>
-            <Field label="Phone Number" dark type="tel" placeholder="0244123456" error={errors.phone} {...register('phone')} />
+            <Field label="Phone Number" dark type="tel" placeholder="+233244123456" error={errors.phone} {...register('phone')} />
             <Field label="PIN" dark type="password" inputMode="numeric" maxLength={6} placeholder="••••" error={errors.pin} {...register('pin')} />
             {apiError && <ErrorAlert message={apiError} />}
             <button type="submit" className="primary-button" disabled={isPending} style={{ width: '100%', justifyContent: 'center' }}>
