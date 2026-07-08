@@ -9,6 +9,7 @@ import { Field } from '../components/ui/Field'
 import { PageHero } from '../components/ui/PageHero'
 import { FormActions } from '../components/ui/FormActions'
 import { REGIONS, LANGUAGES } from './auth/RegisterPage'
+import { Icon } from '../components/Icon'
 
 const phoneSchema = z
   .string()
@@ -22,6 +23,10 @@ const registerClientSchema = z.object({
   email: z.string().email('Enter a valid email').optional().or(z.literal('')),
   region: z.string().min(1, 'Region is required'),
   language: z.string().min(1, 'Preferred language is required'),
+  location: z.object({
+    lat: z.number({ message: 'Latitude is required' }),
+    lng: z.number({ message: 'Longitude is required' }),
+  }).optional()
 })
 
 type RegisterClientFormData = z.infer<typeof registerClientSchema>
@@ -140,6 +145,12 @@ function RegisterClientForm({ onClose }: { onClose: () => void }) {
   const { mutate, isPending, error, isSuccess } = useRegisterClient()
   const { register, handleSubmit, watch, setValue, formState: { errors }, reset } = useForm<RegisterClientFormData>({
     resolver: zodResolver(registerClientSchema),
+    defaultValues: {
+      location: {
+        lat: 6.6745,
+        lng: -1.5644,
+      }
+    }
   })
 
   const selectedRegion = watch('region')
@@ -237,6 +248,61 @@ function RegisterClientForm({ onClose }: { onClose: () => void }) {
             )}
           </div>
         </div>
+
+        {/* GPS Coordinates & Geolocation Picker */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: 12,
+          padding: 14,
+          display: 'grid',
+          gap: 12
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: 'rgba(248, 250, 245, 0.86)', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>
+              GPS Farm Coordinates
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                      setValue('location.lat', parseFloat(position.coords.latitude.toFixed(6)))
+                      setValue('location.lng', parseFloat(position.coords.longitude.toFixed(6)))
+                    },
+                    (error) => {
+                      alert('Geolocation failed: ' + error.message)
+                    }
+                  );
+                } else {
+                  alert('Geolocation is not supported by this browser.')
+                }
+              }}
+              style={{
+                background: 'rgba(214, 255, 205, 0.25)',
+                border: '1px solid #d6ffcd',
+                borderRadius: 8,
+                color: '#d6ffcd',
+                fontSize: '0.75rem',
+                padding: '6px 12px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4
+              }}
+            >
+              <Icon name="map" /> Detect location
+            </button>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <Field label="Latitude" dark type="number" step="0.000001" error={errors.location?.lat} {...register('location.lat', { valueAsNumber: true })} />
+            <Field label="Longitude" dark type="number" step="0.000001" error={errors.location?.lng} {...register('location.lng', { valueAsNumber: true })} />
+          </div>
+        </div>
+
         {apiError && <ErrorAlert message={apiError} />}
         {isSuccess && <div style={{ color: '#d6ffcd', fontWeight: 600 }}>Farmer onboarded ✓</div>}
         <FormActions

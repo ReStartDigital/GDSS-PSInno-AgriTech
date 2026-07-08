@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { authApi, usersApi } from '../lib/apiCalls'
 import { useAuthStore } from '../store/auth.store'
@@ -78,6 +78,10 @@ export function useSetPin() {
       let region: string | undefined = undefined
       let language: string | undefined = undefined
       
+      let paymentDetailsSet: boolean | undefined = undefined
+      let mobileMoneyNumber: string | null = null
+      let mobileMoneyNetwork: string | null = null
+
       try {
         const profileRes = await usersApi.getProfile()
         const dbUser = profileRes.data.data.user
@@ -86,6 +90,9 @@ export function useSetPin() {
           .join(' ')
         region = dbUser.region ?? undefined
         language = dbUser.language ?? undefined
+        paymentDetailsSet = dbUser.paymentDetailsSet
+        mobileMoneyNumber = dbUser.mobileMoneyNumber
+        mobileMoneyNetwork = dbUser.mobileMoneyNetwork
       } catch {
         // Fallback if profile fetch fails
       }
@@ -98,6 +105,9 @@ export function useSetPin() {
           fullName: fullName || undefined,
           region,
           language,
+          paymentDetailsSet,
+          mobileMoneyNumber,
+          mobileMoneyNetwork,
         },
         accessToken,
       )
@@ -125,6 +135,10 @@ export function useLogin() {
       let region: string | undefined = undefined
       let language: string | undefined = undefined
       
+      let paymentDetailsSet: boolean | undefined = undefined
+      let mobileMoneyNumber: string | null = null
+      let mobileMoneyNetwork: string | null = null
+
       try {
         const profileRes = await usersApi.getProfile()
         const dbUser = profileRes.data.data.user
@@ -133,6 +147,9 @@ export function useLogin() {
           .join(' ')
         region = dbUser.region ?? undefined
         language = dbUser.language ?? undefined
+        paymentDetailsSet = dbUser.paymentDetailsSet
+        mobileMoneyNumber = dbUser.mobileMoneyNumber
+        mobileMoneyNetwork = dbUser.mobileMoneyNetwork
       } catch {
         // Fallback
       }
@@ -145,6 +162,9 @@ export function useLogin() {
           fullName: fullName || undefined,
           region,
           language,
+          paymentDetailsSet,
+          mobileMoneyNumber,
+          mobileMoneyNetwork,
         },
         accessToken,
       )
@@ -165,6 +185,22 @@ export function useLogout() {
     onSettled: () => {
       clearAuth()
       navigate('/auth/login')
+    },
+  })
+}
+
+/**
+ * POST /users/me/payment-details
+ * Configures the user's mobile money payment settings.
+ */
+export function useUpdatePaymentDetails() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: { mobile_number: string; mobile_network: string }) =>
+      usersApi.updatePaymentDetails(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['profile'] })
+      qc.invalidateQueries({ queryKey: ['users', 'me'] })
     },
   })
 }

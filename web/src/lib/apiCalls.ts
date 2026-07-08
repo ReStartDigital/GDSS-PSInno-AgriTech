@@ -199,6 +199,12 @@ export const usersApi = {
     location?: { lat: number; lng: number }
   }) => api.patch('/users/me', data),
 
+  /** POST /users/me/payment-details — configure Mobile Money payment settings */
+  updatePaymentDetails: (data: {
+    mobile_number: string
+    mobile_network: string
+  }) => api.post('/users/me/payment-details', data),
+
   /** GET /users/agent/clients — paginated list of agent's farmers */
   getClients: (params?: { page?: number; limit?: number }) =>
     api.get('/users/agent/clients', { params }),

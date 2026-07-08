@@ -45,6 +45,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               fullName,
               region: dbUser.region ?? undefined,
               language: dbUser.language ?? undefined,
+              paymentDetailsSet: dbUser.paymentDetailsSet,
+              mobileMoneyNumber: dbUser.mobileMoneyNumber,
+              mobileMoneyNetwork: dbUser.mobileMoneyNetwork,
             },
             newAccessToken
           )
