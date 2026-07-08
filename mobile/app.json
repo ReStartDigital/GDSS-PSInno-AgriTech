@@ -21,7 +21,12 @@
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundColor": "#2D5A0A"
       },
-      "package": "com.kaliblip.vegelink"
+      "package": "com.kaliblip.vegelink",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -53,6 +58,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b62cdfba-ad91-472e-8d14-636b6fb7a78a"
+      }
     }
   }
 }
