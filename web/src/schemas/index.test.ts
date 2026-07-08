@@ -92,6 +92,10 @@ describe('createListingSchema', () => {
     quantity_kg: 100,
     price_per_kg_ghs: 4.5,
     harvest_date: '2026-08-01',
+    location: {
+      lat: 6.6745,
+      lng: -1.5644,
+    },
   }
 
   it('accepts valid listing data', () => {
