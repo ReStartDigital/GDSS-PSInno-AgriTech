@@ -4,45 +4,82 @@ import { useAuthStore } from '../store/auth.store'
 import type { CreateListingFormData } from '../schemas'
 import type { Listing } from '../types/api'
 
+/**
+ * Backend GET /listings response envelope:
+ *   { success, data: { data: Listing[], meta: PaginationMeta } }
+ *
+ * Backend GET /listings/:id response envelope:
+ *   { success, data: { listing: Listing } }
+ *
+ * Backend POST/PATCH /listings response envelope:
+ *   { success, data: { listing: Listing } }
+ */
+
+/** Fetch listings belonging to a specific farmer (farmer role: self, agent role: selected client) */
 export function useMyListings(selectedFarmerId?: string) {
   const user = useAuthStore((s) => s.user)
   const farmerId = user?.role === 'farmer' ? user.id : selectedFarmerId
 
   return useQuery<Listing[]>({
     queryKey: ['listings', 'mine', farmerId],
-    queryFn: () => {
-      if (farmerId) {
-        return listingsApi.getAll({ farmer_id: farmerId }).then((r) => r.data.data as Listing[])
-      }
-      return Promise.resolve([])
-    },
+    queryFn: () =>
+      listingsApi
+        .getAll({ farmer_id: farmerId })
+        // data.data is { data: Listing[], meta: {} } — extract the array
+        .then((r) => (r.data.data.data ?? []) as Listing[]),
     enabled: !!farmerId,
   })
 }
 
-export function useAllListings(params?: Record<string, string>) {
+/** Fetch all active listings with optional filters */
+export function useAllListings(
+  params?: Record<string, string | number | undefined>,
+) {
   return useQuery<Listing[]>({
     queryKey: ['listings', 'all', params],
-    queryFn: () => listingsApi.getAll(params).then((r) => r.data.data as Listing[]),
+    queryFn: () =>
+      listingsApi
+        .getAll(params)
+        .then((r) => (r.data.data.data ?? []) as Listing[]),
   })
 }
 
+/** Fetch a single listing by UUID */
 export function useListing(id: string) {
   return useQuery<Listing>({
     queryKey: ['listings', id],
-    queryFn: () => listingsApi.getById(id).then((r) => r.data.data as Listing),
+    queryFn: () =>
+      listingsApi.getById(id).then((r) => r.data.data.listing as Listing),
     enabled: !!id,
   })
 }
 
+/** POST /listings — create a new listing */
 export function useCreateListing() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: CreateListingFormData) => listingsApi.create(data),
+    mutationFn: (data: CreateListingFormData & { farmer_id?: string }) =>
+      listingsApi.create(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['listings'] }),
   })
 }
 
+/** PATCH /listings/:id — update one or more fields */
+export function useUpdateListing() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string
+      data: Partial<CreateListingFormData & { status: string }>
+    }) => listingsApi.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['listings'] }),
+  })
+}
+
+/** DELETE /listings/:id — soft-cancel */
 export function useDeleteListing() {
   const qc = useQueryClient()
   return useMutation({
