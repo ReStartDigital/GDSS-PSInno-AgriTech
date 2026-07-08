@@ -114,10 +114,19 @@ export const listingsApi = {
 
   /**
    * POST /listings
-   * Expects the full CreateListingFormData including location: { lat, lng }.
+   * Maps frontend location: { lat, lng } coordinates to backend { latitude, longitude } format.
    */
-  create: (data: CreateListingFormData & { farmer_id?: string }) =>
-    api.post('/listings', data),
+  create: (data: CreateListingFormData & { farmer_id?: string }) => {
+    const { location, ...rest } = data
+    const backendLocation = location
+      ? { latitude: location.lat, longitude: location.lng }
+      : undefined
+
+    return api.post('/listings', {
+      ...rest,
+      location: backendLocation,
+    })
+  },
 
   /**
    * PATCH /listings/:id
@@ -126,7 +135,17 @@ export const listingsApi = {
   update: (
     id: string,
     data: Partial<CreateListingFormData & { status: string }>,
-  ) => api.patch(`/listings/${id}`, data),
+  ) => {
+    const { location, ...rest } = data
+    const backendLocation = location
+      ? { latitude: location.lat, longitude: location.lng }
+      : undefined
+
+    return api.patch(`/listings/${id}`, {
+      ...rest,
+      ...(backendLocation ? { location: backendLocation } : {}),
+    })
+  },
 
   /** DELETE /listings/:id — soft delete (status → cancelled) */
   delete: (id: string) => api.delete(`/listings/${id}`),

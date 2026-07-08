@@ -231,7 +231,13 @@ function CreateListingForm({
   const { mutate, isPending, error } = useCreateListing()
   const { register, handleSubmit, watch, setValue, formState: { errors }, reset } = useForm<CreateListingFormData, unknown, CreateListingFormData>({
     resolver: zodResolver(createListingSchema) as never,
-    defaultValues: { unit_of_measure: 'kg' }
+    defaultValues: {
+      unit_of_measure: 'kg',
+      location: {
+        lat: 6.6745,
+        lng: -1.5644,
+      },
+    }
   })
   
   const [formFarmerId, setFormFarmerId] = useState(selectedFarmerId)
@@ -240,10 +246,6 @@ function CreateListingForm({
   const onSubmit = (data: CreateListingFormData) => {
     const payload = {
       ...data,
-      location: {
-        lat: 6.6745,
-        lng: -1.5644,
-      },
       supports_delivery: true,
       supports_pickup: true,
       ...(isAgent ? { farmer_id: formFarmerId } : {})
