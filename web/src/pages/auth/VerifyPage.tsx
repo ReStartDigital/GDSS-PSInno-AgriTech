@@ -7,20 +7,27 @@ import { useAuthStore } from '../../store/auth.store'
 import { Field } from '../../components/ui/Field'
 import { ErrorAlert } from '../../components/ui/Feedback'
 import { authApi } from '../../lib/apiCalls'
-import { useState } from 'react'
+import { getDisplayError } from '../../lib/errors'
+import { useState, useEffect } from 'react'
 
 export default function VerifyPage() {
   const navigate = useNavigate()
   const pendingPhone = useAuthStore((s) => s.pendingPhone)
   const { mutate, isPending, error } = useVerifyOtp()
   const [resent, setResent] = useState(false)
+  const [resendError, setResendError] = useState<string | null>(null)
 
   const { register, handleSubmit, formState: { errors } } = useForm<VerifyOtpFormData>({
     resolver: zodResolver(verifyOtpSchema),
   })
 
+  useEffect(() => {
+    if (!pendingPhone) {
+      navigate('/auth/register')
+    }
+  }, [pendingPhone, navigate])
+
   if (!pendingPhone) {
-    navigate('/auth/register')
     return null
   }
 
@@ -31,12 +38,17 @@ export default function VerifyPage() {
   }
 
   const handleResend = async () => {
-    await authApi.resendOtp(pendingPhone)
-    setResent(true)
-    setTimeout(() => setResent(false), 30000)
+    setResendError(null)
+    try {
+      await authApi.resendOtp(pendingPhone)
+      setResent(true)
+      setTimeout(() => setResent(false), 30000)
+    } catch (err) {
+      setResendError(getDisplayError(err))
+    }
   }
 
-  const apiError = error && (error as any).response?.data?.error?.message
+  const apiError = getDisplayError(error, '')
 
   return (
     <div className="page-stack">
@@ -55,7 +67,7 @@ export default function VerifyPage() {
           </div>
           <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'grid', gap: 16 }}>
             <Field label="6-Digit Code" dark type="text" inputMode="numeric" maxLength={6} placeholder="123456" error={errors.otp} {...register('otp')} />
-            {apiError && <ErrorAlert message={apiError} />}
+            {(apiError || resendError) && <ErrorAlert message={resendError ?? apiError} />}
             <button type="submit" className="primary-button" disabled={isPending} style={{ width: '100%', justifyContent: 'center' }}>
               {isPending ? 'Verifying…' : 'Verify Code'}
             </button>

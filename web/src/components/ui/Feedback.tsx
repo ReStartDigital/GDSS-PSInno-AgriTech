@@ -7,7 +7,6 @@ export function Spinner() {
         borderTopColor: '#264123',
         animation: 'spin 0.7s linear infinite',
       }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }
@@ -15,7 +14,7 @@ export function Spinner() {
 export function ErrorAlert({ message }: { message: string }) {
   return (
     <div style={{
-      padding: '12px 16px', borderRadius: 6,
+      padding: '12px 16px', borderRadius: 12,
       background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
       color: '#ef4444', fontSize: '0.9rem',
     }}>
