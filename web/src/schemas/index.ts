@@ -7,8 +7,8 @@ const phone = z
   .string()
   .min(1, 'Phone number is required')
   .regex(
-    /^(\+233|0)\d{9}$/,
-    'Enter a valid Ghanaian phone number, e.g. +233244123456',
+    /^\+233\d{9}$/,
+    'Enter a valid Ghanaian phone number in international format, e.g. +233244123456',
   )
 
 // ── PIN: 4–6 numeric digits ───────────────────────────────────────────────────
