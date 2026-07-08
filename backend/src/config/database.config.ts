@@ -5,6 +5,9 @@ import { RefreshTokenEntity } from "../database/entities/RefreshToken.js";
 import { PackagingOptionEntity } from "../database/entities/PackagingOptions.js";
 import { ProduceListingEntity } from "../database/entities/ProduceListing.js";
 import { OrderEntity } from "../database/entities/Order.js";
+import { RatingsEntity } from "../database/entities/Ratings.js";
+import { Transaction } from "../database/entities/Transaction.js";
+import { TransportRequestEntity } from "../database/entities/Transportation.js";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -20,6 +23,9 @@ export const AppDataSource = new DataSource({
     PackagingOptionEntity,
     ProduceListingEntity,
     OrderEntity,
+    RatingsEntity,
+    Transaction,
+    TransportRequestEntity,
   ],
   migrations: ["src/database/migrations/*.ts"],
 });
