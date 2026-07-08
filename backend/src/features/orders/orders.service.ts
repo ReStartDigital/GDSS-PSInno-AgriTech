@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { OrdersRepository } from "./orders.repository.js";
 import { ListingsRepository } from "../listings/listings.repository.js";
 import { UserRepository } from "../user/user.repository.js";
@@ -26,7 +27,7 @@ import { ErrorCode } from "../../common/constants/error-codes.enum.js";
 import { TransportService } from "../transport/transport.service.js";
 import { TransportRepository } from "../transport/transport.repository.js";
 import { AppDataSource } from "../../config/database.config.js";
-import type { DataSource } from "typeorm";
+import { In, type DataSource } from "typeorm";
 import { ProduceListingEntity } from "../../database/entities/ProduceListing.js";
 import { User } from "../../database/entities/User.js";
 import { arkeselClient } from "../../infrastructure/arkesel/arkesel.client.js";
@@ -56,6 +57,12 @@ export class OrdersService {
   ): Promise<OrderEntity> {
     // We execute the entire lifecycle inside a managed database transaction closure
     return await this.dataSource.transaction(async (manager) => {
+      const activeStatuses = [
+        OrderStatus.PENDING,
+        OrderStatus.PENDING_AGENT_CONFIRMATION,
+        OrderStatus.PENDING_SMS_CONFIRMATION,
+        OrderStatus.NEGOTIATING,
+      ];
       // Use transactional managers instead of global unsynced repositories
       const txListingsRepo = manager.getRepository(ProduceListingEntity);
       const txUsersRepo = manager.getRepository(User);
@@ -79,6 +86,22 @@ export class OrdersService {
         throw new BadRequestException(
           "You cannot purchase your own produce listing",
           ErrorCode.ORDER_FORBIDDEN,
+        );
+      }
+
+      // Check if an active contract already exists for this buyer/listing pair
+      const existingOrder = await txOrdersRepo.findOne({
+        where: {
+          buyerId,
+          listingId: dto.listing_id,
+          status: In(activeStatuses),
+        },
+      });
+      console.log(existingOrder);
+      if (existingOrder) {
+        throw new BadRequestException(
+          "You already have an active order pending confirmation for this listing.",
+          ErrorCode.BAD_REQUEST,
         );
       }
 
@@ -474,40 +497,6 @@ export class OrdersService {
       );
     }
   }
-  // Inside your orders.service.ts
-  async markReadyForPickup(
-    orderId: string,
-    farmerId: string,
-  ): Promise<OrderEntity> {
-    return await this.dataSource.transaction(async (manager) => {
-      const orderRepo = manager.getRepository(OrderEntity);
-      const userRepo = manager.getRepository(User);
-
-      const order = await orderRepo.findOne({
-        where: { id: orderId, farmerId },
-        lock: { mode: "pessimistic_write" },
-      });
-
-      if (!order || order.mode !== FulfilmentMode.PICKUP) {
-        throw new BadRequestException(
-          "Invalid order profile context.",
-          ErrorCode.BAD_REQUEST,
-        );
-      }
-
-      // Transition state machine: CONFIRMED -> PACKED
-      assertValidTransition(order.status as OrderStatus, OrderStatus.PACKED);
-      order.status = OrderStatus.PACKED;
-      await orderRepo.save(order);
-
-      await userRepo.findOneBy({ id: order.buyerId });
-
-      // Fire off the OTP to the buyer's phone. They must present it when they arrive at the farm.
-      // await arkeselClient.generateOtp(buyer!.phone, order.id.slice(0, 8));
-
-      return order;
-    });
-  }
 
   /**
    * When the buyer physically arrives at the farm, the farmer inputs the code to release it.
@@ -536,16 +525,73 @@ export class OrdersService {
       const buyer = await userRepo.findOneBy({ id: order.buyerId });
 
       // Validate code directly via Arkesel
-      const isValid = await arkeselClient.verifyOtp(buyer!.phone, inputPin);
-      if (!isValid)
-        throw new BadRequestException(
-          "Invalid verification handshake PIN.",
-          ErrorCode.BAD_REQUEST,
-        );
+      try {
+        // Evaluate verification code securely against Arkesel's session state
+        await arkeselClient.verifyOtp(buyer!.phone, inputPin);
+      } catch (otpError: any) {
+        throw new BadRequestException(otpError.message, ErrorCode.BAD_REQUEST);
+      }
 
       // Transition state: PACKED -> COLLECTED (Terminal state)
-      order.status = OrderStatus.COLLECTED;
+      // Transition state to terminal pickup status: PACKED -> COLLECTED
+      const terminalStatus = OrderStatus.COLLECTED;
+      assertValidTransition(order.status as OrderStatus, terminalStatus);
+
+      order.status = terminalStatus;
       return await orderRepo.save(order);
+    });
+  }
+  async markReadyForPickup(
+    orderId: string,
+    farmerId: string,
+  ): Promise<OrderEntity> {
+    return await this.dataSource.transaction(async (manager) => {
+      const orderRepo = manager.getRepository(OrderEntity);
+      const userRepo = manager.getRepository(User);
+
+      const order = await orderRepo.findOne({
+        where: { id: orderId, farmerId },
+        lock: { mode: "pessimistic_write" },
+      });
+
+      if (!order) {
+        throw new NotFoundException(
+          "Active order context records not found.",
+          ErrorCode.ORDER_NOT_FOUND,
+        );
+      }
+      if (order.mode !== FulfilmentMode.PICKUP) {
+        throw new BadRequestException(
+          "This order is designated for delivery tracking pipelines.",
+          ErrorCode.BAD_REQUEST,
+        );
+      }
+
+      // Enforce state transition safety rule: CONFIRMED -> PACKED
+      const targetStatus = OrderStatus.PACKED;
+      assertValidTransition(order.status as OrderStatus, targetStatus);
+
+      const buyer = await userRepo.findOneBy({ id: order.buyerId });
+      if (!buyer || !buyer.phone) {
+        throw new BadRequestException(
+          "Buyer contact data is currently unavailable for OTP verification.",
+          ErrorCode.BAD_REQUEST,
+        );
+      }
+
+      // Update state locally
+      order.status = targetStatus;
+      const updatedOrder = await orderRepo.save(order);
+      const fullname = `${buyer.firstName} ${buyer.middleName} ${buyer.lastName}`;
+      // Dispatches the 6-minute Arkesel verification code to the buyer
+      try {
+        // Evaluate verification code securely against Arkesel's session state
+        await arkeselClient.generateAndSendDoorstepOtp(buyer.phone, fullname);
+      } catch (otpError: any) {
+        throw new BadRequestException(otpError.message, ErrorCode.BAD_REQUEST);
+      }
+
+      return updatedOrder;
     });
   }
 }

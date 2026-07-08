@@ -176,7 +176,6 @@ router.post(
  */
 router.get(
   "/packaging/recommend",
-  authenticate,
   validate(packagingRecommendSchema, "query"),
   listingsController.recommendPackaging,
 );
@@ -303,7 +302,6 @@ router.get(
  */
 router.get(
   "/",
-  authenticate,
   validate(listingsQuerySchema, "query"),
   listingsController.browse,
 );

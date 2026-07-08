@@ -28,6 +28,8 @@ const ratingsRepo = new RatingsRepository();
 const ratingsService = new RatingsService(ratingsRepo, ordersService);
 const controller = new RatingsController(ratingsService);
 
+ratingsRouter.use(authenticate);
+
 /**
  * @openapi
  * /api/v1/ratings:
@@ -36,6 +38,8 @@ const controller = new RatingsController(ratingsService);
  *     description: Log a whole-number score (1-5) and an optional comment targeting a counter-party of a finalized (DELIVERED or PICKED_UP) transaction order. Synchronizes aggregate score profiles on the ratee user account.
  *     tags:
  *       - Ratings
+ *     security:
+ *       - BearerAuth: []
  *     access: Private (Authenticated Buyers or Farmers)
  *     middleware: [authenticate]
  *     requestBody:
@@ -74,7 +78,7 @@ const controller = new RatingsController(ratingsService);
  *       409:
  *         description: Double-rating conflict attempt detected for this order tracking sequence
  */
-ratingsRouter.post("/", authenticate, controller.submitReview);
+ratingsRouter.post("/", controller.submitReview);
 
 /**
  * @openapi
@@ -84,6 +88,8 @@ ratingsRouter.post("/", authenticate, controller.submitReview);
  *     description: Returns a paginated list of reviews either authored by the authenticated caller or received by them from marketplace counterparties.
  *     tags:
  *       - Ratings
+ *     security:
+ *       - BearerAuth: []
  *     access: Private (All Authenticated Users)
  *     middleware: [authenticate]
  *     parameters:
@@ -113,6 +119,6 @@ ratingsRouter.post("/", authenticate, controller.submitReview);
  *       401:
  *         description: Request lacks valid signature authorization credentials
  */
-ratingsRouter.get("/me", authenticate, controller.getMyReviews);
+ratingsRouter.get("/me", controller.getMyReviews);
 
 export { ratingsRouter };

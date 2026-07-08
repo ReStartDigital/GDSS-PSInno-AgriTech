@@ -11,6 +11,7 @@ import {
   BadRequestException,
   UnprocessableException,
 } from "../../common/exceptions/index.js";
+import { HttpStatusCode } from "axios";
 
 export class OrdersController {
   constructor(private ordersService: OrdersService) {}
@@ -324,6 +325,77 @@ export class OrdersController {
         success: true,
         message:
           "Webhook event processed and state machine adjustments completed.",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  /**
+   * Step 1: Fire Outbound Pickup OTP Token
+   */
+  markReadyForPickup = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const orderId = req.params.id as string;
+      const farmerId = req.user?.sub as string;
+
+      if (!orderId || !farmerId) {
+        throw new UnprocessableException(
+          "Order ID and farmer authentication context are required.",
+          ErrorCode.VALIDATION_ERROR,
+        );
+      }
+
+      const updatedOrder = await this.ordersService.markReadyForPickup(
+        orderId,
+        farmerId,
+      );
+
+      res.status(HttpStatusCode.Ok).json({
+        success: true,
+        message:
+          "Order items compiled. A 6-minute warehouse collection PIN has been sent to the buyer.",
+        data: updatedOrder,
+      });
+    } catch (error) {
+      next(error); // Safe transactional rollbacks on network fail
+    }
+  };
+
+  /**
+   * Step 2: Validate Handoff PIN and Clear Escrow
+   */
+  verifyBuyerPickup = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const orderId = req.params.id as string;
+      const farmerId = req.user?.sub as string;
+      const { verification_pin } = req.body;
+
+      if (!orderId || !verification_pin) {
+        throw new UnprocessableException(
+          "Order ID and verification_pin are required properties.",
+          ErrorCode.VALIDATION_ERROR,
+        );
+      }
+
+      const completedOrder = await this.ordersService.verifyBuyerPickup(
+        orderId,
+        farmerId,
+        verification_pin,
+      );
+
+      res.status(HttpStatusCode.Ok).json({
+        success: true,
+        message:
+          "Handoff verified successfully via Arkesel. Order state moved to terminal COLLECTED status.",
+        data: completedOrder,
       });
     } catch (error) {
       next(error);

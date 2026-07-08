@@ -15,7 +15,8 @@ const phoneSchema = z
     if (!normalized) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Enter a valid Ghanaian phone number, e.g. 0244123456",
+        message:
+          "Enter a valid Ghanaian phone number in E.164 format, e.g. +233244123456",
       });
       return z.NEVER;
     }
