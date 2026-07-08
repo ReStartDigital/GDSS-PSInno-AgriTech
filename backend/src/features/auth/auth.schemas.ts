@@ -15,7 +15,8 @@ const phoneSchema = z
     if (!normalized) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Enter a valid Ghanaian phone number, e.g. 0244123456",
+        message:
+          "Enter a valid Ghanaian phone number in E.164 format, e.g. +233244123456",
       });
       return z.NEVER;
     }
@@ -72,6 +73,8 @@ export const registerSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required").max(255),
   middleName: z.string().trim().max(255).optional().nullable(),
   lastName: z.string().trim().min(1, "Last name is required").max(255),
+  region: z.string().trim().max(255).default("Ashanti"),
+  language: z.string().trim().max(255).default("en"),
   role: z.nativeEnum(UserRole, {
     message: "Invalid platform group role provided.",
   }),

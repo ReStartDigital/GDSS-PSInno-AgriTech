@@ -8,14 +8,24 @@ import type {
   RegistrationTokenPayload,
 } from "../../common/types/express.js";
 
-const privateKey = fs.readFileSync(
-  process.env.JWT_PRIVATE_KEY_PATH || "./keys/private.pem",
-  "utf8",
-);
-const publicKey = fs.readFileSync(
-  process.env.JWT_PUBLIC_KEY_PATH || "./keys/public.pem",
-  "utf8",
-);
+const node_env = process.env.NODE_ENV ?? "production";
+
+let privateKey = "";
+let publicKey = "";
+
+if (node_env === "development") {
+  privateKey = process.env.JWT_PRIVATE_KEY_PATH ?? "";
+  publicKey = process.env.JWT_PUBLIC_KEY_PATH ?? "";
+} else {
+  privateKey = fs.readFileSync(
+    process.env.JWT_PRIVATE_KEY_PATH || "./keys/private.pem",
+    "utf8",
+  );
+  publicKey = fs.readFileSync(
+    process.env.JWT_PUBLIC_KEY_PATH || "./keys/public.pem",
+    "utf8",
+  );
+}
 
 const ALGORITHM = "RS256";
 
