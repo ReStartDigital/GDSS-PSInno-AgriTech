@@ -33,24 +33,30 @@ export function createApp(): Application {
   app.use(morganMiddleware);
 
   // 1. Professional CORS Configuration
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") ?? [];
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+    : [];
 
   app.use(requestIdMiddleware);
   app.use(helmet());
   app.use(
     cors({
       origin: (origin, callback) => {
-        // ALLOW REQUEST WITH NO ORIGIN
+        // ALLOW REQUEST WITH NO ORIGIN (e.g. mobile apps, postman, curl)
         if (!origin) return callback(null, true);
 
-        if (allowedOrigins.indexOf(origin) != -1) {
+        const isAllowed = allowedOrigins.includes(origin);
+        const isVercel = origin.endsWith(".vercel.app");
+
+        if (isAllowed || isVercel) {
           callback(null, true);
         } else {
-          callback(new Error("Not allowed by CORS"));
+          callback(new Error(`Origin ${origin} not allowed by CORS`));
         }
       },
-      methods: ["GET", "POST", "PUT", "DELETE"],
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       credentials: true,
+      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
     }),
   );
 
