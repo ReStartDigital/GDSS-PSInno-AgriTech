@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { OrdersRepository } from "./orders.repository.js";
 import { ListingsRepository } from "../listings/listings.repository.js";
 import { UserRepository } from "../user/user.repository.js";
@@ -474,40 +475,6 @@ export class OrdersService {
       );
     }
   }
-  // Inside your orders.service.ts
-  async markReadyForPickup(
-    orderId: string,
-    farmerId: string,
-  ): Promise<OrderEntity> {
-    return await this.dataSource.transaction(async (manager) => {
-      const orderRepo = manager.getRepository(OrderEntity);
-      const userRepo = manager.getRepository(User);
-
-      const order = await orderRepo.findOne({
-        where: { id: orderId, farmerId },
-        lock: { mode: "pessimistic_write" },
-      });
-
-      if (!order || order.mode !== FulfilmentMode.PICKUP) {
-        throw new BadRequestException(
-          "Invalid order profile context.",
-          ErrorCode.BAD_REQUEST,
-        );
-      }
-
-      // Transition state machine: CONFIRMED -> PACKED
-      assertValidTransition(order.status as OrderStatus, OrderStatus.PACKED);
-      order.status = OrderStatus.PACKED;
-      await orderRepo.save(order);
-
-      await userRepo.findOneBy({ id: order.buyerId });
-
-      // Fire off the OTP to the buyer's phone. They must present it when they arrive at the farm.
-      // await arkeselClient.generateOtp(buyer!.phone, order.id.slice(0, 8));
-
-      return order;
-    });
-  }
 
   /**
    * When the buyer physically arrives at the farm, the farmer inputs the code to release it.
@@ -546,6 +513,59 @@ export class OrdersService {
       // Transition state: PACKED -> COLLECTED (Terminal state)
       order.status = OrderStatus.COLLECTED;
       return await orderRepo.save(order);
+    });
+  }
+  async markReadyForPickup(
+    orderId: string,
+    farmerId: string,
+  ): Promise<OrderEntity> {
+    return await this.dataSource.transaction(async (manager) => {
+      const orderRepo = manager.getRepository(OrderEntity);
+      const userRepo = manager.getRepository(User);
+
+      const order = await orderRepo.findOne({
+        where: { id: orderId, farmerId },
+        lock: { mode: "pessimistic_write" },
+      });
+
+      if (!order) {
+        throw new NotFoundException(
+          "Active order context records not found.",
+          ErrorCode.ORDER_NOT_FOUND,
+        );
+      }
+      if (order.mode !== FulfilmentMode.PICKUP) {
+        throw new BadRequestException(
+          "This order is designated for delivery tracking pipelines.",
+          ErrorCode.BAD_REQUEST,
+        );
+      }
+
+      // Enforce state transition safety rule: CONFIRMED -> PACKED
+      const targetStatus = OrderStatus.PACKED;
+      assertValidTransition(order.status as OrderStatus, targetStatus);
+
+      const buyer = await userRepo.findOneBy({ id: order.buyerId });
+      if (!buyer || !buyer.phone) {
+        throw new BadRequestException(
+          "Buyer contact data is currently unavailable for OTP verification.",
+          ErrorCode.BAD_REQUEST,
+        );
+      }
+
+      // Update state locally
+      order.status = targetStatus;
+      const updatedOrder = await orderRepo.save(order);
+      const fullname = `${buyer.firstName} ${buyer.middleName} ${buyer.lastName}`;
+      // Dispatches the 6-minute Arkesel verification code to the buyer
+      try {
+        // Evaluate verification code securely against Arkesel's session state
+        await arkeselClient.generateAndSendDoorstepOtp(buyer.phone, fullname);
+      } catch (otpError: any) {
+        throw new BadRequestException(otpError.message, ErrorCode.BAD_REQUEST);
+      }
+
+      return updatedOrder;
     });
   }
 }
