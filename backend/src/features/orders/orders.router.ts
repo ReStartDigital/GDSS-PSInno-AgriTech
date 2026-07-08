@@ -347,4 +347,111 @@ router.patch(
   ordersController.cancelOrder,
 );
 
+/**
+ * @openapi
+ * /api/v1/orders/{id}/ready-pickup:
+ *   patch:
+ *     summary: Pickup Step 1 - Mark order cargo as packed and dispatch Arkesel OTP
+ *     description: Farmers call this endpoint when produce is fully prepared at the warehouse. Flips the order status to `PACKED` and initializes a strict 6-minute server-side Arkesel OTP sent directly to the buyer's phone.
+ *     tags:
+ *       - Order Fulfillment
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The unique UUID v4 identifier of the target order record.
+ *     responses:
+ *       200:
+ *         description: Order state changed to PACKED. 6-minute handoff PIN dispatched.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Order items compiled. A 6-minute warehouse collection PIN has been sent to the buyer."
+ *                 data:
+ *                   $ref: '#/components/schemas/Order'
+ *       400:
+ *         description: Invalid order context or state transition violation.
+ *       401:
+ *         description: Unauthorized access token.
+ *       422:
+ *         description: Missing parameter or validation error.
+ */
+router.patch(
+  "/:id/ready-pickup",
+  authorize(UserRole.FARMER, UserRole.AGENT),
+  ordersController.markReadyForPickup,
+);
+
+/**
+ * @openapi
+ * /api/v1/orders/{id}/verify-pickup:
+ *   post:
+ *     summary: Pickup Step 2 - Validate buyer handoff PIN and finalize order lifecycle
+ *     description: Farmers call this endpoint in-person when the buyer arrives at the farm. Verifies the input code against Arkesel's session state. On success, moves the order status to terminal `COLLECTED` and releases funds from escrow.
+ *     tags:
+ *       - Order Fulfillment
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The unique UUID v4 identifier of the active order.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - verification_pin
+ *             properties:
+ *               verification_pin:
+ *                 type: string
+ *                 minLength: 4
+ *                 maxLength: 8
+ *                 example: "482915"
+ *                 description: The numeric 6-digit Arkesel SMS code presented by the buyer.
+ *     responses:
+ *       200:
+ *         description: Handoff verified. Order status updated to COLLECTED.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Handoff verified successfully via Arkesel. Order state moved to terminal COLLECTED status."
+ *                 data:
+ *                   $ref: '#/components/schemas/Order'
+ *       400:
+ *         description: Invalid/expired handshake PIN or invalid order state.
+ *       422:
+ *         description: Validation error or unprocessable payload.
+ */
+router.post(
+  "/:id/verify-pickup",
+  authorize(UserRole.BUYER),
+  ordersController.verifyBuyerPickup,
+);
+
 export { router as ordersRouter };

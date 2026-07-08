@@ -503,15 +503,19 @@ export class OrdersService {
       const buyer = await userRepo.findOneBy({ id: order.buyerId });
 
       // Validate code directly via Arkesel
-      const isValid = await arkeselClient.verifyOtp(buyer!.phone, inputPin);
-      if (!isValid)
-        throw new BadRequestException(
-          "Invalid verification handshake PIN.",
-          ErrorCode.BAD_REQUEST,
-        );
+      try {
+        // Evaluate verification code securely against Arkesel's session state
+        await arkeselClient.verifyOtp(buyer!.phone, inputPin);
+      } catch (otpError: any) {
+        throw new BadRequestException(otpError.message, ErrorCode.BAD_REQUEST);
+      }
 
       // Transition state: PACKED -> COLLECTED (Terminal state)
-      order.status = OrderStatus.COLLECTED;
+      // Transition state to terminal pickup status: PACKED -> COLLECTED
+      const terminalStatus = OrderStatus.COLLECTED;
+      assertValidTransition(order.status as OrderStatus, terminalStatus);
+
+      order.status = terminalStatus;
       return await orderRepo.save(order);
     });
   }
