@@ -21,7 +21,7 @@ export default function HomePage() {
   const user = useAuthStore((s) => s.user)
   const navigate = useNavigate()
 
-  const params = filter !== 'All' ? { vegetableType: filter } : undefined
+  const params = filter !== 'All' ? { vegetable_type: filter } : undefined
   const { data, isLoading, error } = useAllListings(params)
 
   const listings = useMemo(() => {

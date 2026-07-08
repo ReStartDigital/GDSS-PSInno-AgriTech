@@ -14,7 +14,7 @@ export default function MarketplacePage() {
   const [selected, setSelected]   = useState<Listing | null>(null)
   const user = useAuthStore((s) => s.user)
 
-  const params = filter !== 'All' ? { vegetableType: filter } : undefined
+  const params = filter !== 'All' ? { vegetable_type: filter } : undefined
   const { data, isLoading, error } = useAllListings(params)
 
   const listings = useMemo(() => {

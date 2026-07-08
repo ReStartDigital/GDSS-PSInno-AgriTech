@@ -23,7 +23,7 @@ export default function LoginPage() {
         <div>
           <p className="eyebrow">Welcome back</p>
           <h2>Log in to VegeLink Ghana.</h2>
-          <p>Enter your phone number (starting with +233) and PIN to continue.</p>
+          <p>Enter your phone number and PIN to continue.</p>
         </div>
         <Link to="/auth/register" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px' }}>
           Create account

@@ -104,7 +104,7 @@ export const listingsApi = {
   /**
    * GET /listings
    * Accepts any subset of the backend query params (page, limit,
-   * vegetableType, farmerId, lat, lng, radiusKm, etc.)
+   * vegetable_type, farmer_id, lat, lng, radius_km, etc.)
    */
   getAll: (params?: Record<string, string | number | undefined>) =>
     api.get('/listings', { params }),

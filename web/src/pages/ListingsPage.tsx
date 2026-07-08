@@ -151,14 +151,14 @@ function ListingCard({ listing }: { listing: Listing }) {
         </span>
 
         {/* AgriScore ring — top right */}
-        {(listing as any).agriScore && (
-          <div className="mp-agriscore" title={`AgriScore: ${(listing as any).agriScore}`}>
-            <AgriScoreCircle score={(listing as any).agriScore} />
+        {listing.agriScore && (
+          <div className="mp-agriscore" title={`AgriScore: ${listing.agriScore}`}>
+            <AgriScoreCircle score={listing.agriScore} />
           </div>
         )}
 
         {/* Urgent badge — below status if both exist */}
-        {(listing as any).isUrgent && (
+        {listing.isUrgent && (
           <span className="mp-urgent-badge" style={{
             top: 'auto', bottom: 12, left: 12,
             background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
@@ -168,9 +168,9 @@ function ListingCard({ listing }: { listing: Listing }) {
 
       {/* Card body */}
       <div className="mp-card-body">
-        {(listing as any).freshness && (
+        {listing.freshness && (
           <div style={{ marginBottom: 8 }}>
-            <FreshnessBadge freshness={(listing as any).freshness} />
+            <FreshnessBadge freshness={listing.freshness} />
           </div>
         )}
 
@@ -286,7 +286,7 @@ function CreateListingForm({
       onSuccess: () => {
         reset()
         onClose()
-        onSuccess?.(data.vegetableType || 'Produce')
+        onSuccess?.(data.vegetable_type || 'Produce')
       }
     })
   }

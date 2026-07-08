@@ -155,7 +155,7 @@ function JobCard({ job }: { job: Job }) {
         {job.order && (
           <p className="mp-card-farmer">
             <span style={{ opacity: 0.5, marginRight: 4 }}>Cargo:</span>
-            {produceName} · {job.order.quantityKg} kg
+            {produceName} · {job.order.quantity_kg} kg
           </p>
         )}
 

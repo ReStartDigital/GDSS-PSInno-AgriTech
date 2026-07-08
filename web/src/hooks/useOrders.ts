@@ -19,7 +19,7 @@ export function useMyOrders() {
   return useQuery<Order[]>({
     queryKey: ['orders'],
     queryFn: () =>
-      ordersApi.getMyOrders().then((r) => (r.data.data ?? []) as Order[]),
+      ordersApi.getMyOrders().then((r) => (r.data.data.data ?? []) as Order[]),
   })
 }
 
@@ -27,7 +27,7 @@ export function useOrder(id: string) {
   return useQuery<Order>({
     queryKey: ['orders', id],
     queryFn: () =>
-      ordersApi.getById(id).then((r) => r.data.data as Order),
+      ordersApi.getById(id).then((r) => r.data.data.order as Order),
     enabled: !!id,
   })
 }

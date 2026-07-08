@@ -1,7 +1,7 @@
 import type { UserRole } from '../store/auth.store'
 
 // ── Listing ───────────────────────────────────────────────────────────────────
-// Matches the backend ProduceListingEntity schema
+// Matches the backend ListingDetail / ListingSummary schema
 export interface Listing {
   id: string
   farmerId: string
@@ -11,14 +11,17 @@ export interface Listing {
   harvestDate: string
   status: 'active' | 'sold' | 'cancelled'
   images: string[]
-  location: { type: 'Point'; coordinates: [number, number] }
+  location?: { type: string; coordinates: [number, number] }
   supportsDelivery: boolean
   supportsPickup: boolean
   autoConfirmUntilKg?: number | null
   autoConfirmPriceFloorGhs?: number | null
-  recommended_packaging_id?: string | null
-  created_at: string
-  updated_at: string
+  recommendedPackagingId?: string | null
+  createdAt: string
+  updatedAt: string
+  agriScore?: number
+  isUrgent?: boolean
+  freshness?: 'High' | 'Medium' | 'Low'
   farmer?: {
     id: string
     firstName: string
@@ -42,37 +45,26 @@ export interface PaginatedResponse<T> {
 }
 
 // ── Order ─────────────────────────────────────────────────────────────────────
-// Matches backend OrderEntity schema
+// Placeholder — will be updated once the orders backend feature is built
 export interface Order {
   id: string
-  buyerId: string
-  farmerId: string
-  listingId: string
-  listing?: Listing
-  mode: 'delivery' | 'pickup'
-  quantityKg: number
-  pricePerKgGhs: number
-  negotiatedPricePerKgGhs: number | null
-  produceSubtotalGhs: number
-  packagingTypeId: string | null
-  transportCostEstimateGhs: number
-  totalGhs: number
-  deliveryAddress: string | null
-  deliveryLocation: { type: 'Point'; coordinates: [number, number] } | null
   status:
     | 'pending'
-    | 'pending_agent_confirmation'
-    | 'pending_sms_confirmation'
     | 'negotiating'
     | 'confirmed'
     | 'packed'
     | 'in_transit'
     | 'delivered'
     | 'cancelled'
-  cancelledBy: string | null
-  cancellationReason: string | null
-  createdAt: string
-  updatedAt: string
+  quantity_kg: number
+  price_per_kg_ghs: number
+  total_ghs: number
+  mode: 'delivery' | 'pickup'
+  delivery_address?: string
+  listing_id: string
+  buyer_id: string
+  created_at: string
+  updated_at: string
 }
 
 // ── User ──────────────────────────────────────────────────────────────────────
