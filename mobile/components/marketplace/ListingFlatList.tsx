@@ -1,14 +1,15 @@
 import { Link } from "expo-router";
 import { useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, TextInput, View, ActivityIndicator, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   listingCategories,
   ListingCategoryFilter,
   MarketplaceListing,
-  marketplaceListings,
 } from "@/lib/marketplace-data";
+import { useMarketplaceListings, mapBackendListingToClient } from "@/lib/listings-api";
 import { vlClassNames, vlColors } from "@/lib/design-system";
+import { getProduceEmoji } from "@/lib/utils";
 import {
   ViewGrid,
   List as ListIcon,
@@ -22,6 +23,7 @@ import {
   Xmark,
   Check,
 } from "iconoir-react-native";
+import { useUserSettingsStore } from "@/lib/user-settings-store";
 
 type SortMode = "nearest" | "price_low" | "price_high" | "stock";
 type ViewMode = "grid" | "list";
@@ -55,6 +57,12 @@ export function ListingFlatList() {
     "All Regions",
   );
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const { data: listingsData, isLoading, refetch, isFetching } = useMarketplaceListings();
+  const marketplaceListings = useMemo(() => {
+    const raw = listingsData?.data || [];
+    return raw.map(mapBackendListingToClient);
+  }, [listingsData?.data]);
 
   const activeSortLabel =
     sortOptions.find((option) => option.value === sortMode)?.label ?? "Nearest First";
@@ -97,7 +105,7 @@ export function ListingFlatList() {
 
         return left.distanceKm - right.distanceKm;
       });
-  }, [searchQuery, selectedCategory, selectedRegion, sortMode]);
+  }, [searchQuery, selectedCategory, selectedRegion, sortMode, marketplaceListings]);
 
   const resetFilters = () => {
     setSelectedCategory("All");
@@ -108,21 +116,29 @@ export function ListingFlatList() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: 112,
-          paddingTop: Math.max(insets.top, 16),
-        }}
-      >
-        <View className="flex-row items-start justify-between">
-          <View>
-            <Text className="text-3xl font-black text-gray-950">Browse Produce</Text>
-            <Text className="mt-1 text-sm font-black text-gray-400">
-              {marketplaceListings.length} products available
-            </Text>
-          </View>
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#15803D" />
+        </View>
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingBottom: 112,
+            paddingTop: Math.max(insets.top, 16),
+          }}
+          refreshControl={
+            <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor="#15803D" />
+          }
+        >
+          <View className="flex-row items-start justify-between">
+            <View>
+              <Text className="text-3xl font-black text-gray-950">Browse Produce</Text>
+              <Text className="mt-1 text-sm font-black text-gray-400">
+                {marketplaceListings.length} products available
+              </Text>
+            </View>
 
           <Pressable
             accessibilityLabel={viewMode === "grid" ? "Show list view" : "Show grid view"}
@@ -196,7 +212,8 @@ export function ListingFlatList() {
             ))}
           </View>
         )}
-      </ScrollView>
+        </ScrollView>
+      )}
 
       <FilterSheet
         visible={isFilterOpen}
@@ -212,6 +229,9 @@ export function ListingFlatList() {
 }
 
 function ListCard({ listing }: { listing: MarketplaceListing }) {
+  const { toggleSaveListing, isSaved } = useUserSettingsStore();
+  const saved = isSaved(listing.id);
+
   return (
     <Link href={{ pathname: "/listings/[id]", params: { id: listing.id } }} asChild>
       <Pressable className="rounded-2xl bg-white p-3 shadow-sm active:opacity-80">
@@ -245,8 +265,20 @@ function ListCard({ listing }: { listing: MarketplaceListing }) {
             </View>
           </View>
 
-          <Pressable className="ml-3 h-10 w-10 items-center justify-center rounded-full bg-gray-50">
-            <Heart color="#D1D5DB" width={20} height={20} strokeWidth={2} />
+          <Pressable
+            className="ml-3 h-10 w-10 items-center justify-center rounded-full bg-gray-50 active:bg-gray-100"
+            onPress={(e) => {
+              e.stopPropagation();
+              toggleSaveListing(listing.id);
+            }}
+          >
+            <Heart
+              color={saved ? "#EF4444" : "#D1D5DB"}
+              fill={saved ? "#EF4444" : "none"}
+              width={20}
+              height={20}
+              strokeWidth={2}
+            />
           </Pressable>
         </View>
       </Pressable>
@@ -255,6 +287,9 @@ function ListCard({ listing }: { listing: MarketplaceListing }) {
 }
 
 function GridCard({ listing }: { listing: MarketplaceListing }) {
+  const { toggleSaveListing, isSaved } = useUserSettingsStore();
+  const saved = isSaved(listing.id);
+
   return (
     <Link href={{ pathname: "/listings/[id]", params: { id: listing.id } }} asChild>
       <Pressable className="mb-3 w-[48%] overflow-hidden rounded-2xl bg-white active:opacity-80">
@@ -265,8 +300,20 @@ function GridCard({ listing }: { listing: MarketplaceListing }) {
           <View className="absolute left-3 top-3">
             <FreshnessPill listing={listing} compact />
           </View>
-          <Pressable className="absolute right-3 top-3 h-9 w-9 items-center justify-center rounded-full bg-white">
-            <Heart color="#D1D5DB" width={18} height={18} strokeWidth={2} />
+          <Pressable
+            className="absolute right-3 top-3 h-9 w-9 items-center justify-center rounded-full bg-white active:bg-gray-100 shadow-sm"
+            onPress={(e) => {
+              e.stopPropagation();
+              toggleSaveListing(listing.id);
+            }}
+          >
+            <Heart
+              color={saved ? "#EF4444" : "#D1D5DB"}
+              fill={saved ? "#EF4444" : "none"}
+              width={18}
+              height={18}
+              strokeWidth={2}
+            />
           </Pressable>
           <ProduceThumb listing={listing} size="lg" />
         </View>
@@ -342,11 +389,7 @@ function ProduceThumb({
   size: "sm" | "lg";
 }) {
   const dimensions = size === "sm" ? "h-20 w-20" : "h-24 w-24";
-  const cropInitials = listing.cropName
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 2);
+  const emoji = getProduceEmoji(listing.cropName);
 
   return (
     <View
@@ -364,7 +407,7 @@ function ProduceThumb({
         }}
       >
         <View className="absolute -right-1 -top-1 h-5 w-7 rotate-45 rounded-full bg-white/40" />
-        <Text className="text-base font-black text-white">{cropInitials}</Text>
+        <Text className="text-2xl">{emoji}</Text>
       </View>
     </View>
   );

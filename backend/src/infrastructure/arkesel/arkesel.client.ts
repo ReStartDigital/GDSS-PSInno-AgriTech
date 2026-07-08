@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance } from "axios";
 import { logger, logError } from "../../common/utils/logger.js";
+import { AUTH_CONSTANTS } from "../../common/constants/auth.constants.js";
 
 const ARKESEL_BASE_URL = "https://sms.arkesel.com/api";
 
@@ -113,6 +114,41 @@ class ArkeselClient {
     } catch (error) {
       logError("Arkesel verifyOtp request failed", error, { phone });
       return { success: false, errorReason: "NETWORK_ERROR" };
+    }
+  }
+
+  async generateAndSendDoorstepOtp(
+    phoneNumber: string,
+    buyerName?: string | null,
+  ): Promise<void> {
+    const codeLength = 6;
+    const expiryMinutes = AUTH_CONSTANTS.OTP.EXPIRY_SECONDS; // Enforcing your strict 6-minute operational lifespan
+
+    logger.info(
+      `Initiating doorstep 2-step verification OTP dispatch for ${phoneNumber}`,
+    );
+
+    const result = await arkeselClient.generateOtp(
+      phoneNumber,
+      codeLength,
+      expiryMinutes,
+      buyerName || "Valued Buyer",
+    );
+
+    if (!result.success) {
+      throw new Error(
+        `Failed to dispatch doorstep authentication token: ${result.errorReason}`,
+      );
+    }
+  }
+
+  async verifyDoorstepOtp(phoneNumber: string, code: string): Promise<void> {
+    const result = await arkeselClient.verifyOtp(phoneNumber, code);
+
+    if (!result.success) {
+      throw new Error(
+        "The doorstep verification PIN entered is invalid, incorrect, or has expired.",
+      );
     }
   }
 }

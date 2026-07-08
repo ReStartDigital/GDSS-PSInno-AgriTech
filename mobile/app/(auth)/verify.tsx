@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
+import { Alert, Pressable, Text, View, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
 import { OTPInput } from "@/components/common/OTPInput";
@@ -7,40 +7,66 @@ import { ProgressStep } from "@/components/common/ProgressStep";
 import { vlClassNames, vlStyles } from "@/lib/design-system";
 import { NavArrowLeft, NavArrowRight } from "iconoir-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { apiClient } from "@/lib/api-client";
 
 const otpLength = 6;
 
 export default function VerifyScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { firstName, lastName, phone, role } = useLocalSearchParams<{
+  const { firstName, lastName, phone, role, region, language } = useLocalSearchParams<{
     firstName?: string;
     lastName?: string;
     phone?: string;
     role?: UserRole;
+    region?: string;
+    language?: string;
   }>();
   const [otp, setOtp] = useState("");
   const [countdown, setCountdown] = useState(30);
-  const canResend = countdown === 0;
+  const [loading, setLoading] = useState(false);
+  const canResend = countdown === 0 && !loading;
 
   const safePhone = phone?.trim() || "+233059983273";
   const safeRole: UserRole = role ?? "farmer";
-  const isOtpReady = otp.length === otpLength;
+  const isOtpReady = otp.length === otpLength && !loading;
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (!isOtpReady) {
       return;
     }
 
-    router.push({
-      pathname: "/(auth)/details",
-      params: {
-        firstName,
-        lastName,
+    setLoading(true);
+    try {
+      const res = await apiClient.post("/auth/verify-otp", {
         phone: safePhone,
-        role: safeRole,
-      },
-    });
+        otp,
+      }) as any;
+
+      const registrationToken = res.data?.registration_token;
+
+      if (!registrationToken) {
+        throw new Error("Registration token not received from server.");
+      }
+
+      router.push({
+        pathname: "/(auth)/pin" as any,
+        params: {
+          firstName,
+          lastName,
+          phone: safePhone,
+          role: safeRole,
+          region,
+          language,
+          registrationToken,
+        },
+      });
+    } catch (err: any) {
+      const errMsg = err.error?.message || "Invalid or expired verification code.";
+      Alert.alert("Verification Failed", errMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -59,10 +85,15 @@ export default function VerifyScreen() {
     return () => clearInterval(timer);
   }, [countdown]);
 
-  const handleResend = useCallback(() => {
+  const handleResend = useCallback(async () => {
     if (!canResend) return;
-    setCountdown(30);
-    Alert.alert("Code sent", `A new code was sent to ${safePhone}.`);
+    try {
+      await apiClient.post("/auth/resend-otp", { phone: safePhone });
+      setCountdown(30);
+      Alert.alert("Code sent", `A new code was sent to ${safePhone}.`);
+    } catch (err: any) {
+      Alert.alert("Resend Failed", err.error?.message || "Could not resend OTP code.");
+    }
   }, [canResend, safePhone]);
 
   const handleBack = () => {
@@ -73,7 +104,11 @@ export default function VerifyScreen() {
 
     router.replace({
       pathname: "/(auth)/phone",
-      params: { role: safeRole },
+      params: {
+        firstName,
+        lastName,
+        role: safeRole,
+      },
     });
   };
 
@@ -92,9 +127,10 @@ export default function VerifyScreen() {
             <View className="flex-row gap-2">
               <ProgressStep active />
               <ProgressStep active />
+              <ProgressStep active />
               <ProgressStep />
             </View>
-            <Text className="text-xs font-black text-gray-400">Step 2 of 3</Text>
+            <Text className="text-xs font-black text-gray-400">Step 3 of 4</Text>
           </View>
         </View>
 
@@ -137,23 +173,30 @@ export default function VerifyScreen() {
             className={isOtpReady ? vlClassNames.primaryButton : vlClassNames.mutedButton}
             style={isOtpReady ? vlStyles.primaryButtonShadow : undefined}
             onPress={handleVerify}
+            disabled={loading}
           >
             <View className="flex-row items-center justify-center gap-2">
-              <Text
-                className={
-                  isOtpReady
-                    ? vlClassNames.primaryButtonText
-                    : vlClassNames.mutedButtonText
-                }
-              >
-                Verify
-              </Text>
-              <NavArrowRight
-                color={isOtpReady ? "#FFFFFF" : "#9CA3AF"}
-                width={18}
-                height={18}
-                strokeWidth={2.5}
-              />
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <>
+                  <Text
+                    className={
+                      isOtpReady
+                        ? vlClassNames.primaryButtonText
+                        : vlClassNames.mutedButtonText
+                    }
+                  >
+                    Verify
+                  </Text>
+                  <NavArrowRight
+                    color={isOtpReady ? "#FFFFFF" : "#9CA3AF"}
+                    width={18}
+                    height={18}
+                    strokeWidth={2.5}
+                  />
+                </>
+              )}
             </View>
           </Pressable>
         </View>
