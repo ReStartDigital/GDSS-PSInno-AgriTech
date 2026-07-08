@@ -122,7 +122,7 @@ function RoleDashboard({ role }: { role: string }) {
                 <div className="dashboard-row">
                   <StatusBadge status={o.status} />
                   <span style={{ color: '#374151', fontWeight: 600, fontSize: '0.88rem' }}>GH₵ {o.total_ghs}</span>
-                  <span style={{ color: '#9ca3af', fontSize: '0.8rem', marginLeft: 'auto' }}>{o.quantity_kg} kg</span>
+                  <span style={{ color: '#9ca3af', fontSize: '0.8rem', marginLeft: 'auto' }}>{o.quantityKg} kg</span>
                 </div>
               </Link>
             ))}
@@ -146,8 +146,8 @@ function RoleDashboard({ role }: { role: string }) {
               {recentListings.map((l: Listing) => (
                 <div key={l.id} className="dashboard-row">
                   <StatusBadge status={l.status} />
-                  <span style={{ color: '#374151', fontWeight: 600, fontSize: '0.88rem' }}>{l.vegetable_type}</span>
-                  <span style={{ color: '#9ca3af', fontSize: '0.8rem', marginLeft: 'auto' }}>GH₵ {l.price_per_kg_ghs}/kg</span>
+                  <span style={{ color: '#374151', fontWeight: 600, fontSize: '0.88rem' }}>{l.vegetableType}</span>
+                  <span style={{ color: '#9ca3af', fontSize: '0.8rem', marginLeft: 'auto' }}>GH₵ {l.pricePerKgGhs}/kg</span>
                 </div>
               ))}
             </div>

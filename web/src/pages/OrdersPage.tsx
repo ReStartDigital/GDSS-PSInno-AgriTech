@@ -10,6 +10,8 @@ import type { Order } from '../types/api'
 // Status-based visual config for order cards
 const ORDER_STATUS_CONFIG: Record<string, { emoji: string; tint: string; accent: string }> = {
   pending:     { emoji: '⏳', tint: 'rgba(245,158,11,0.08)',   accent: '#d97706' },
+  pending_agent_confirmation: { emoji: '👤', tint: 'rgba(245,158,11,0.08)', accent: '#d97706' },
+  pending_sms_confirmation: { emoji: '📱', tint: 'rgba(245,158,11,0.08)', accent: '#d97706' },
   negotiating: { emoji: '🤝', tint: 'rgba(99,102,241,0.08)',  accent: '#6366f1' },
   confirmed:   { emoji: '✅', tint: 'rgba(22,101,52,0.08)',   accent: '#166534' },
   packed:      { emoji: '📦', tint: 'rgba(59,130,246,0.08)',  accent: '#2563eb' },
@@ -97,22 +99,22 @@ function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
         <h3 className="mp-card-name">#{order.id.slice(0, 8)}</h3>
         <p className="mp-card-farmer">
           <span style={{ opacity: 0.5, marginRight: 4 }}>Placed</span>
-          {new Date(order.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+          {new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
         </p>
 
         {/* Price + quantity meta */}
         <div className="mp-card-meta">
           <div>
-            <span className="mp-card-price">GH₵ {order.total_ghs}</span>
+            <span className="mp-card-price">GH₵ {order.totalGhs}</span>
             <span className="mp-card-per"> total</span>
           </div>
-          <div className="mp-card-qty">{order.quantity_kg} kg</div>
+          <div className="mp-card-qty">{order.quantityKg} kg</div>
         </div>
 
-        {order.delivery_address && (
+        {order.deliveryAddress && (
           <p className="mp-card-date">
             <span style={{ opacity: 0.55 }}>To:</span>{' '}
-            {order.delivery_address}
+            {order.deliveryAddress}
           </p>
         )}
 
@@ -150,9 +152,9 @@ function OrderDetail({ order, onClose }: { order: Order; onClose: () => void }) 
 
       <div className="detail-grid" style={{ marginBottom: 20 }}>
         {[
-          { label: 'Quantity', value: `${order.quantity_kg} kg` },
-          { label: 'Total',    value: `GH₵ ${order.total_ghs}` },
-          { label: 'Price/kg', value: `GH₵ ${order.price_per_kg_ghs}` },
+          { label: 'Quantity', value: `${order.quantityKg} kg` },
+          { label: 'Total',    value: `GH₵ ${order.totalGhs}` },
+          { label: 'Price/kg', value: `GH₵ ${order.pricePerKgGhs}` },
           { label: 'Mode',     value: order.mode },
         ].map((item) => (
           <div key={item.label} className="detail-card">
@@ -162,10 +164,10 @@ function OrderDetail({ order, onClose }: { order: Order; onClose: () => void }) 
         ))}
       </div>
 
-      {order.delivery_address && (
+      {order.deliveryAddress && (
         <div style={{ padding: '12px 16px', borderRadius: 12, background: 'rgba(214,255,205,0.3)', marginBottom: 16 }}>
           <strong style={{ fontSize: '0.8rem', color: '#264123', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Delivery Address</strong>
-          <p style={{ margin: '4px 0 0', color: '#374151' }}>{order.delivery_address}</p>
+          <p style={{ margin: '4px 0 0', color: '#374151' }}>{order.deliveryAddress}</p>
         </div>
       )}
 

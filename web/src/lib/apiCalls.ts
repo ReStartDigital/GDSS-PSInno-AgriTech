@@ -104,7 +104,7 @@ export const listingsApi = {
   /**
    * GET /listings
    * Accepts any subset of the backend query params (page, limit,
-   * vegetable_type, farmer_id, lat, lng, radius_km, etc.)
+   * vegetableType, farmerId, lat, lng, radiusKm, etc.)
    */
   getAll: (params?: Record<string, string | number | undefined>) =>
     api.get('/listings', { params }),
@@ -116,7 +116,7 @@ export const listingsApi = {
    * POST /listings
    * Expects the full CreateListingFormData including location: { lat, lng }.
    */
-  create: (data: CreateListingFormData & { farmer_id?: string }) =>
+  create: (data: CreateListingFormData & { farmerId?: string }) =>
     api.post('/listings', data),
 
   /**

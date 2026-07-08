@@ -1,13 +1,12 @@
 import { z } from 'zod'
 
 // ── Phone: strict Ghana international format (+233 + 9 digits) ────────────────
-// Accepts the full E.164 format: +233XXXXXXXXX
-// Also accepts the local shorthand 0XXXXXXXXX — the backend normalises both.
+// Strictly enforced: +233XXXXXXXXX
 const phone = z
   .string()
   .min(1, 'Phone number is required')
   .regex(
-    /^(\+233|0)\d{9}$/,
+    /^\+233\d{9}$/,
     'Enter a valid Ghanaian phone number, e.g. +233244123456',
   )
 
@@ -64,28 +63,26 @@ export type LoginFormData = z.infer<typeof loginSchema>
 
 // ── POST /api/v1/listings ─────────────────────────────────────────────────────
 // Mirrors backend createListingSchema exactly.
-// Required backend fields: vegetable_type, quantity_kg, price_per_kg_ghs,
-// harvest_date, images[], location: {lat, lng}, supports_delivery, supports_pickup
 export const createListingSchema = z
   .object({
-    vegetable_type: z.string().min(1, 'Crop type is required'),
-    quantity_kg: z.coerce.number().positive('Must be greater than 0'),
-    price_per_kg_ghs: z.coerce.number().positive('Must be greater than 0'),
-    harvest_date: z.string().min(1, 'Harvest date is required'),
+    vegetableType: z.string().min(1, 'Crop type is required'),
+    quantityKg: z.coerce.number().positive('Must be greater than 0'),
+    pricePerKgGhs: z.coerce.number().positive('Must be greater than 0'),
+    harvestDate: z.string().min(1, 'Harvest date is required'),
     images: z.array(z.string().url('Invalid image URL')).default([]),
     location: z.object({
       lat: z.number({ required_error: 'Latitude is required' }),
       lng: z.number({ required_error: 'Longitude is required' }),
     }),
-    supports_delivery: z.boolean().default(true),
-    supports_pickup: z.boolean().default(true),
-    recommended_packaging_id: z.string().uuid().optional(),
+    supportsDelivery: z.boolean().default(true),
+    supportsPickup: z.boolean().default(true),
+    recommendedPackagingId: z.string().uuid().optional(),
     // Agent-only: supply when creating on behalf of a farmer
-    farmer_id: z.string().uuid().optional(),
+    farmerId: z.string().uuid().optional(),
   })
-  .refine((d) => d.supports_delivery || d.supports_pickup, {
+  .refine((d) => d.supportsDelivery || d.supportsPickup, {
     message: 'At least one fulfilment mode must be selected',
-    path: ['supports_pickup'],
+    path: ['supportsPickup'],
   })
 export type CreateListingFormData = z.infer<typeof createListingSchema>
 

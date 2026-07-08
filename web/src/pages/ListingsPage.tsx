@@ -130,7 +130,7 @@ export default function ListingsPage() {
 
 function ListingCard({ listing }: { listing: Listing }) {
   const { mutate: deleteListing, isPending } = useDeleteListing()
-  const cfg = getCropConfig(listing.vegetable_type)
+  const cfg = getCropConfig(listing.vegetableType)
 
   return (
     <article className="mp-card">
@@ -150,14 +150,14 @@ function ListingCard({ listing }: { listing: Listing }) {
         </span>
 
         {/* AgriScore ring — top right */}
-        {listing.agriScore && (
-          <div className="mp-agriscore" title={`AgriScore: ${listing.agriScore}`}>
-            <AgriScoreCircle score={listing.agriScore} />
+        {(listing as any).agriScore && (
+          <div className="mp-agriscore" title={`AgriScore: ${(listing as any).agriScore}`}>
+            <AgriScoreCircle score={(listing as any).agriScore} />
           </div>
         )}
 
         {/* Urgent badge — below status if both exist */}
-        {listing.isUrgent && (
+        {(listing as any).isUrgent && (
           <span className="mp-urgent-badge" style={{
             top: 'auto', bottom: 12, left: 12,
             background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
@@ -167,13 +167,13 @@ function ListingCard({ listing }: { listing: Listing }) {
 
       {/* Card body */}
       <div className="mp-card-body">
-        {listing.freshness && (
+        {(listing as any).freshness && (
           <div style={{ marginBottom: 8 }}>
-            <FreshnessBadge freshness={listing.freshness} />
+            <FreshnessBadge freshness={(listing as any).freshness} />
           </div>
         )}
 
-        <h3 className="mp-card-name">{listing.vegetable_type}</h3>
+        <h3 className="mp-card-name">{listing.vegetableType}</h3>
 
         {(listing as any).description && (
           <p className="mp-card-farmer" style={{ marginBottom: 10, lineHeight: 1.5 }}>
@@ -184,18 +184,18 @@ function ListingCard({ listing }: { listing: Listing }) {
         {/* Price + quantity meta row */}
         <div className="mp-card-meta">
           <div>
-            <span className="mp-card-price">GH₵ {listing.price_per_kg_ghs}</span>
+            <span className="mp-card-price">GH₵ {listing.pricePerKgGhs}</span>
             <span className="mp-card-per"> /{(listing as any).unit_of_measure ?? 'kg'}</span>
           </div>
           <div className="mp-card-qty">
-            {listing.quantity_kg} {(listing as any).unit_of_measure ?? 'kg'}
+            {listing.quantityKg} {(listing as any).unit_of_measure ?? 'kg'}
           </div>
         </div>
 
-        {listing.harvest_date && (
+        {listing.harvestDate && (
           <p className="mp-card-date">
             <span style={{ opacity: 0.55 }}>Harvest:</span>{' '}
-            {new Date(listing.harvest_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+            {new Date(listing.harvestDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
           </p>
         )}
 
@@ -231,7 +231,7 @@ function CreateListingForm({
   const { mutate, isPending, error } = useCreateListing()
   const { register, handleSubmit, watch, setValue, formState: { errors }, reset } = useForm<CreateListingFormData, unknown, CreateListingFormData>({
     resolver: zodResolver(createListingSchema) as never,
-    defaultValues: { unit_of_measure: 'kg' }
+    defaultValues: { unit_of_measure: 'kg' } // Need to check if this needs to change to camelCase too
   })
   
   const [formFarmerId, setFormFarmerId] = useState(selectedFarmerId)
@@ -244,15 +244,15 @@ function CreateListingForm({
         lat: 6.6745,
         lng: -1.5644,
       },
-      supports_delivery: true,
-      supports_pickup: true,
-      ...(isAgent ? { farmer_id: formFarmerId } : {})
+      supportsDelivery: true,
+      supportsPickup: true,
+      ...(isAgent ? { farmerId: formFarmerId } : {})
     }
     mutate(payload as any, {
       onSuccess: () => {
         reset()
         onClose()
-        onSuccess?.(data.vegetable_type || 'Produce')
+        onSuccess?.(data.vegetableType || 'Produce')
       }
     })
   }
@@ -298,10 +298,10 @@ function CreateListingForm({
           </div>
         )}
         <div className="form-grid">
-          <Field label="Crop Type" dark placeholder="e.g. Tomatoes" error={errors.vegetable_type} {...register('vegetable_type')} />
-          <Field label="Quantity" dark type="number" min="1" placeholder="e.g. 200" error={errors.quantity_kg} {...register('quantity_kg')} />
-          <Field label="Price per unit (GH₵)" dark type="number" step="0.01" min="0.01" placeholder="e.g. 4.50" error={errors.price_per_kg_ghs} {...register('price_per_kg_ghs')} />
-          <Field label="Harvest Date" dark type="date" error={errors.harvest_date} {...register('harvest_date')} />
+          <Field label="Crop Type" dark placeholder="e.g. Tomatoes" error={errors.vegetableType} {...register('vegetableType')} />
+          <Field label="Quantity" dark type="number" min="1" placeholder="e.g. 200" error={errors.quantityKg} {...register('quantityKg')} />
+          <Field label="Price per unit (GH₵)" dark type="number" step="0.01" min="0.01" placeholder="e.g. 4.50" error={errors.pricePerKgGhs} {...register('pricePerKgGhs')} />
+          <Field label="Harvest Date" dark type="date" error={errors.harvestDate} {...register('harvestDate')} />
         </div>
 
         {/* Unit of measure */}

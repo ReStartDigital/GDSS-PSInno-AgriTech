@@ -24,7 +24,7 @@ export function useMyListings(selectedFarmerId?: string) {
     queryKey: ['listings', 'mine', farmerId],
     queryFn: () =>
       listingsApi
-        .getAll({ farmer_id: farmerId })
+        .getAll({ farmerId: farmerId })
         // data.data is { data: Listing[], meta: {} } — extract the array
         .then((r) => (r.data.data.data ?? []) as Listing[]),
     enabled: !!farmerId,
@@ -58,7 +58,7 @@ export function useListing(id: string) {
 export function useCreateListing() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: CreateListingFormData & { farmer_id?: string }) =>
+    mutationFn: (data: CreateListingFormData & { farmerId?: string }) =>
       listingsApi.create(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['listings'] }),
   })

@@ -21,14 +21,14 @@ export default function HomePage() {
   const user = useAuthStore((s) => s.user)
   const navigate = useNavigate()
 
-  const params = filter !== 'All' ? { vegetable_type: filter } : undefined
+  const params = filter !== 'All' ? { vegetableType: filter } : undefined
   const { data, isLoading, error } = useAllListings(params)
 
   const listings = useMemo(() => {
     const all: Listing[] = Array.isArray(data) ? data : []
     if (!search.trim()) return all
     return all.filter((l) =>
-      l.vegetable_type.toLowerCase().includes(search.toLowerCase()) ||
+      l.vegetableType.toLowerCase().includes(search.toLowerCase()) ||
       l.farmer?.firstName?.toLowerCase().includes(search.toLowerCase())
     )
   }, [data, search])
@@ -145,7 +145,7 @@ export default function HomePage() {
         {listings.length > 0 && (
           <div className="mp-card-grid">
             {listings.map((listing) => {
-              const cfg = getCropConfig(listing.vegetable_type)
+              const cfg = getCropConfig(listing.vegetableType)
               return (
                 <article key={listing.id} className="mp-card">
                   <div className="mp-card-visual" style={{ background: cfg.tint }}>
@@ -165,7 +165,7 @@ export default function HomePage() {
                         <FreshnessBar freshness={listing.freshness} />
                       </div>
                     )}
-                    <h3 className="mp-card-name">{listing.vegetable_type}</h3>
+                    <h3 className="mp-card-name">{listing.vegetableType}</h3>
                     {listing.farmer && (
                       <p className="mp-card-farmer">
                         <span style={{ opacity: 0.5, marginRight: 4 }}>by</span>
@@ -174,17 +174,17 @@ export default function HomePage() {
                     )}
                     <div className="mp-card-meta">
                       <div>
-                        <span className="mp-card-price">GH₵ {listing.price_per_kg_ghs}</span>
+                        <span className="mp-card-price">GH₵ {listing.pricePerKgGhs}</span>
                         <span className="mp-card-per"> /kg</span>
                       </div>
                       <div className="mp-card-qty">
-                        <span>{listing.quantity_kg} kg</span>
+                        <span>{listing.quantityKg} kg</span>
                       </div>
                     </div>
-                    {listing.harvest_date && (
+                    {listing.harvestDate && (
                       <p className="mp-card-date">
                         <span style={{ opacity: 0.55 }}>Harvest:</span>{' '}
-                        {new Date(listing.harvest_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {new Date(listing.harvestDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </p>
                     )}
 

@@ -18,11 +18,13 @@ interface AuthState {
   registrationToken: string | null
   pendingPhone: string | null
   isAuthenticated: boolean
+  isInitialized: boolean
   setAuth: (user: AuthUser, accessToken: string) => void
   setAccessToken: (token: string) => void
   setRegistrationToken: (token: string, phone: string) => void
   clearRegistrationToken: () => void
   clearAuth: () => void
+  setInitialized: (initialized: boolean) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -33,15 +35,17 @@ export const useAuthStore = create<AuthState>()(
       registrationToken: null,
       pendingPhone: null,
       isAuthenticated: false,
+      isInitialized: false,
       setAuth: (user, accessToken) =>
         set({ user, accessToken, isAuthenticated: true, registrationToken: null, pendingPhone: null }),
-      setAccessToken: (accessToken) => set({ accessToken }),
+      setAccessToken: (accessToken) => set({ accessToken, isAuthenticated: true }),
       setRegistrationToken: (registrationToken, pendingPhone) =>
         set({ registrationToken, pendingPhone }),
       clearRegistrationToken: () => set({ registrationToken: null, pendingPhone: null }),
       clearAuth: () =>
-        set({ user: null, accessToken: null, isAuthenticated: false, registrationToken: null, pendingPhone: null }),
+        set({ user: null, accessToken: null, isAuthenticated: false, registrationToken: null, pendingPhone: null, isInitialized: true }),
+      setInitialized: (isInitialized) => set({ isInitialized }),
     }),
-    { name: 'vegelink-auth', partialize: (s) => ({ user: s.user }) },
+    { name: 'vegelink-auth', partialize: (s) => ({ user: s.user, isAuthenticated: s.isAuthenticated, accessToken: s.accessToken }) },
   ),
 )

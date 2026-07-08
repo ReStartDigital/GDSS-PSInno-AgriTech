@@ -82,7 +82,7 @@ export function FreshnessBar({ freshness }: { freshness: 'High' | 'Medium' | 'Lo
 // ── Order Modal ────────────────────────────────────────────────────────────────
 
 export function OrderModal({ listing, onClose }: { listing: Listing; onClose: () => void }) {
-  const cfg = getCropConfig(listing.vegetable_type)
+  const cfg = getCropConfig(listing.vegetableType)
   const { mutate, isPending, error, isSuccess } = usePlaceOrder(listing.id)
   const { register, handleSubmit, watch, formState: { errors } } = useForm<PlaceOrderFormData, unknown, PlaceOrderFormData>({
     resolver: zodResolver(placeOrderSchema) as never,
@@ -101,8 +101,8 @@ export function OrderModal({ listing, onClose }: { listing: Listing; onClose: ()
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ margin: 0, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#9ca3af', fontWeight: 600 }}>Place Order</p>
-          <h3 style={{ margin: '2px 0 0', color: '#264123', fontFamily: 'Poppins, sans-serif', fontSize: '1.15rem', fontWeight: 700 }}>{listing.vegetable_type}</h3>
-          <p style={{ margin: '2px 0 0', color: cfg.accent, fontWeight: 800, fontSize: '0.95rem' }}>GH₵ {listing.price_per_kg_ghs}/kg</p>
+          <h3 style={{ margin: '2px 0 0', color: '#264123', fontFamily: 'Poppins, sans-serif', fontSize: '1.15rem', fontWeight: 700 }}>{listing.vegetableType}</h3>
+          <p style={{ margin: '2px 0 0', color: cfg.accent, fontWeight: 800, fontSize: '0.95rem' }}>GH₵ {listing.pricePerKgGhs}/kg</p>
         </div>
         <button
           type="button"

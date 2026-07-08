@@ -52,7 +52,7 @@ function JobCard({ job }: { job: Job }) {
   const { mutate: updateStatus, isPending: updating } = useUpdateJobStatus()
 
   const cfg = getJobConfig(job.status)
-  const produceName = job.order?.listing?.vegetable_type ?? 'Vegetables'
+  const produceName = job.order?.listing?.vegetableType ?? 'Vegetables'
   const cropCfg = getCropConfig(produceName)
 
   return (
@@ -95,7 +95,7 @@ function JobCard({ job }: { job: Job }) {
         {job.order && (
           <p className="mp-card-farmer">
             <span style={{ opacity: 0.5, marginRight: 4 }}>Cargo:</span>
-            {produceName} · {job.order.quantity_kg} kg
+            {produceName} · {job.order.quantityKg} kg
           </p>
         )}
 
