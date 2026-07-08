@@ -39,7 +39,7 @@ export function useVerifyOtp() {
  * Backend response: { success, data: { user, accessToken, refreshToken } }
  */
 export function useSetPin() {
-  const { setAuth, registrationToken, pendingPhone, user } = useAuthStore()
+  const { setAuth, registrationToken, pendingPhone } = useAuthStore()
   const navigate = useNavigate()
   return useMutation({
     mutationFn: async ({
@@ -58,6 +58,8 @@ export function useSetPin() {
       // Step 2: persist region + language if provided (non-blocking — ignore errors)
       if ((region || language) && accessToken) {
         try {
+          // Temporarily set token for the profile request
+          useAuthStore.getState().setAccessToken(accessToken)
           await usersApi.updateProfile({ region, language })
         } catch {
           // Profile update failure should not block login
@@ -66,15 +68,36 @@ export function useSetPin() {
 
       return setPinRes
     },
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       const { user: responseUser, accessToken } = res.data.data
+      
+      // Temporarily set token to fetch the profile
+      useAuthStore.getState().setAccessToken(accessToken)
+      
+      let fullName = ''
+      let region: string | undefined = undefined
+      let language: string | undefined = undefined
+      
+      try {
+        const profileRes = await usersApi.getProfile()
+        const dbUser = profileRes.data.data.user
+        fullName = [dbUser.firstName, dbUser.middleName, dbUser.lastName]
+          .filter(Boolean)
+          .join(' ')
+        region = dbUser.region ?? undefined
+        language = dbUser.language ?? undefined
+      } catch {
+        // Fallback if profile fetch fails
+      }
+      
       setAuth(
         {
           id: responseUser.id,
           phone: pendingPhone ?? responseUser.phone,
           role: responseUser.role,
-          region: user?.region,
-          language: user?.language,
+          fullName: fullName || undefined,
+          region,
+          language,
         },
         accessToken,
       )
@@ -92,13 +115,36 @@ export function useLogin() {
   const navigate = useNavigate()
   return useMutation({
     mutationFn: (data: LoginFormData) => authApi.login(data),
-    onSuccess: (res) => {
-      const { user, accessToken } = res.data.data
+    onSuccess: async (res) => {
+      const { user: responseUser, accessToken } = res.data.data
+      
+      // Temporarily set token to fetch the profile
+      useAuthStore.getState().setAccessToken(accessToken)
+      
+      let fullName = ''
+      let region: string | undefined = undefined
+      let language: string | undefined = undefined
+      
+      try {
+        const profileRes = await usersApi.getProfile()
+        const dbUser = profileRes.data.data.user
+        fullName = [dbUser.firstName, dbUser.middleName, dbUser.lastName]
+          .filter(Boolean)
+          .join(' ')
+        region = dbUser.region ?? undefined
+        language = dbUser.language ?? undefined
+      } catch {
+        // Fallback
+      }
+      
       setAuth(
         {
-          id: user.id,
-          phone: user.phone,
-          role: user.role,
+          id: responseUser.id,
+          phone: responseUser.phone,
+          role: responseUser.role,
+          fullName: fullName || undefined,
+          region,
+          language,
         },
         accessToken,
       )

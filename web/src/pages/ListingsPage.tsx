@@ -130,7 +130,7 @@ export default function ListingsPage() {
 
 function ListingCard({ listing }: { listing: Listing }) {
   const { mutate: deleteListing, isPending } = useDeleteListing()
-  const cfg = getCropConfig(listing.vegetable_type)
+  const cfg = getCropConfig(listing.vegetableType)
 
   return (
     <article className="mp-card">
@@ -173,7 +173,7 @@ function ListingCard({ listing }: { listing: Listing }) {
           </div>
         )}
 
-        <h3 className="mp-card-name">{listing.vegetable_type}</h3>
+        <h3 className="mp-card-name">{listing.vegetableType}</h3>
 
         {(listing as any).description && (
           <p className="mp-card-farmer" style={{ marginBottom: 10, lineHeight: 1.5 }}>
@@ -184,18 +184,18 @@ function ListingCard({ listing }: { listing: Listing }) {
         {/* Price + quantity meta row */}
         <div className="mp-card-meta">
           <div>
-            <span className="mp-card-price">GH₵ {listing.price_per_kg_ghs}</span>
+            <span className="mp-card-price">GH₵ {listing.pricePerKgGhs}</span>
             <span className="mp-card-per"> /{(listing as any).unit_of_measure ?? 'kg'}</span>
           </div>
           <div className="mp-card-qty">
-            {listing.quantity_kg} {(listing as any).unit_of_measure ?? 'kg'}
+            {listing.quantityKg} {(listing as any).unit_of_measure ?? 'kg'}
           </div>
         </div>
 
-        {listing.harvest_date && (
+        {listing.harvestDate && (
           <p className="mp-card-date">
             <span style={{ opacity: 0.55 }}>Harvest:</span>{' '}
-            {new Date(listing.harvest_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+            {new Date(listing.harvestDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
           </p>
         )}
 

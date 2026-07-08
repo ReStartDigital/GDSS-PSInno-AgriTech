@@ -52,7 +52,7 @@ function JobCard({ job }: { job: Job }) {
   const { mutate: updateStatus, isPending: updating } = useUpdateJobStatus()
 
   const cfg = getJobConfig(job.status)
-  const produceName = job.order?.listing?.vegetable_type ?? 'Vegetables'
+  const produceName = job.order?.listing?.vegetableType ?? 'Vegetables'
   const cropCfg = getCropConfig(produceName)
 
   return (

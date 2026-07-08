@@ -5,10 +5,10 @@ import type { UserRole } from '../store/auth.store'
 export interface Listing {
   id: string
   farmerId: string
-  vegetable_type: string
-  quantity_kg: number
-  price_per_kg_ghs: number
-  harvest_date: string
+  vegetableType: string
+  quantityKg: number
+  pricePerKgGhs: number
+  harvestDate: string
   status: 'active' | 'sold' | 'cancelled'
   images: string[]
   location?: { type: string; coordinates: [number, number] }
@@ -16,9 +16,9 @@ export interface Listing {
   supportsPickup: boolean
   autoConfirmUntilKg?: number | null
   autoConfirmPriceFloorGhs?: number | null
-  recommended_packaging_id?: string | null
-  created_at: string
-  updated_at: string
+  recommendedPackagingId?: string | null
+  createdAt: string
+  updatedAt: string
   farmer?: {
     id: string
     firstName: string

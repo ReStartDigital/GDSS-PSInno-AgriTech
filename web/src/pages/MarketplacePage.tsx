@@ -21,7 +21,7 @@ export default function MarketplacePage() {
     const all: Listing[] = Array.isArray(data) ? data : []
     if (!search.trim()) return all
     return all.filter((l) =>
-      l.vegetable_type.toLowerCase().includes(search.toLowerCase()) ||
+      l.vegetableType.toLowerCase().includes(search.toLowerCase()) ||
       l.farmer?.firstName?.toLowerCase().includes(search.toLowerCase())
     )
   }, [data, search])
@@ -107,7 +107,7 @@ function ProduceCard({
   canOrder: boolean
   onOrder: () => void
 }) {
-  const cfg = getCropConfig(listing.vegetable_type)
+  const cfg = getCropConfig(listing.vegetableType)
 
   return (
     <article className="mp-card">
@@ -134,7 +134,7 @@ function ProduceCard({
           </div>
         )}
 
-        <h3 className="mp-card-name">{listing.vegetable_type}</h3>
+        <h3 className="mp-card-name">{listing.vegetableType}</h3>
 
         {listing.farmer && (
           <p className="mp-card-farmer">
@@ -145,18 +145,18 @@ function ProduceCard({
 
         <div className="mp-card-meta">
           <div>
-            <span className="mp-card-price">GH₵ {listing.price_per_kg_ghs}</span>
+            <span className="mp-card-price">GH₵ {listing.pricePerKgGhs}</span>
             <span className="mp-card-per"> /kg</span>
           </div>
           <div className="mp-card-qty">
-            <span>{listing.quantity_kg} kg</span>
+            <span>{listing.quantityKg} kg</span>
           </div>
         </div>
 
-        {listing.harvest_date && (
+        {listing.harvestDate && (
           <p className="mp-card-date">
             <span style={{ opacity: 0.55 }}>Harvest:</span>{' '}
-            {new Date(listing.harvest_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+            {new Date(listing.harvestDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
           </p>
         )}
 
