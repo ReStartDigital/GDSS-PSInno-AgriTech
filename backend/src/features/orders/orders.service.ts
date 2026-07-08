@@ -27,7 +27,7 @@ import { ErrorCode } from "../../common/constants/error-codes.enum.js";
 import { TransportService } from "../transport/transport.service.js";
 import { TransportRepository } from "../transport/transport.repository.js";
 import { AppDataSource } from "../../config/database.config.js";
-import type { DataSource } from "typeorm";
+import { In, type DataSource } from "typeorm";
 import { ProduceListingEntity } from "../../database/entities/ProduceListing.js";
 import { User } from "../../database/entities/User.js";
 import { arkeselClient } from "../../infrastructure/arkesel/arkesel.client.js";
@@ -57,6 +57,12 @@ export class OrdersService {
   ): Promise<OrderEntity> {
     // We execute the entire lifecycle inside a managed database transaction closure
     return await this.dataSource.transaction(async (manager) => {
+      const activeStatuses = [
+        OrderStatus.PENDING,
+        OrderStatus.PENDING_AGENT_CONFIRMATION,
+        OrderStatus.PENDING_SMS_CONFIRMATION,
+        OrderStatus.NEGOTIATING
+      ];
       // Use transactional managers instead of global unsynced repositories
       const txListingsRepo = manager.getRepository(ProduceListingEntity);
       const txUsersRepo = manager.getRepository(User);
@@ -80,6 +86,22 @@ export class OrdersService {
         throw new BadRequestException(
           "You cannot purchase your own produce listing",
           ErrorCode.ORDER_FORBIDDEN,
+        );
+      }
+      
+      // Check if an active contract already exists for this buyer/listing pair
+      const existingOrder = await txOrdersRepo.findOne({
+        where: {
+          buyerId,
+          listingId: dto.listing_id,
+          status: In(activeStatuses)
+        }
+      });
+      console.log(existingOrder)
+      if (existingOrder) {
+        throw new BadRequestException(
+          "You already have an active order pending confirmation for this listing.",
+          ErrorCode.BAD_REQUEST
         );
       }
 
