@@ -18,7 +18,6 @@ import {
 import { useListingDetails, mapBackendListingToClient } from "@/lib/listings-api";
 import { useCreateOrder } from "@/lib/orders-api";
 import { MarketplaceListing } from "@/lib/marketplace-data";
-import { useTransportStore } from "@/lib/transport-store";
 import { useAuthStore } from "@vegelink/shared";
 
 type DeliveryMode = "pickup" | "delivery";
@@ -32,7 +31,6 @@ export default function ListingOrderScreen() {
 
   const { data: rawListing, isLoading } = useListingDetails(id || "");
   const createOrderMutation = useCreateOrder();
-  const addTransportJob = useTransportStore((s) => s.addJob);
   const authUser = useAuthStore((s) => s.user);
 
   const listing = useMemo(() => {
@@ -115,20 +113,6 @@ export default function ListingOrderScreen() {
       packaging_type_id: rawListing.recommendedPackagingId || null,
     }, {
       onSuccess: (createdOrder) => {
-        // If transporter delivery was selected, post to the transport jobs board
-        if (deliveryMode === "delivery") {
-          addTransportJob({
-            orderId: createdOrder.id,
-            cropName: listing.cropName,
-            quantityText: `${quantity} ${listing.unitOfMeasure}`,
-            buyerName: authUser?.fullName || "Buyer",
-            farmerName: listing.farmer.fullName,
-            pickupAddress: listing.farmer.locationLabel || "Farm",
-            deliveryAddress: "Buyer delivery location",
-            payoutGhs: transportTotal,
-          });
-        }
-
         const modeLabel = deliveryMode === "pickup" ? "Self Pickup" : "Transporter Delivery";
 
         Alert.alert(
