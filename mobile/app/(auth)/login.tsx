@@ -60,6 +60,9 @@ export default function LoginScreen() {
           phone: user.phone,
           role: user.role,
           fullName: `${user.firstName} ${user.lastName}`.trim(),
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
         },
         accessToken
       );

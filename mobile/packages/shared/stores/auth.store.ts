@@ -8,6 +8,9 @@ export interface AuthUser {
   phone: string;
   role: UserRole;
   fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string | null;
 }
 
 interface AuthState {

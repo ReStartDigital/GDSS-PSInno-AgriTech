@@ -90,7 +90,10 @@ export default function PinScreen() {
         id: user.id,
         phone: user.phone,
         role: user.role as UserRole,
-        fullName: `${safeFirst} ${safeLast}`,
+        fullName: `${user.firstName || safeFirst} ${user.lastName || safeLast}`.trim(),
+        firstName: user.firstName || safeFirst,
+        lastName: user.lastName || safeLast,
+        email: user.email,
       };
       setAuth(mappedUser, accessToken);
 
