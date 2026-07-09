@@ -55,7 +55,6 @@ class PaystackClient {
   ): Promise<PaystackSubaccountResult> {
     const bankCode =
       MOBILE_NETWORK_TO_PAYSTACK_BANK[payload.mobileNetwork.toLowerCase()];
-    console.log(bankCode)
     if (!bankCode) {
       throw new AppException(
         400,
