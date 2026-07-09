@@ -1,11 +1,11 @@
-import { View, Text, Pressable, ScrollView, Alert, RefreshControl, ActivityIndicator } from "react-native";
-import { Link, useRouter } from "expo-router";
-import { Plus, EditPencil, Trash, BoxIso } from "iconoir-react-native";
+import { View, Text, Pressable, ScrollView, Alert, RefreshControl, ActivityIndicator, Image } from "react-native";
+import { useRouter } from "expo-router";
+import { Plus, EditPencil, Trash, BoxIso, MediaImage } from "iconoir-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState } from "react";
-import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
+import { vlStyles } from "@/lib/design-system";
 import { useAuthStore } from "@vegelink/shared";
-import { useMarketplaceListings, useCancelListing, useUpdateListing, mapBackendListingToClient, BackendListing } from "@/lib/listings-api";
+import { useMarketplaceListings, useCancelListing, useUpdateListing, mapBackendListingToClient } from "@/lib/listings-api";
 
 export default function ListingsScreen() {
   const insets = useSafeAreaInsets();
@@ -14,7 +14,7 @@ export default function ListingsScreen() {
   const [activeTab, setActiveTab] = useState<"active" | "all">("active");
 
   const { data: listingsData, isLoading, refetch, isFetching } = useMarketplaceListings({
-    farmer_id: user?.id,
+    farmer_id: user?.role === "farmer" ? user?.id : undefined,
   });
 
   const cancelListingMutation = useCancelListing();
@@ -64,26 +64,6 @@ export default function ListingsScreen() {
         },
       ]
     );
-  };
-
-  const getCropEmoji = (cropName: string) => {
-    const name = cropName.toLowerCase();
-    if (name.includes("tomato")) return "🍅";
-    if (name.includes("pepper") || name.includes("chili")) return "🌶️";
-    if (name.includes("cabbage") || name.includes("lettuce")) return "🥬";
-    if (name.includes("onion")) return "🧅";
-    if (name.includes("yam") || name.includes("potato") || name.includes("cassava")) return "🍠";
-    if (name.includes("corn") || name.includes("maize")) return "🌽";
-    if (name.includes("bean") || name.includes("pea") || name.includes("legume")) return "🫛";
-    return "🥦";
-  };
-
-  const getCropBgColor = (cropName: string) => {
-    const name = cropName.toLowerCase();
-    if (name.includes("tomato") || name.includes("pepper") || name.includes("chili")) return "bg-red-50";
-    if (name.includes("cabbage") || name.includes("lettuce")) return "bg-green-50";
-    if (name.includes("yam") || name.includes("potato") || name.includes("onion")) return "bg-orange-50";
-    return "bg-gray-100";
   };
 
   return (
@@ -205,13 +185,13 @@ export default function ListingsScreen() {
                 >
                   {/* Top card section */}
                   <View className="p-4 flex-row">
-                    {/* Left Icon */}
-                    <View
-                      className={`w-16 h-16 rounded-2xl items-center justify-center ${getCropBgColor(
-                        item.cropName
-                      )}`}
-                    >
-                      <Text className="text-3xl">{getCropEmoji(item.cropName)}</Text>
+                    {/* Left photo */}
+                    <View className="w-16 h-16 rounded-2xl items-center justify-center overflow-hidden bg-gray-100">
+                      {item.imageUrls?.[0] ? (
+                        <Image source={{ uri: item.imageUrls[0] }} className="h-full w-full" resizeMode="cover" />
+                      ) : (
+                        <MediaImage color="#9CA3AF" width={24} height={24} strokeWidth={2} />
+                      )}
                     </View>
 
                     {/* Right text area */}

@@ -8,6 +8,7 @@ export interface UserProfile {
   phone: string;
   firstName: string;
   lastName: string;
+  email?: string | null;
   role: string;
   profilePhotoUrl: string | null;
   region: string | null;
@@ -72,6 +73,7 @@ export function useUpdateProfile() {
     mutationFn: async (data: Partial<{
       first_name: string;
       last_name: string;
+      email: string | null;
       region: string;
       language: string;
     }>) => {

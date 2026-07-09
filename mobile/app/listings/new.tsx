@@ -1,6 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,20 +11,19 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
+import { Alert } from "@/lib/alert-service";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { NavArrowLeft, NavArrowDown, Pin, Check, PlusCircle, Camera, Xmark } from "iconoir-react-native";
+import { NavArrowLeft, NavArrowDown, Pin, Check, PlusCircle, Camera, Xmark, MediaImage } from "iconoir-react-native";
 import { useCreateListing, useUpdateListing, useListingDetails, useRecommendPackaging, useUploadListingImage } from "@/lib/listings-api";
+import { useAgentClients } from "@/lib/user-api";
+import { useAuthStore } from "@vegelink/shared";
 import * as ImagePicker from "expo-image-picker";
 
 const unitOptions = ["kg", "crate", "basket", "head", "bunch", "sack"] as const;
 
-const LISTING_EMOJIS = [
-  "🍅", "🌶️", "🥬", "🧅", "🍠", "🥔", "🥕", "🌽", "🫛", 
-  "🥦", "🍎", "🍌", "🍉", "🍍", "🥑", "🥭", "🍊", "🍐", "🍋"
-] as const;
-
 const categories = ["Vegetables", "Roots", "Leafy", "Legumes", "Fruits"] as const;
+const MAX_LISTING_IMAGES = 8;
 
 const colorMap: Record<string, { tintColor: string; accentColor: string }> = {
   Vegetables: { tintColor: "#FEF2F2", accentColor: "#DC2626" },
@@ -49,7 +47,6 @@ export default function NewListingScreen() {
   const [description, setDescription] = useState("");
   const [priceText, setPriceText] = useState("");
   const [quantityText, setQuantityText] = useState("");
-  const [selectedEmoji, setSelectedEmoji] = useState("🍅");
   const [category, setCategory] = useState<(typeof categories)[number]>("Vegetables");
   const [unitOfMeasure, setUnitOfMeasure] = useState<(typeof unitOptions)[number]>("kg");
 
@@ -59,8 +56,18 @@ export default function NewListingScreen() {
 
   // Success state
   const [listingPosted, setListingPosted] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
+
+  // Agent farmer client selection state
+  const user = useAuthStore((s) => s.user);
+  const isAgent = user?.role === "agent";
+  const [selectedFarmerId, setSelectedFarmerId] = useState<string>("");
+  const [isFarmerModalOpen, setIsFarmerModalOpen] = useState(false);
+
+  const { data: clientsData } = useAgentClients();
+  const farmersList = useMemo(() => {
+    return clientsData?.data || [];
+  }, [clientsData]);
 
   // Load existing listing data in edit mode
   useEffect(() => {
@@ -73,43 +80,38 @@ export default function NewListingScreen() {
       setUnitOfMeasure("kg"); // Default unit in backend
       setCategory("Vegetables");
 
-      // Try to deduce emoji
       const name = existingListing.vegetableType.toLowerCase();
-      if (name.includes("tomato")) setSelectedEmoji("🍅");
-      else if (name.includes("pepper") || name.includes("chili")) setSelectedEmoji("🌶️");
-      else if (name.includes("cabbage") || name.includes("lettuce")) setSelectedEmoji("🥬");
-      else if (name.includes("onion")) setSelectedEmoji("🧅");
-      else if (name.includes("yam") || name.includes("potato")) setSelectedEmoji("🍠");
+      if (name.includes("tomato")) setCategory("Fruits");
+      else if (name.includes("pepper") || name.includes("chili")) setCategory("Vegetables");
+      else if (name.includes("cabbage") || name.includes("lettuce")) setCategory("Leafy");
+      else if (name.includes("onion")) setCategory("Vegetables");
+      else if (name.includes("yam") || name.includes("potato")) setCategory("Roots");
       setImages(existingListing.images || []);
       /* eslint-enable react-hooks/set-state-in-effect */
+      if (existingListing.farmerId) {
+        setSelectedFarmerId(existingListing.farmerId);
+      }
     }
   }, [existingListing]);
 
-  // Auto-detect emoji and category based on name input
+  // Auto-detect category based on name input
   const handleCropNameChange = (text: string) => {
     setCropName(text);
     const normalized = text.toLowerCase().trim();
     if (normalized.length >= 2) {
       if (normalized.includes("tomato")) {
-        setSelectedEmoji("🍅");
         setCategory("Fruits");
       } else if (normalized.includes("pepper") || normalized.includes("chili")) {
-        setSelectedEmoji("🌶️");
         setCategory("Vegetables");
       } else if (normalized.includes("cabbage") || normalized.includes("lettuce")) {
-        setSelectedEmoji("🥬");
         setCategory("Leafy");
       } else if (normalized.includes("onion")) {
-        setSelectedEmoji("🧅");
         setCategory("Vegetables");
       } else if (normalized.includes("yam") || normalized.includes("cassava")) {
-        setSelectedEmoji("🍠");
         setCategory("Roots");
       } else if (normalized.includes("potato")) {
-        setSelectedEmoji("🥔");
         setCategory("Roots");
       } else if (normalized.includes("bean") || normalized.includes("pea")) {
-        setSelectedEmoji("🫛");
         setCategory("Legumes");
       }
     }
@@ -137,30 +139,36 @@ export default function NewListingScreen() {
   const recommendedPackagingLabel = packagingOptions?.[0]?.label;
 
   const handlePickImage = async () => {
+    const remainingSlots = MAX_LISTING_IMAGES - images.length;
+    if (remainingSlots <= 0) {
+      Alert.alert("Image Limit Reached", `A listing can include up to ${MAX_LISTING_IMAGES} photos.`, [], { type: "warning" });
+      return;
+    }
+
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissionResult.granted === false) {
-      Alert.alert("Permission Required", "Please allow gallery permissions to select produce photos.");
+      Alert.alert("Permission Required", "Please allow gallery permissions to select produce photos.", [], { type: "warning" });
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsMultipleSelection: true,
-      selectionLimit: 5,
+      selectionLimit: remainingSlots,
       quality: 0.8,
     });
 
     if (!result.canceled) {
       setUploadingImage(true);
       try {
-        const uploadPromises = result.assets.map(async (asset) => {
+        const uploadPromises = result.assets.slice(0, remainingSlots).map(async (asset) => {
           const uploadRes = await uploadImageMutation.mutateAsync(asset.uri);
           return uploadRes.url;
         });
         const urls = await Promise.all(uploadPromises);
-        setImages((current) => [...current, ...urls]);
+        setImages((current) => [...current, ...urls].slice(0, MAX_LISTING_IMAGES));
       } catch (err: any) {
-        Alert.alert("Upload Failed", err.message || "Failed to upload one or more images.");
+        Alert.alert("Upload Failed", err.message || "Failed to upload one or more images.", [], { type: "error" });
       } finally {
         setUploadingImage(false);
       }
@@ -174,6 +182,11 @@ export default function NewListingScreen() {
   const handleSubmit = () => {
     if (!hasValidListing) return;
 
+    if (isAgent && !selectedFarmerId && !isEditMode) {
+      Alert.alert("Validation", "Please select a farmer client to list on behalf of.", [], { type: "warning" });
+      return;
+    }
+
     const harvestDate = new Date().toISOString().split("T")[0]; // default to today
     const submitData = {
       vegetable_type: cropName.trim().toLowerCase(),
@@ -185,6 +198,7 @@ export default function NewListingScreen() {
       location: { lat: 5.7023, lng: -0.0194 }, // default Accra coordinate
       supports_delivery: true,
       supports_pickup: true,
+      farmer_id: isAgent ? selectedFarmerId : undefined,
     };
 
     if (isEditMode && id) {
@@ -196,7 +210,7 @@ export default function NewListingScreen() {
           setListingPosted(true);
         },
         onError: (err: any) => {
-          Alert.alert("Failed to Update", err.error?.message || "Could not update listing.");
+          Alert.alert("Failed to Update", err.error?.message || "Could not update listing.", [], { type: "error" });
         }
       });
     } else {
@@ -205,7 +219,7 @@ export default function NewListingScreen() {
           setListingPosted(true);
         },
         onError: (err: any) => {
-          Alert.alert("Failed to Post", err.error?.message || "Could not create listing.");
+          Alert.alert("Failed to Post", err.error?.message || "Could not create listing.", [], { type: "error" });
         }
       });
     }
@@ -216,9 +230,9 @@ export default function NewListingScreen() {
     setDescription("");
     setPriceText("");
     setQuantityText("");
-    setSelectedEmoji("🍅");
     setCategory("Vegetables");
     setUnitOfMeasure("kg");
+    setImages([]);
     setListingPosted(false);
   };
 
@@ -275,8 +289,12 @@ export default function NewListingScreen() {
 
           {/* Success summary card */}
           <View className="w-full p-4 rounded-3xl bg-green-50 border border-green-150 flex-row items-center gap-4 mb-8">
-            <View className="w-14 h-14 rounded-2xl bg-white items-center justify-center shadow-sm">
-              <Text className="text-3xl">{selectedEmoji}</Text>
+            <View className="w-14 h-14 rounded-2xl bg-white items-center justify-center shadow-sm overflow-hidden">
+              {images[0] ? (
+                <Image source={{ uri: images[0] }} className="h-full w-full" />
+              ) : (
+                <MediaImage color="#15803D" width={24} height={24} strokeWidth={2} />
+              )}
             </View>
             <View className="flex-1 justify-center">
               <Text className="font-black text-gray-900 text-base">{cropName}</Text>
@@ -316,27 +334,30 @@ export default function NewListingScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerClassName="px-5 pt-6 pb-28 gap-5"
           >
-            {/* Emoji + Name Row */}
-            <View className="flex-row gap-4">
-              {/* Emoji Selector */}
+            {/* Agent Farmer Selection Section */}
+            {isAgent && !isEditMode && (
               <View>
                 <Text className="mb-2 text-xs font-black uppercase text-gray-400">
-                  Icon
+                  Select Farmer Client *
                 </Text>
                 <Pressable
-                  onPress={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="w-16 h-16 rounded-2xl border border-gray-200 bg-gray-50 items-center justify-center active:bg-gray-100"
-                  style={{
-                    borderColor: showEmojiPicker ? "#0F6A2B" : "#E5E7EB",
-                    borderWidth: showEmojiPicker ? 2 : 1,
-                  }}
+                  onPress={() => setIsFarmerModalOpen(true)}
+                  className="h-16 flex-row items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 active:bg-gray-100"
                 >
-                  <Text className="text-3xl">{selectedEmoji}</Text>
+                  <Text className={`text-base font-extrabold ${selectedFarmerId ? "text-gray-950" : "text-gray-400"}`}>
+                    {selectedFarmerId
+                      ? farmersList.find((f) => f.id === selectedFarmerId)
+                        ? `${farmersList.find((f) => f.id === selectedFarmerId)?.firstName} ${farmersList.find((f) => f.id === selectedFarmerId)?.lastName}`
+                        : "Selected Farmer"
+                      : "Select represented farmer…"}
+                  </Text>
+                  <NavArrowDown color="#9CA3AF" width={20} height={20} strokeWidth={2} />
                 </Pressable>
               </View>
+            )}
 
-              {/* Name Input */}
-              <View className="flex-1">
+            {/* Name Input */}
+            <View>
                 <Text className="mb-2 text-xs font-black uppercase text-gray-400">
                   Produce Name *
                 </Text>
@@ -347,17 +368,16 @@ export default function NewListingScreen() {
                   placeholderTextColor="#9CA3AF"
                   className="h-16 rounded-2xl border border-gray-250 bg-gray-50 px-4 text-base font-extrabold text-gray-950"
                 />
-              </View>
             </View>
 
             {/* Images Uploader Row */}
             <View>
               <Text className="mb-2 text-xs font-black uppercase text-gray-400">
-                Produce Photos ({images.length}/5)
+                Produce Photos ({images.length}/{MAX_LISTING_IMAGES})
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row py-1">
                 {/* Upload box */}
-                {images.length < 5 && (
+                {images.length < MAX_LISTING_IMAGES && (
                   <Pressable
                     onPress={handlePickImage}
                     disabled={uploadingImage}
@@ -388,29 +408,6 @@ export default function NewListingScreen() {
                 ))}
               </ScrollView>
             </View>
-
-            {/* Emoji Picker Grid */}
-            {showEmojiPicker && (
-              <View className="bg-white rounded-3xl border border-green-100 p-4 shadow-sm shadow-green-900/5">
-                <View className="flex-row flex-wrap gap-2 justify-between">
-                  {LISTING_EMOJIS.map((e) => (
-                    <Pressable
-                      key={e}
-                      onPress={() => {
-                        setSelectedEmoji(e);
-                        setShowEmojiPicker(false);
-                      }}
-                      className="w-10 h-10 rounded-xl items-center justify-center active:scale-90"
-                      style={{
-                        backgroundColor: selectedEmoji === e ? "#E8F5E9" : "transparent",
-                      }}
-                    >
-                      <Text className="text-2xl">{e}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            )}
 
             {/* Category Selector */}
             <View>
@@ -540,11 +537,12 @@ export default function NewListingScreen() {
                   Preview
                 </Text>
                 <View className="flex-row items-center gap-4">
-                  <View
-                    className="w-16 h-16 rounded-2xl items-center justify-center"
-                    style={{ backgroundColor: previewColor.tintColor }}
-                  >
-                    <Text className="text-3xl">{selectedEmoji}</Text>
+                  <View className="w-16 h-16 rounded-2xl items-center justify-center overflow-hidden" style={{ backgroundColor: previewColor.tintColor }}>
+                    {images[0] ? (
+                      <Image source={{ uri: images[0] }} className="h-full w-full" />
+                    ) : (
+                      <MediaImage color={previewColor.accentColor} width={26} height={26} strokeWidth={2} />
+                    )}
                   </View>
                   <View className="justify-center">
                     <Text className="font-black text-gray-950 text-base">{cropName}</Text>
@@ -625,6 +623,67 @@ export default function NewListingScreen() {
               ))}
             </View>
           </View>
+        </Pressable>
+      </Modal>
+
+      {/* Farmer Client Picker Modal */}
+      <Modal visible={isFarmerModalOpen} animationType="slide" transparent>
+        <Pressable
+          className="flex-1 bg-black/45 justify-end"
+          onPress={() => setIsFarmerModalOpen(false)}
+        >
+          <Pressable
+            className="bg-white rounded-t-3xl px-5 pt-5 pb-8 gap-4 max-h-[75%]"
+            style={{ paddingBottom: Math.max(insets.bottom, 28) }}
+          >
+            <Text className="text-2xl font-black text-gray-950 mb-2">Select Farmer Client</Text>
+            
+            {farmersList.length === 0 ? (
+              <View className="items-center py-10">
+                <Text className="text-base font-bold text-gray-400 text-center">
+                  No clients registered yet. Please go to the Clients tab to add one.
+                </Text>
+              </View>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false} className="gap-2">
+                {farmersList.map((farmer) => {
+                  const name = `${farmer.firstName} ${farmer.lastName}`;
+                  const active = selectedFarmerId === farmer.id;
+                  return (
+                    <Pressable
+                      key={farmer.id}
+                      onPress={() => {
+                        setSelectedFarmerId(farmer.id);
+                        setIsFarmerModalOpen(false);
+                      }}
+                      className={`flex-row items-center justify-between p-4 rounded-2xl border ${
+                        active
+                          ? "bg-green-50 border-green-800"
+                          : "bg-gray-50 border-gray-200"
+                      }`}
+                    >
+                      <View>
+                        <Text className={`text-base font-black ${active ? "text-green-800" : "text-gray-950"}`}>
+                          {name}
+                        </Text>
+                        <Text className="text-xs text-gray-400 mt-0.5">
+                          {farmer.phone} · {farmer.region || "No Region"}
+                        </Text>
+                      </View>
+                      {active && <Check color="#15803D" width={20} height={20} strokeWidth={2.5} />}
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            )}
+
+            <Pressable
+              className="mt-2 rounded-2xl border border-gray-200 py-4"
+              onPress={() => setIsFarmerModalOpen(false)}
+            >
+              <Text className="text-center font-black text-gray-600">Close</Text>
+            </Pressable>
+          </Pressable>
         </Pressable>
       </Modal>
     </View>

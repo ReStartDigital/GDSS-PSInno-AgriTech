@@ -450,7 +450,7 @@ router.patch(
  */
 router.post(
   "/:id/verify-pickup",
-  authorize(UserRole.BUYER),
+  authorize(UserRole.FARMER, UserRole.AGENT),
   ordersController.verifyBuyerPickup,
 );
 

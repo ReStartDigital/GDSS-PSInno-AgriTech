@@ -4,7 +4,7 @@ import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useUserSettingsStore } from "@/lib/user-settings-store";
 import { vlClassNames } from "@/lib/design-system";
-import { initials, getProduceEmoji } from "@/lib/utils";
+import { initials } from "@/lib/utils";
 import { useListingDetails, mapBackendListingToClient } from "@/lib/listings-api";
 import { MarketplaceListing } from "@/lib/marketplace-data";
 
@@ -19,6 +19,7 @@ import {
   Truck,
   Minus,
   Plus,
+  MediaImage,
 } from "iconoir-react-native";
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -331,7 +332,6 @@ function ProduceImageCarousel({ listing }: { listing: MarketplaceListing }) {
 }
 
 function ProduceHero({ listing }: { listing: MarketplaceListing }) {
-  const emoji = getProduceEmoji(listing.cropName);
   return (
     <View className="h-40 w-40 items-center justify-center">
       <View
@@ -345,9 +345,7 @@ function ProduceHero({ listing }: { listing: MarketplaceListing }) {
         }}
       >
         <View className="absolute -right-2 top-2 h-10 w-14 rotate-45 rounded-full bg-white/35" />
-        <Text className="text-5xl">
-          {emoji}
-        </Text>
+        <MediaImage color="#FFFFFF" width={36} height={36} strokeWidth={2} />
       </View>
     </View>
   );
@@ -380,5 +378,3 @@ function EstimateTile({ value, label }: { value: string; label: string }) {
     </View>
   );
 }
-
-

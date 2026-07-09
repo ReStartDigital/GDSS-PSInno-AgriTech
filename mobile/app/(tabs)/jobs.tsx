@@ -1,26 +1,52 @@
 import { useState } from "react";
-import { View, Text, Pressable, ScrollView, Alert } from "react-native";
+import { View, Text, Pressable, ScrollView, TextInput, Modal, RefreshControl, ActivityIndicator } from "react-native";
+import { Alert } from "@/lib/alert-service";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Truck, NavArrowRight, BoxIso } from "iconoir-react-native";
-import { useTransportStore, TransportJob } from "@/lib/transport-store";
+import {
+  useAvailableJobs,
+  useAcceptJob,
+  useTriggerArrival,
+  useConfirmDelivery,
+  mapTransportJobToClient,
+  BackendTransportRequest,
+} from "@/lib/transport-api";
 import { useAuthStore } from "@vegelink/shared";
 
 type TabKey = "available" | "my_jobs";
 
 export default function JobsScreen() {
   const [activeTab, setActiveTab] = useState<TabKey>("available");
-  const jobs = useTransportStore((s) => s.jobs);
-  const acceptJob = useTransportStore((s) => s.acceptJob);
-  const startTransit = useTransportStore((s) => s.startTransit);
-  const completeJob = useTransportStore((s) => s.completeJob);
+  const [otpModalVisible, setOtpModalVisible] = useState(false);
+  const [otpPin, setOtpPin] = useState("");
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
+
   const user = useAuthStore((s) => s.user);
 
-  const openJobs = jobs.filter((j) => j.status === "open");
-  const myJobs = jobs.filter(
-    (j) => j.transporterId === user?.id && ["accepted", "in_transit"].includes(j.status)
+  // Queries
+  const {
+    data: availableData,
+    isLoading: availableLoading,
+    refetch: refetchAvailable,
+    isRefetching: isRefetchingAvailable,
+  } = useAvailableJobs();
+
+  // Mutations
+  const acceptJobMutation = useAcceptJob();
+  const triggerArrivalMutation = useTriggerArrival();
+  const confirmDeliveryMutation = useConfirmDelivery();
+
+  // Map API data into UI-friendly format
+  const rawJobs: BackendTransportRequest[] = availableData?.data || [];
+  const allJobs = rawJobs.map(mapTransportJobToClient);
+  const openJobs = allJobs.filter((j) => j.status === "open");
+  const myJobs = allJobs.filter(
+    (j) =>
+      j.transporterId === user?.id &&
+      ["accepted", "in_transit", "en_route"].includes(j.status),
   );
 
-  const handleAccept = (job: TransportJob) => {
+  const handleAccept = (job: ReturnType<typeof mapTransportJobToClient>) => {
     Alert.alert(
       "Accept Job?",
       `Deliver ${job.quantityText} of ${job.cropName} from ${job.pickupAddress} to ${job.deliveryAddress} for GHC${job.payoutGhs.toFixed(2)}?`,
@@ -29,44 +55,112 @@ export default function JobsScreen() {
         {
           text: "Accept",
           onPress: () => {
-            acceptJob(job.orderId, user?.id || "", user?.fullName || "Transporter");
-            Alert.alert("Job Accepted ✅", "You can now pick up the produce from the farmer.");
+            acceptJobMutation.mutate(job.id, {
+              onSuccess: () => {
+                Alert.alert(
+                  "Job Accepted ✅",
+                  "You can now pick up the produce from the farmer.",
+                  [],
+                  { type: "success" }
+                );
+                refetchAvailable();
+              },
+              onError: (err: any) =>
+                Alert.alert(
+                  "Error",
+                  err.error?.message || "Could not accept job.",
+                  [],
+                  { type: "error" }
+                ),
+            });
           },
         },
-      ]
+      ],
     );
   };
 
-  const handleStartTransit = (job: TransportJob) => {
+  const handleArrival = (job: ReturnType<typeof mapTransportJobToClient>) => {
     Alert.alert(
-      "Start Transit?",
-      "Confirm that you have picked up the produce and are heading to the delivery location.",
+      "Arrived at Doorstep?",
+      "Confirm that you have arrived at the buyer's location. A 6-minute verification code will be sent to the buyer.",
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Start",
-          onPress: () => startTransit(job.orderId),
-        },
-      ]
-    );
-  };
-
-  const handleComplete = (job: TransportJob) => {
-    Alert.alert(
-      "Complete Delivery?",
-      "Confirm that you have delivered the produce to the buyer.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Complete",
+          text: "I've Arrived",
           onPress: () => {
-            completeJob(job.orderId);
-            Alert.alert("Delivery Complete ✅", `GHC${job.payoutGhs.toFixed(2)} will be credited to your account.`);
+            triggerArrivalMutation.mutate(job.id, {
+              onSuccess: () => {
+                Alert.alert(
+                  "Arrival Registered ✅",
+                  "A verification PIN has been sent to the buyer. Ask them for the code.",
+                  [],
+                  { type: "success" }
+                );
+                refetchAvailable();
+              },
+              onError: (err: any) =>
+                Alert.alert(
+                  "Error",
+                  err.error?.message || "Could not register arrival.",
+                  [],
+                  { type: "error" }
+                ),
+            });
           },
         },
-      ]
+      ],
     );
   };
+
+  const handleStartDeliveryVerification = (
+    job: ReturnType<typeof mapTransportJobToClient>,
+  ) => {
+    setActiveJobId(job.id);
+    setOtpPin("");
+    setOtpModalVisible(true);
+  };
+
+  const handleSubmitDeliveryOtp = () => {
+    if (!activeJobId || otpPin.length < 4) {
+      Alert.alert(
+        "Invalid PIN",
+        "Please enter the buyer's verification code (at least 4 digits).",
+        [],
+        { type: "warning" }
+      );
+      return;
+    }
+    confirmDeliveryMutation.mutate(
+      { transportRequestId: activeJobId, pin: otpPin },
+      {
+        onSuccess: () => {
+          setOtpModalVisible(false);
+          setOtpPin("");
+          setActiveJobId(null);
+          Alert.alert(
+            "Delivery Complete ✅",
+            "Delivery verified. Payment will be credited to your account.",
+            [],
+            { type: "success" }
+          );
+          refetchAvailable();
+        },
+        onError: (err: any) => {
+          Alert.alert(
+            "Verification Failed",
+            err.error?.message || "Invalid or expired PIN. Please try again.",
+            [],
+            { type: "error" }
+          );
+        },
+      },
+    );
+  };
+
+  const isMutating =
+    acceptJobMutation.isPending ||
+    triggerArrivalMutation.isPending ||
+    confirmDeliveryMutation.isPending;
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -92,12 +186,31 @@ export default function JobsScreen() {
         className="flex-1"
         contentContainerClassName="px-5 pb-8"
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetchingAvailable}
+            onRefresh={refetchAvailable}
+            tintColor="#2563EB"
+          />
+        }
       >
-        {activeTab === "available" && (
+        {availableLoading ? (
+          <View className="items-center pt-20">
+            <ActivityIndicator size="large" color="#2563EB" />
+            <Text className="mt-4 text-base text-gray-500">Loading jobs…</Text>
+          </View>
+        ) : activeTab === "available" ? (
           <>
             {openJobs.length === 0 ? (
               <EmptyState
-                icon={<Truck color="#2563EB" width={44} height={44} strokeWidth={1.5} />}
+                icon={
+                  <Truck
+                    color="#2563EB"
+                    width={44}
+                    height={44}
+                    strokeWidth={1.5}
+                  />
+                }
                 title="No jobs available"
                 message="Available transport jobs will appear here when buyers need deliveries in your area."
               />
@@ -105,46 +218,123 @@ export default function JobsScreen() {
               <View className="gap-4">
                 {openJobs.map((job) => (
                   <JobCard
-                    key={job.orderId}
+                    key={job.id}
                     job={job}
                     actionLabel="Accept Job"
                     actionColor="blue"
                     onAction={() => handleAccept(job)}
+                    disabled={isMutating}
                   />
                 ))}
               </View>
             )}
           </>
-        )}
-
-        {activeTab === "my_jobs" && (
+        ) : (
           <>
             {myJobs.length === 0 ? (
               <EmptyState
-                icon={<BoxIso color="#6B7280" width={44} height={44} strokeWidth={1.5} />}
+                icon={
+                  <BoxIso
+                    color="#6B7280"
+                    width={44}
+                    height={44}
+                    strokeWidth={1.5}
+                  />
+                }
                 title="No active jobs"
                 message="Jobs you accept will appear here. Go to Available to pick up a delivery."
               />
             ) : (
               <View className="gap-4">
-                {myJobs.map((job) => (
-                  <JobCard
-                    key={job.orderId}
-                    job={job}
-                    actionLabel={job.status === "accepted" ? "Start Transit" : "Complete Delivery"}
-                    actionColor={job.status === "accepted" ? "amber" : "green"}
-                    onAction={() =>
-                      job.status === "accepted"
-                        ? handleStartTransit(job)
-                        : handleComplete(job)
-                    }
-                  />
-                ))}
+                {myJobs.map((job) => {
+                  const isAccepted = job.status === "accepted";
+                  const isEnRoute = job.status === "en_route";
+                  return (
+                    <JobCard
+                      key={job.id}
+                      job={job}
+                      actionLabel={
+                        isAccepted
+                          ? "I've Arrived"
+                          : isEnRoute
+                          ? "Verify Delivery"
+                          : "In Transit"
+                      }
+                      actionColor={isAccepted ? "amber" : "green"}
+                      onAction={() =>
+                        isAccepted
+                          ? handleArrival(job)
+                          : handleStartDeliveryVerification(job)
+                      }
+                      disabled={isMutating}
+                    />
+                  );
+                })}
               </View>
             )}
           </>
         )}
       </ScrollView>
+
+      {/* OTP Verification Modal */}
+      <Modal
+        visible={otpModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setOtpModalVisible(false)}
+      >
+        <Pressable
+          className="flex-1 justify-end bg-black/40"
+          onPress={() => setOtpModalVisible(false)}
+        >
+          <Pressable
+            className="rounded-t-3xl bg-white px-6 pb-10 pt-6"
+            onPress={() => {}}
+          >
+            <Text className="text-xl font-black text-gray-950">
+              Verify Delivery
+            </Text>
+            <Text className="mt-2 text-base leading-6 text-gray-500">
+              Enter the 6-digit PIN the buyer received via SMS to complete this
+              delivery.
+            </Text>
+
+            <TextInput
+              className="mt-5 rounded-2xl border-2 border-gray-200 bg-gray-50 px-5 py-4 text-center text-2xl font-black tracking-[8px] text-gray-950"
+              placeholder="• • • • • •"
+              placeholderTextColor="#9CA3AF"
+              value={otpPin}
+              onChangeText={setOtpPin}
+              keyboardType="number-pad"
+              maxLength={8}
+              autoFocus
+            />
+
+            <Pressable
+              className="mt-5 rounded-2xl bg-green-700 py-4 active:opacity-80"
+              disabled={confirmDeliveryMutation.isPending}
+              onPress={handleSubmitDeliveryOtp}
+            >
+              {confirmDeliveryMutation.isPending ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text className="text-center text-base font-black text-white">
+                  Confirm Delivery
+                </Text>
+              )}
+            </Pressable>
+
+            <Pressable
+              className="mt-3 rounded-2xl border border-gray-200 py-4"
+              onPress={() => setOtpModalVisible(false)}
+            >
+              <Text className="text-center font-black text-gray-600">
+                Cancel
+              </Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -190,17 +380,21 @@ function JobCard({
   actionLabel,
   actionColor,
   onAction,
+  disabled,
 }: {
-  job: TransportJob;
+  job: ReturnType<typeof mapTransportJobToClient>;
   actionLabel: string;
   actionColor: "blue" | "amber" | "green";
   onAction: () => void;
+  disabled?: boolean;
 }) {
   const statusColors: Record<string, { bg: string; text: string; label: string }> = {
     open: { bg: "bg-blue-100", text: "text-blue-700", label: "Open" },
     accepted: { bg: "bg-amber-100", text: "text-amber-700", label: "Accepted" },
     in_transit: { bg: "bg-orange-100", text: "text-orange-700", label: "In Transit" },
-    completed: { bg: "bg-green-100", text: "text-green-700", label: "Completed" },
+    en_route: { bg: "bg-purple-100", text: "text-purple-700", label: "At Doorstep" },
+    delivered: { bg: "bg-green-100", text: "text-green-700", label: "Delivered" },
+    cancelled: { bg: "bg-red-100", text: "text-red-700", label: "Cancelled" },
   };
 
   const actionBg: Record<string, string> = {
@@ -218,7 +412,7 @@ function JobCard({
         <View className="flex-1">
           <Text className="text-lg font-black text-gray-950">{job.cropName}</Text>
           <Text className="mt-1 text-sm font-semibold text-gray-500">
-            {job.quantityText}
+            {job.quantityText} · {job.distanceKm.toFixed(1)} km
           </Text>
         </View>
         <View className={`rounded-xl px-3 py-1.5 ${st.bg}`}>
@@ -262,8 +456,9 @@ function JobCard({
           </Text>
         </View>
         <Pressable
-          className={`flex-row items-center gap-2 rounded-2xl px-5 py-3.5 ${actionBg[actionColor]}`}
+          className={`flex-row items-center gap-2 rounded-2xl px-5 py-3.5 ${actionBg[actionColor]} ${disabled ? "opacity-50" : ""}`}
           onPress={onAction}
+          disabled={disabled}
         >
           <Text className="text-sm font-black text-white">{actionLabel}</Text>
           <NavArrowRight color="#FFFFFF" width={16} height={16} strokeWidth={2.5} />

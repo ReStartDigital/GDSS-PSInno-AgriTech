@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View, ActivityIndicator, Linking, Platform } from "react-native";
+import { Pressable, ScrollView, Text, View, ActivityIndicator, Linking, Platform } from "react-native";
+import { Alert } from "@/lib/alert-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { vlClassNames } from "@/lib/design-system";
@@ -18,7 +19,6 @@ import {
 import { useListingDetails, mapBackendListingToClient } from "@/lib/listings-api";
 import { useCreateOrder } from "@/lib/orders-api";
 import { MarketplaceListing } from "@/lib/marketplace-data";
-import { useTransportStore } from "@/lib/transport-store";
 import { useAuthStore } from "@vegelink/shared";
 
 type DeliveryMode = "pickup" | "delivery";
@@ -32,7 +32,6 @@ export default function ListingOrderScreen() {
 
   const { data: rawListing, isLoading } = useListingDetails(id || "");
   const createOrderMutation = useCreateOrder();
-  const addTransportJob = useTransportStore((s) => s.addJob);
   const authUser = useAuthStore((s) => s.user);
 
   const listing = useMemo(() => {
@@ -115,20 +114,6 @@ export default function ListingOrderScreen() {
       packaging_type_id: rawListing.recommendedPackagingId || null,
     }, {
       onSuccess: (createdOrder) => {
-        // If transporter delivery was selected, post to the transport jobs board
-        if (deliveryMode === "delivery") {
-          addTransportJob({
-            orderId: createdOrder.id,
-            cropName: listing.cropName,
-            quantityText: `${quantity} ${listing.unitOfMeasure}`,
-            buyerName: authUser?.fullName || "Buyer",
-            farmerName: listing.farmer.fullName,
-            pickupAddress: listing.farmer.locationLabel || "Farm",
-            deliveryAddress: "Buyer delivery location",
-            payoutGhs: transportTotal,
-          });
-        }
-
         const modeLabel = deliveryMode === "pickup" ? "Self Pickup" : "Transporter Delivery";
 
         Alert.alert(
@@ -152,11 +137,17 @@ export default function ListingOrderScreen() {
               text: "View Order",
               onPress: () => router.replace(`/orders/${createdOrder.id}`),
             }
-          ]
+          ],
+          { type: "success" }
         );
       },
       onError: (err: any) => {
-        Alert.alert("Checkout Failed", err.error?.message || "Could not place order.");
+        Alert.alert(
+          "Checkout Failed",
+          err.error?.message || "Could not place order.",
+          [],
+          { type: "error" }
+        );
       }
     });
   };
