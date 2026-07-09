@@ -11,12 +11,39 @@ export interface Job {
   route: string
   createdAt: string
   order?: any
+  pickupLocation?: {
+    type: 'Point'
+    coordinates: [number, number]
+  }
+  dropoffLocation?: {
+    type: 'Point'
+    coordinates: [number, number]
+  }
 }
 
 export function useJobs() {
   return useQuery<Job[]>({
     queryKey: ['jobs'],
-    queryFn: () => transportApi.getJobs().then((r) => r.data.data as Job[]),
+    queryFn: () =>
+      transportApi.getJobs().then((r) => {
+        const resData = r.data
+        let jobs: any[] = []
+        if (resData.success && Array.isArray(resData.data)) {
+          jobs = resData.data
+        } else if (resData.success && resData.data && Array.isArray(resData.data.data)) {
+          jobs = resData.data.data
+        }
+        return jobs.map((job: any) => {
+          let mappedStatus = job.status
+          if (job.status === 'open') mappedStatus = 'pending'
+          else if (job.status === 'accepted') mappedStatus = 'assigned'
+          else if (job.status === 'en_route') mappedStatus = 'in_transit'
+          return {
+            ...job,
+            status: mappedStatus,
+          }
+        }) as Job[]
+      }),
   })
 }
 
@@ -34,8 +61,15 @@ export function useAcceptJob() {
 export function useUpdateJobStatus() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) =>
-      transportApi.updateStatus(id, status),
+    mutationFn: ({ id, status, pin }: { id: string; status: string; pin?: string }) => {
+      if (status === 'in_transit' || status === 'arrived') {
+        return transportApi.arrive(id)
+      }
+      if (status === 'delivered') {
+        return transportApi.confirmDelivery(id, pin ?? '')
+      }
+      throw new Error(`Unsupported status action: ${status}`)
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['jobs'] })
       qc.invalidateQueries({ queryKey: ['orders'] })
