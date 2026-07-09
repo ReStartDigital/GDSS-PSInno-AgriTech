@@ -39,7 +39,6 @@ const phoneSchema = z
     return normalized;
   });
 
-
 export const paystackPhone = z
   .string()
   .min(1, "Phone number is required")
@@ -68,7 +67,7 @@ export const paystackPhone = z
       code: z.ZodIssueCode.custom,
       message: "Enter a valid 10-digit Ghanaian phone number (e.g. 020XXXXXXX)",
     });
-    
+
     return z.NEVER;
   });
 

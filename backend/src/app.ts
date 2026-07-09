@@ -58,7 +58,12 @@ export function createApp(): Application {
       },
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       credentials: true,
-      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Accept",
+      ],
     }),
   );
 

@@ -91,7 +91,7 @@ class PaystackClient {
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      console.log(error.response.data)
+      console.log(error.response.data);
       throw new AppException(
         422,
         ErrorCode.PAYSTACK_SUBACCOUNT_FAILED,
