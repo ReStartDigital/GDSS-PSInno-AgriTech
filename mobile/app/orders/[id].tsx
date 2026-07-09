@@ -1,4 +1,6 @@
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { useState } from "react";
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert } from "@/lib/alert-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { useAuthStore } from "@vegelink/shared";
@@ -8,20 +10,39 @@ import {
   useDeclineOrder,
   usePackOrder,
   useCancelOrder,
+  useMarkReadyForPickup,
+  useVerifyPickup,
   mapBackendOrderToClient,
 } from "@/lib/orders-api";
+import { useRequestTransport } from "@/lib/transport-api";
+import { useSubmitRating } from "@/lib/ratings-api";
 import { getConfirmationLabel, getStatusLabel } from "@/lib/orders-data";
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const role = useAuthStore((state) => state.user?.role);
+  const userId = useAuthStore((state) => state.user?.id);
 
+  // ── PIN verification modal state ─────────────────────────────────────
+  const [pinModalVisible, setPinModalVisible] = useState(false);
+  const [verifyPin, setVerifyPin] = useState("");
+
+  // ── Rating modal state ───────────────────────────────────────────────
+  const [ratingModalVisible, setRatingModalVisible] = useState(false);
+  const [ratingScore, setRatingScore] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
+
+  // ── API hooks ────────────────────────────────────────────────────────
   const { data: rawOrder, isLoading } = useOrderDetails(id || "");
   const confirmMutation = useConfirmOrder();
   const declineMutation = useDeclineOrder();
   const packMutation = usePackOrder();
   const cancelMutation = useCancelOrder();
+  const readyPickupMutation = useMarkReadyForPickup();
+  const verifyPickupMutation = useVerifyPickup();
+  const requestTransportMutation = useRequestTransport();
+  const submitRatingMutation = useSubmitRating();
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -69,7 +90,11 @@ export default function OrderDetailScreen() {
     confirmMutation.isPending ||
     declineMutation.isPending ||
     packMutation.isPending ||
-    cancelMutation.isPending;
+    cancelMutation.isPending ||
+    readyPickupMutation.isPending ||
+    verifyPickupMutation.isPending ||
+    requestTransportMutation.isPending ||
+    submitRatingMutation.isPending;
 
   // ── Action handlers ─────────────────────────────────────────────────
 
@@ -80,53 +105,33 @@ export default function OrderDetailScreen() {
         text: "Confirm",
         onPress: () =>
           confirmMutation.mutate(id!, {
-            onSuccess: () => Alert.alert("Confirmed", "Order has been confirmed."),
+            onSuccess: () => Alert.alert("Confirmed", "Order has been confirmed.", [], { type: "success" }),
             onError: (err: any) =>
-              Alert.alert("Error", err.error?.message || "Could not confirm order."),
+              Alert.alert("Error", err.error?.message || "Could not confirm order.", [], { type: "error" }),
           }),
       },
     ]);
   };
 
   const handleDecline = () => {
-    if (Alert.prompt) {
-      Alert.prompt(
-        "Decline Order",
-        "Provide a reason for declining:",
-        (reason) => {
-          if (!reason || reason.length < 4) {
-            Alert.alert("Validation", "Reason must be at least 4 characters.");
-            return;
+    Alert.prompt(
+      "Decline Order",
+      "Provide a reason for declining:",
+      (reason) => {
+        if (!reason || reason.length < 4) {
+          Alert.alert("Validation", "Reason must be at least 4 characters.", [], { type: "warning" });
+          return;
+        }
+        declineMutation.mutate(
+          { id: id!, reason },
+          {
+            onSuccess: () => Alert.alert("Declined", "Order has been declined.", [], { type: "success" }),
+            onError: (err: any) =>
+              Alert.alert("Error", err.error?.message || "Could not decline order.", [], { type: "error" }),
           }
-          declineMutation.mutate(
-            { id: id!, reason },
-            {
-              onSuccess: () => Alert.alert("Declined", "Order has been declined."),
-              onError: (err: any) =>
-                Alert.alert("Error", err.error?.message || "Could not decline order."),
-            }
-          );
-        },
-        "plain-text"
-      );
-    } else {
-      Alert.alert("Decline Order", "Are you sure you want to decline this order?", [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Decline",
-          style: "destructive",
-          onPress: () =>
-            declineMutation.mutate(
-              { id: id!, reason: "Farmer declined via app" },
-              {
-                onSuccess: () => Alert.alert("Declined", "Order has been declined."),
-                onError: (err: any) =>
-                  Alert.alert("Error", err.error?.message || "Could not decline order."),
-              }
-            ),
-        },
-      ]);
-    }
+        );
+      }
+    );
   };
 
   const handlePack = () => {
@@ -136,9 +141,9 @@ export default function OrderDetailScreen() {
         text: "Mark Packed",
         onPress: () =>
           packMutation.mutate(id!, {
-            onSuccess: () => Alert.alert("Packed", "Order marked as packed."),
+            onSuccess: () => Alert.alert("Packed", "Order marked as packed.", [], { type: "success" }),
             onError: (err: any) =>
-              Alert.alert("Error", err.error?.message || "Could not mark as packed."),
+              Alert.alert("Error", err.error?.message || "Could not mark as packed.", [], { type: "error" }),
           }),
       },
     ]);
@@ -154,13 +159,173 @@ export default function OrderDetailScreen() {
           cancelMutation.mutate(
             { id: id!, reason: "Cancelled via mobile app" },
             {
-              onSuccess: () => Alert.alert("Cancelled", "Order has been cancelled."),
+              onSuccess: () => Alert.alert("Cancelled", "Order has been cancelled.", [], { type: "success" }),
               onError: (err: any) =>
-                Alert.alert("Error", err.error?.message || "Could not cancel order."),
+                Alert.alert("Error", err.error?.message || "Could not cancel order.", [], { type: "error" }),
             }
           ),
       },
     ]);
+  };
+
+  const handleReadyForPickup = () => {
+    Alert.alert(
+      "Ready for Pickup",
+      "Confirm the order is packed. A 6-minute verification PIN will be sent to the buyer.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Send PIN",
+          onPress: () =>
+            readyPickupMutation.mutate(id!, {
+              onSuccess: () =>
+                Alert.alert(
+                  "PIN Sent ✅",
+                  "A 6-minute collection PIN has been sent to the buyer.",
+                  [],
+                  { type: "success" }
+                ),
+              onError: (err: any) =>
+                Alert.alert(
+                  "Error",
+                  err.error?.message || "Could not mark as ready for pickup.",
+                  [],
+                  { type: "error" }
+                ),
+            }),
+        },
+      ],
+    );
+  };
+
+  const handleOpenVerifyPickup = () => {
+    setVerifyPin("");
+    setPinModalVisible(true);
+  };
+
+  const handleSubmitPickupPin = () => {
+    if (verifyPin.length < 4) {
+      Alert.alert(
+        "Invalid PIN",
+        "Please enter the buyer's verification code (at least 4 digits).",
+        [],
+        { type: "warning" }
+      );
+      return;
+    }
+    verifyPickupMutation.mutate(
+      { id: id!, pin: verifyPin },
+      {
+        onSuccess: () => {
+          setPinModalVisible(false);
+          setVerifyPin("");
+          Alert.alert(
+            "Pickup Verified ✅",
+            "Order complete. The buyer has collected the produce.",
+            [],
+            { type: "success" }
+          );
+        },
+        onError: (err: any) => {
+          Alert.alert(
+            "Verification Failed",
+            err.error?.message || "Invalid or expired PIN. Please try again.",
+            [],
+            { type: "error" }
+          );
+        },
+      },
+    );
+  };
+
+  const handleRequestTransport = () => {
+    // For transport requests, we need pickup/dropoff coordinates
+    // Using placeholder coordinates — a real app would use the listing's farm location and buyer's delivery location
+    Alert.alert(
+      "Request Transport",
+      "Post this order to the transport jobs board so a transporter can pick it up?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Request Transport",
+          onPress: () =>
+            requestTransportMutation.mutate(
+              {
+                order_id: id!,
+                pickup_location: { latitude: 5.6037, longitude: -0.187 },
+                dropoff_location: { latitude: 6.6666, longitude: -1.6163 },
+                packaging_type_name: order.packaging || "Standard Sacks",
+              },
+              {
+                onSuccess: () =>
+                  Alert.alert(
+                    "Transport Requested ✅",
+                    "Your order has been posted to the jobs board. A transporter will accept it soon.",
+                    [],
+                    { type: "success" }
+                  ),
+                onError: (err: any) =>
+                  Alert.alert(
+                    "Error",
+                    err.error?.message || "Could not request transport.",
+                    [],
+                    { type: "error" }
+                  ),
+              },
+            ),
+        },
+      ],
+    );
+  };
+
+  const handleOpenRating = () => {
+    setRatingScore(0);
+    setRatingComment("");
+    setRatingModalVisible(true);
+  };
+
+  const handleSubmitRating = () => {
+    if (ratingScore < 1 || ratingScore > 5) {
+      Alert.alert(
+        "Select Rating",
+        "Please tap a star to select your rating.",
+        [],
+        { type: "warning" }
+      );
+      return;
+    }
+
+    // Determine the counter-party to rate
+    const rateeId =
+      role === "buyer" ? order.farmerId : order.traderId;
+
+    submitRatingMutation.mutate(
+      {
+        order_id: id!,
+        ratee_id: rateeId,
+        score: ratingScore,
+        comment: ratingComment.trim() || undefined,
+      },
+      {
+        onSuccess: () => {
+          setRatingModalVisible(false);
+          Alert.alert(
+            "Review Submitted ✅",
+            "Thank you for your feedback.",
+            [],
+            { type: "success" }
+          );
+        },
+        onError: (err: any) => {
+          Alert.alert(
+            "Error",
+            err.error?.message || "Could not submit rating.",
+            [],
+            { type: "error" }
+          );
+        },
+      },
+    );
   };
 
   // ── Derive visible actions based on role + status ───────────────────
@@ -170,6 +335,10 @@ export default function OrderDetailScreen() {
     onDecline: handleDecline,
     onPack: handlePack,
     onCancel: handleCancel,
+    onReadyForPickup: handleReadyForPickup,
+    onVerifyPickup: handleOpenVerifyPickup,
+    onRequestTransport: handleRequestTransport,
+    onRate: handleOpenRating,
   });
 
   return (
@@ -286,6 +455,154 @@ export default function OrderDetailScreen() {
           </Text>
         </Pressable>
       </ScrollView>
+
+      {/* ── PIN Verification Modal ───────────────────────────────────── */}
+      <Modal
+        visible={pinModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPinModalVisible(false)}
+      >
+        <Pressable
+          className="flex-1 justify-end bg-black/40"
+          onPress={() => setPinModalVisible(false)}
+        >
+          <Pressable
+            className="rounded-t-3xl bg-white px-6 pb-10 pt-6"
+            onPress={() => {}}
+          >
+            <Text className="text-xl font-black text-gray-950">
+              Verify Buyer PIN
+            </Text>
+            <Text className="mt-2 text-base leading-6 text-gray-500">
+              Enter the 6-digit code the buyer received via SMS to complete this
+              pickup.
+            </Text>
+
+            <TextInput
+              className="mt-5 rounded-2xl border-2 border-gray-200 bg-gray-50 px-5 py-4 text-center text-2xl font-black tracking-[8px] text-gray-950"
+              placeholder="• • • • • •"
+              placeholderTextColor="#9CA3AF"
+              value={verifyPin}
+              onChangeText={setVerifyPin}
+              keyboardType="number-pad"
+              maxLength={8}
+              autoFocus
+            />
+
+            <Pressable
+              className="mt-5 rounded-2xl bg-green-700 py-4 active:opacity-80"
+              disabled={verifyPickupMutation.isPending}
+              onPress={handleSubmitPickupPin}
+            >
+              {verifyPickupMutation.isPending ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text className="text-center text-base font-black text-white">
+                  Verify & Complete
+                </Text>
+              )}
+            </Pressable>
+
+            <Pressable
+              className="mt-3 rounded-2xl border border-gray-200 py-4"
+              onPress={() => setPinModalVisible(false)}
+            >
+              <Text className="text-center font-black text-gray-600">
+                Cancel
+              </Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ── Rating Modal ─────────────────────────────────────────────── */}
+      <Modal
+        visible={ratingModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setRatingModalVisible(false)}
+      >
+        <Pressable
+          className="flex-1 justify-end bg-black/40"
+          onPress={() => setRatingModalVisible(false)}
+        >
+          <Pressable
+            className="rounded-t-3xl bg-white px-6 pb-10 pt-6"
+            onPress={() => {}}
+          >
+            <Text className="text-xl font-black text-gray-950">
+              Rate {role === "buyer" ? order.farmerName : order.buyerName}
+            </Text>
+            <Text className="mt-2 text-base leading-6 text-gray-500">
+              How was your experience with this transaction?
+            </Text>
+
+            {/* Star Picker */}
+            <View className="mt-5 flex-row justify-center gap-3">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Pressable
+                  key={star}
+                  className={`h-12 w-12 items-center justify-center rounded-xl ${
+                    ratingScore >= star
+                      ? "bg-amber-400"
+                      : "bg-gray-100"
+                  }`}
+                  onPress={() => setRatingScore(star)}
+                >
+                  <Text
+                    className={`text-xl ${
+                      ratingScore >= star
+                        ? "text-white"
+                        : "text-gray-400"
+                    }`}
+                  >
+                    ★
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <Text className="mt-2 text-center text-sm text-gray-400">
+              {ratingScore > 0 ? `${ratingScore} / 5 stars` : "Tap a star"}
+            </Text>
+
+            {/* Comment */}
+            <TextInput
+              className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-950"
+              placeholder="Optional feedback comment…"
+              placeholderTextColor="#9CA3AF"
+              value={ratingComment}
+              onChangeText={setRatingComment}
+              multiline
+              numberOfLines={3}
+              maxLength={1000}
+            />
+
+            <Pressable
+              className="mt-5 rounded-2xl bg-green-700 py-4 active:opacity-80"
+              disabled={submitRatingMutation.isPending || ratingScore === 0}
+              onPress={handleSubmitRating}
+            >
+              {submitRatingMutation.isPending ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text className="text-center text-base font-black text-white">
+                  Submit Review
+                </Text>
+              )}
+            </Pressable>
+
+            <Pressable
+              className="mt-3 rounded-2xl border border-gray-200 py-4"
+              onPress={() => setRatingModalVisible(false)}
+            >
+              <Text className="text-center font-black text-gray-600">
+                Cancel
+              </Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -313,14 +630,20 @@ function getActions(
     onDecline: () => void;
     onPack: () => void;
     onCancel: () => void;
+    onReadyForPickup: () => void;
+    onVerifyPickup: () => void;
+    onRequestTransport: () => void;
+    onRate: () => void;
   }
 ): ActionItem[] {
   const actions: ActionItem[] = [];
+  const rawStatus = order.rawStatus as string;
+  const mode = order.mode as string;
 
   // Farmer / Agent can confirm pending orders
   if (
     (role === "farmer" || role === "agent") &&
-    order.status === "pending_payment"
+    ["pending", "pending_agent_confirmation", "pending_sms_confirmation"].includes(rawStatus)
   ) {
     actions.push({ label: "Confirm Order", onPress: handlers.onConfirm });
     actions.push({
@@ -330,21 +653,45 @@ function getActions(
     });
   }
 
-  // Farmer / Agent can mark confirmed orders as packed
+  // Farmer / Agent can mark confirmed delivery orders as packed
   if (
     (role === "farmer" || role === "agent") &&
-    order.status === "paid"
+    rawStatus === "confirmed" &&
+    mode === "delivery"
   ) {
     actions.push({ label: "Mark as Packed", onPress: handlers.onPack });
+    actions.push({ label: "Request Transport", onPress: handlers.onRequestTransport });
+  }
+
+  // Farmer / Agent can trigger the pickup OTP flow for confirmed pickup orders
+  if (
+    (role === "farmer" || role === "agent") &&
+    rawStatus === "confirmed" &&
+    mode === "pickup"
+  ) {
+    actions.push({ label: "Ready for Pickup (Send PIN)", onPress: handlers.onReadyForPickup });
+  }
+
+  // Farmer / Agent can verify the buyer's pickup PIN when order is packed (pickup mode)
+  if (
+    (role === "farmer" || role === "agent") &&
+    rawStatus === "packed" &&
+    mode === "pickup"
+  ) {
+    actions.push({ label: "Verify Buyer PIN", onPress: handlers.onVerifyPickup });
+  }
+
+  // Any involved party can rate on terminal orders
+  if (["delivered", "collected"].includes(rawStatus)) {
+    actions.push({ label: "Rate Counter-Party ★", onPress: handlers.onRate });
   }
 
   // Any involved party can cancel non-completed orders
   if (
-    order.status !== "completed" &&
-    order.status !== "cancelled"
+    !["delivered", "collected", "cancelled", "cancelled_expired"].includes(rawStatus)
   ) {
     // Only add cancel if we haven't already added decline above
-    if (order.status !== "pending_payment" || role === "buyer") {
+    if (!["pending", "pending_agent_confirmation", "pending_sms_confirmation"].includes(rawStatus) || role === "buyer") {
       actions.push({
         label: "Cancel Order",
         destructive: true,

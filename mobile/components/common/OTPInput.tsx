@@ -6,9 +6,10 @@ interface OTPInputProps {
   length?: number;
   value: string;
   onChange: (value: string) => void;
+  secure?: boolean;
 }
 
-export function OTPInput({ length = 6, value, onChange }: OTPInputProps) {
+export function OTPInput({ length = 6, value, onChange, secure = false }: OTPInputProps) {
   const inputRef = useRef<TextInput>(null);
 
   const handleChange = (nextValue: string) => {
@@ -23,6 +24,7 @@ export function OTPInput({ length = 6, value, onChange }: OTPInputProps) {
       <View className="flex-row justify-between gap-2">
         {Array.from({ length }).map((_, index) => {
           const digit = value[index] ?? "";
+          const filled = digit !== "";
 
           return (
             <View
@@ -30,9 +32,13 @@ export function OTPInput({ length = 6, value, onChange }: OTPInputProps) {
               className="h-14 flex-1 items-center justify-center rounded-2xl border-2 bg-green-50"
               style={{ borderColor: vlColors.brandGreen }}
             >
-              <Text className="text-2xl font-black text-green-800">
-                {digit}
-              </Text>
+              {filled && secure ? (
+                <View className="h-3 w-3 rounded-full bg-green-800" />
+              ) : (
+                <Text className="text-2xl font-black text-green-800">
+                  {digit}
+                </Text>
+              )}
             </View>
           );
         })}
@@ -44,7 +50,7 @@ export function OTPInput({ length = 6, value, onChange }: OTPInputProps) {
         maxLength={length}
         value={value}
         onChangeText={handleChange}
-        textContentType="oneTimeCode"
+        textContentType={secure ? "none" : "oneTimeCode"}
       />
     </Pressable>
   );

@@ -4,8 +4,9 @@ import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useUserSettingsStore } from "@/lib/user-settings-store";
 import { vlClassNames } from "@/lib/design-system";
-import { initials, getProduceEmoji } from "@/lib/utils";
+import { initials } from "@/lib/utils";
 import { useListingDetails, mapBackendListingToClient } from "@/lib/listings-api";
+import { chatRoutes } from "@/lib/messages-api";
 import { MarketplaceListing } from "@/lib/marketplace-data";
 
 import {
@@ -15,10 +16,12 @@ import {
   Star,
   MapPin,
   CheckCircle,
+  ChatBubble,
   Phone,
   Truck,
   Minus,
   Plus,
+  MediaImage,
 } from "iconoir-react-native";
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -205,6 +208,25 @@ export default function ListingDetailScreen() {
                   </Text>
                 </View>
               </View>
+              <Link
+                href={{
+                  pathname: "/messages/[id]",
+                  params: {
+                    id: chatRoutes.listingThreadId(listing.id, listing.farmer.id),
+                    listingId: listing.id,
+                    listingTitle: listing.cropName,
+                    listingImageUrl: listing.imageUrls?.[0] || "",
+                    farmerId: listing.farmer.id,
+                    farmerName: listing.farmer.fullName,
+                    farmerPhone: listing.farmer.phone,
+                  },
+                } as any}
+                asChild
+              >
+                <Pressable className="mr-2 h-12 w-12 items-center justify-center rounded-2xl bg-green-800 active:bg-green-900">
+                  <ChatBubble color="#FFFFFF" width={20} height={20} strokeWidth={2} />
+                </Pressable>
+              </Link>
               <Pressable className="h-12 w-12 items-center justify-center rounded-2xl bg-green-50">
                 <Phone color="#166534" width={20} height={20} strokeWidth={2} />
               </Pressable>
@@ -331,7 +353,6 @@ function ProduceImageCarousel({ listing }: { listing: MarketplaceListing }) {
 }
 
 function ProduceHero({ listing }: { listing: MarketplaceListing }) {
-  const emoji = getProduceEmoji(listing.cropName);
   return (
     <View className="h-40 w-40 items-center justify-center">
       <View
@@ -345,9 +366,7 @@ function ProduceHero({ listing }: { listing: MarketplaceListing }) {
         }}
       >
         <View className="absolute -right-2 top-2 h-10 w-14 rotate-45 rounded-full bg-white/35" />
-        <Text className="text-5xl">
-          {emoji}
-        </Text>
+        <MediaImage color="#FFFFFF" width={36} height={36} strokeWidth={2} />
       </View>
     </View>
   );
@@ -380,5 +399,3 @@ function EstimateTile({ value, label }: { value: string; label: string }) {
     </View>
   );
 }
-
-

@@ -172,6 +172,36 @@ export function useCancelOrder() {
   });
 }
 
+export function useMarkReadyForPickup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiClient.patch<BackendOrder>(`/orders/${id}/ready-pickup`);
+      return response as any;
+    },
+    onSuccess: (data, id) => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["order", id] });
+    },
+  });
+}
+
+export function useVerifyPickup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, pin }: { id: string; pin: string }) => {
+      const response = await apiClient.post<BackendOrder>(`/orders/${id}/verify-pickup`, {
+        verification_pin: pin,
+      });
+      return response as any;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["order", variables.id] });
+    },
+  });
+}
+
 // ── UTILITIES ────────────────────────────────────────────────────────────────
 
 export function mapBackendOrderToClient(item: BackendOrder): any {
@@ -189,6 +219,7 @@ export function mapBackendOrderToClient(item: BackendOrder): any {
       clientStatus = "paid";
       break;
     case "in_transit":
+    case "arrived_at_doorstep":
       clientStatus = "in_transit";
       break;
     case "delivered":
@@ -217,8 +248,8 @@ export function mapBackendOrderToClient(item: BackendOrder): any {
   const isPending = ["pending", "pending_agent_confirmation", "pending_sms_confirmation", "negotiating"].includes(item.status);
   const isConfirmed = !isPending && item.status !== "cancelled";
   const isPaid = isConfirmed && item.status !== "cancelled";
-  const isPacked = ["packed", "in_transit", "delivered", "collected"].includes(item.status);
-  const isInTransit = ["in_transit", "delivered", "collected"].includes(item.status);
+  const isPacked = ["packed", "in_transit", "arrived_at_doorstep", "delivered", "collected"].includes(item.status);
+  const isInTransit = ["in_transit", "arrived_at_doorstep", "delivered", "collected"].includes(item.status);
   const isDone = ["delivered", "collected"].includes(item.status);
 
   const timeline = [
@@ -258,6 +289,8 @@ export function mapBackendOrderToClient(item: BackendOrder): any {
     unitOfMeasure: "kg",
     totalAmount: Number(item.totalGhs),
     status: clientStatus,
+    rawStatus: item.status,
+    mode: item.mode,
     deliveryAddress: item.deliveryAddress || "Pickup at Farm",
     traderId: item.buyerId,
     buyerName: item.buyer ? `${item.buyer.firstName} ${item.buyer.lastName}`.trim() : "Vegelink Buyer",
