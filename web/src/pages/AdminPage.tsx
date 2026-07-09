@@ -592,7 +592,7 @@ export default function AdminPage() {
           width: 100%;
         }
 
-        @media (min-width: 640px) {
+        @media (min-width: 768px) {
           .conflict-evidence-grid {
             grid-template-columns: 1fr 1fr;
           }
@@ -1311,14 +1311,14 @@ export default function AdminPage() {
 
       {/* ── CONFLICT DETAIL MEDIATION PANEL MODAL ────────────────────────────────────── */}
       {selectedConflict && (
-        <Modal onClose={() => setSelectedConflict(null)}>
+        <Modal maxWidth={720} onClose={() => setSelectedConflict(null)}>
           <ModalHeader
             eyebrow="Conflict Resolution Panel"
             title="Resolve Conflict Dispute"
             onClose={() => setSelectedConflict(null)}
           />
           
-          <div style={{ padding: '0 20px 20px 20px', display: 'grid', gap: 16 }}>
+          <div style={{ display: 'grid', gap: 16 }}>
             <div style={{ padding: 16, background: '#fcfdfa', border: '1px solid #e5e7eb', borderRadius: 12 }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#6b7280' }}>
                 DISPUTE ID: {selectedConflict.id} · ORDER: {selectedConflict.orderId}
