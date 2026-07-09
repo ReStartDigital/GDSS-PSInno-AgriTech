@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/auth.store'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createListingSchema, type CreateListingFormData } from '../schemas'
-import type { Listing } from '../types/api'
+import type { ListingResponse } from '../types/api'
 import { getApiErrorMessage, getApiErrorData } from '../lib/errors'
 import { Spinner, ErrorAlert, EmptyState } from '../components/ui/Feedback'
 import { Field } from '../components/ui/Field'
@@ -130,7 +130,7 @@ export default function ListingsPage() {
   )
 }
 
-function ListingCard({ listing }: { listing: Listing }) {
+function ListingCard({ listing }: { listing: ListingResponse }) {
   const { mutate: deleteListing, isPending } = useDeleteListing()
   const cfg = getCropConfig(listing.vegetableType)
 

@@ -33,7 +33,6 @@ export class TransportService {
   ): Promise<TransportRequestEntity> {
     const orderRepo = this.dataSource.getRepository(OrderEntity);
     const existingOrder = await orderRepo.findOneBy({ id: dto.order_id });
-
     if (!existingOrder) {
       throw new NotFoundException(
         "Target order record not found.",

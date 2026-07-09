@@ -2,7 +2,7 @@ import { useJobs, useAcceptJob, useUpdateJobStatus, type Job } from '../hooks/us
 import { Spinner, ErrorAlert, EmptyState } from '../components/ui/Feedback'
 import { PageHero } from '../components/ui/PageHero'
 import { getCropConfig } from '../lib/produceUtils'
-import { GoogleRouteMap } from '../components/GoogleRouteMap'
+import { JobsMap } from '../components/map/JobsMap'
 
 // Job status visual config
 const JOB_STATUS_CONFIG: Record<string, { emoji: string; tint: string; accent: string }> = {
@@ -31,6 +31,7 @@ export default function JobsPage() {
 
       {isLoading && <Spinner />}
       {error && <ErrorAlert message="Could not load transport jobs." />}
+
       {!isLoading && !error && jobs.length === 0 && (
         <EmptyState message="No transport jobs available at the moment." />
       )}
@@ -63,6 +64,9 @@ function JobCard({ job }: { job: Job }) {
   const dropoff = job.dropoffLocation?.coordinates
     ? { lat: job.dropoffLocation.coordinates[1], lng: job.dropoffLocation.coordinates[0] }
     : { lat: 6.6666, lng: -1.6163 }
+
+  const pickupCoords: [number, number] = [pickup.lat, pickup.lng];
+  const dropoffCoords: [number, number] = [dropoff.lat, dropoff.lng];
 
   return (
     <article className="mp-card">
@@ -105,14 +109,13 @@ function JobCard({ job }: { job: Job }) {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        <GoogleRouteMap pickup={pickup} dropoff={dropoff} status={job.status} />
-
-        <span style={{ position: 'absolute', bottom: 10, left: 16, fontSize: '0.65rem', fontWeight: 700, color: '#264123', background: 'rgba(255,255,255,0.85)', padding: '2px 6px', borderRadius: 4, zIndex: 3 }}>
-          {job.route.split(' to ')[0] || 'Origin'}
-        </span>
-        <span style={{ position: 'absolute', bottom: 10, right: 16, fontSize: '0.65rem', fontWeight: 700, color: '#15803d', background: 'rgba(255,255,255,0.85)', padding: '2px 6px', borderRadius: 4, zIndex: 3 }}>
-          {job.route.split(' to ')[1] || 'Destination'}
-        </span>
+        {/* Placeholder for route preview */}
+        <div style={{ height: 120, position: 'relative', overflow: 'hidden' }}>
+          <JobsMap pickup={pickupCoords} dropoff={dropoffCoords} />
+        </div>
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '0.8rem', color: '#555' }}>
+          {job.route}
+        </div>
       </div>
 
       {/* Body */}

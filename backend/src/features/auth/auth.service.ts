@@ -237,7 +237,7 @@ export class AuthService {
     refreshToken: string;
   }> {
     const user = await this.findByPhone(dto.phone);
-    if (!user || !user.isActive || !user.pinHash) {
+    if (!user  || !user.pinHash) {
       throw new AppException(
         401,
         ErrorCode.UNAUTHORIZED,

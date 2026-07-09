@@ -2,17 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { listingsApi } from '../lib/apiCalls'
 import { useAuthStore } from '../store/auth.store'
 import type { CreateListingFormData } from '../schemas'
-import type { Listing } from '../types/api'
+import type { ListingResponse } from '../types/api'
 
 /**
  * Backend GET /listings response envelope:
- *   { success, data: { data: Listing[], meta: PaginationMeta } }
+ *   { success, data: { data: ListingResponse[], meta: PaginationMeta } }
  *
  * Backend GET /listings/:id response envelope:
- *   { success, data: { listing: Listing } }
+ *   { success, data: { listing: ListingResponse } }
  *
  * Backend POST/PATCH /listings response envelope:
- *   { success, data: { listing: Listing } }
+ *   { success, data: { listing: ListingResponse } }
  */
 
 /** Fetch listings belonging to a specific farmer (farmer role: self, agent role: selected client) */
@@ -20,13 +20,13 @@ export function useMyListings(selectedFarmerId?: string) {
   const user = useAuthStore((s) => s.user)
   const farmerId = user?.role === 'farmer' ? user.id : selectedFarmerId
 
-  return useQuery<Listing[]>({
+  return useQuery<ListingResponse[]>({
     queryKey: ['listings', 'mine', farmerId],
     queryFn: () =>
       listingsApi
         .getAll({ farmer_id: farmerId })
-        // data.data is { data: Listing[], meta: {} } — extract the array
-        .then((r) => (r.data.data.data ?? []) as Listing[]),
+        // data.data is { data: ListingResponse[], meta: {} } — extract the array
+        .then((r) => (r.data.data.data ?? []) as ListingResponse[]),
     enabled: !!farmerId,
   })
 }
@@ -35,21 +35,21 @@ export function useMyListings(selectedFarmerId?: string) {
 export function useAllListings(
   params?: Record<string, string | number | undefined>,
 ) {
-  return useQuery<Listing[]>({
+  return useQuery<ListingResponse[]>({
     queryKey: ['listings', 'all', params],
     queryFn: () =>
       listingsApi
         .getAll(params)
-        .then((r) => (r.data.data.data ?? []) as Listing[]),
+        .then((r) => (r.data.data.data ?? []) as ListingResponse[]),
   })
 }
 
 /** Fetch a single listing by UUID */
 export function useListing(id: string) {
-  return useQuery<Listing>({
+  return useQuery<ListingResponse>({
     queryKey: ['listings', id],
     queryFn: () =>
-      listingsApi.getById(id).then((r) => r.data.data.listing as Listing),
+      listingsApi.getById(id).then((r) => r.data.data.listing as ListingResponse),
     enabled: !!id,
   })
 }

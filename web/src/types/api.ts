@@ -1,8 +1,24 @@
 import type { UserRole } from '../store/auth.store'
 
 // ── Listing ───────────────────────────────────────────────────────────────────
-// Matches the backend ListingDetail / ListingSummary schema
-export interface Listing {
+// Matches backend CreateListingRequest (POST)
+export interface ListingRequest {
+  vegetable_type: string
+  quantity_kg: number
+  price_per_kg_ghs: number
+  harvest_date: string
+  images: string[]
+  recommended_packaging_id?: string
+  location: { lat: number; lng: number }
+  supports_delivery: boolean
+  supports_pickup: boolean
+  auto_confirm_until_kg?: number
+  auto_confirm_price_floor_ghs?: number
+  farmer_id?: string
+}
+
+// Matches backend ProduceListingEntity (GET/Response)
+export interface ListingResponse {
   id: string
   farmerId: string
   vegetableType: string
@@ -11,12 +27,13 @@ export interface Listing {
   harvestDate: string
   status: 'active' | 'sold' | 'cancelled'
   images: string[]
-  location?: { type: string; coordinates: [number, number] }
+  location: { type: 'Point'; coordinates: [number, number] }
   supportsDelivery: boolean
   supportsPickup: boolean
-  autoConfirmUntilKg?: number | null
-  autoConfirmPriceFloorGhs?: number | null
-  recommendedPackagingId?: string | null
+  autoConfirmUntilKg: number | null
+  autoConfirmPriceFloorGhs: number | null
+  recommendedPackagingId: string | null
+  committedKg: number
   createdAt: string
   updatedAt: string
   agriScore?: number
