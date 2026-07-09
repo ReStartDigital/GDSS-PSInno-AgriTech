@@ -206,7 +206,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <NavLink to="/marketplace" className={({ isActive }) => `topbar-nav-link ${isActive ? 'active' : ''}`}>Marketplace</NavLink>
               <NavLink to="/how-it-works" className={({ isActive }) => `topbar-nav-link ${isActive ? 'active' : ''}`}>How it Works</NavLink>
               <NavLink to="/about" className={({ isActive }) => `topbar-nav-link ${isActive ? 'active' : ''}`}>About</NavLink>
-              <NavLink to="/admin" className={({ isActive }) => `topbar-nav-link ${isActive ? 'active' : ''}`}>Admin Portal</NavLink>
+              {/* <NavLink to="/admin" className={({ isActive }) => `topbar-nav-link ${isActive ? 'active' : ''}`}>Admin Portal</NavLink> */}
             </nav>
           )}
 
@@ -251,7 +251,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <NavLink to="/marketplace" className={({ isActive }) => `mobile-menu-link ${isActive ? 'active' : ''}`}>Marketplace</NavLink>
               <NavLink to="/how-it-works" className={({ isActive }) => `mobile-menu-link ${isActive ? 'active' : ''}`}>How it Works</NavLink>
               <NavLink to="/about" className={({ isActive }) => `mobile-menu-link ${isActive ? 'active' : ''}`}>About</NavLink>
-              <NavLink to="/admin" className={({ isActive }) => `mobile-menu-link ${isActive ? 'active' : ''}`}>Admin Portal</NavLink>
+              {/* <NavLink to="/admin" className={({ isActive }) => `mobile-menu-link ${isActive ? 'active' : ''}`}>Admin Portal</NavLink> */}
             </nav>
             <div className="mobile-menu-actions">
               <Link to="/auth/login" className="secondary-button mobile-menu-btn">Log In</Link>
