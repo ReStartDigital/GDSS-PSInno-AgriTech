@@ -83,7 +83,7 @@ export function OrderModal({ listing, onClose }: { listing: ListingResponse; onC
   const { mutate, isPending, error, isSuccess } = usePlaceOrder(listing.id)
   const { register, handleSubmit, watch,setValue, formState: { errors } } = useForm<PlaceOrderFormData, unknown, PlaceOrderFormData>({
     resolver: zodResolver(placeOrderSchema) as never,
-    defaultValues: { mode: FulfilmentMode.DELIVERY, listing_id: listing.id },
+    defaultValues: { mode: FulfilmentMode.DELIVERY, listing_id: listing.id, delivery_location: {lat: parseFloat("0"),lng: parseFloat("0")}},
   })
   const currentMode = watch('mode')
   const onSubmit = (data: PlaceOrderFormData) => mutate({ ...data, listing_id: listing.id }, { 
@@ -197,8 +197,8 @@ export function OrderModal({ listing, onClose }: { listing: ListingResponse; onC
                       if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(
                           (position) => {
-                            setValue('delivery_location.lat', parseFloat(position.coords.latitude.toFixed(6)))
-                            setValue('delivery_location.lng', parseFloat(position.coords.longitude.toFixed(6)))
+                            setValue('delivery_location.lat', parseFloat(position.coords.latitude.toFixed(6) ?? 0))
+                            setValue('delivery_location.lng', parseFloat(position.coords.longitude.toFixed(6) ?? 0))
                           },
                           (error) => toast.error('Geolocation failed: ' + error.message)
                         );

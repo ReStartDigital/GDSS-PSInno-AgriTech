@@ -40,6 +40,7 @@ export const authApi = {
       email: data.email || undefined,
       region: data.region || undefined,
       language: data.language || undefined,
+      location: data.location || undefined,
     }),
 
   /**
@@ -189,9 +190,10 @@ export const usersApi = {
 
   /** PATCH /users/me — update mutable profile fields */
   updateProfile: (data: {
-    firstName?: string
-    middleName?: string
-    lastName?: string
+    first_name?: string
+    middle_name?: string
+    last_name?: string
+    phone?: string
     email?: string
     region?: string
     language?: string
