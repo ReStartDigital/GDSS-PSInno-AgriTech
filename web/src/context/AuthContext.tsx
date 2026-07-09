@@ -25,6 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Try to perform a silent refresh via httpOnly refresh cookie
         const res = await authApi.refresh()
         const newAccessToken = res.data.data.accessToken
+        console.log(accessToken)
         
         if (active) {
           setAccessToken(newAccessToken)
@@ -32,6 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Fetch the full private profile to recover the complete user context (name, region, language)
           const profileRes = await usersApi.getProfile()
           const dbUser = profileRes.data.data.user
+          console.log(dbUser)
           
           const fullName = [dbUser.firstName, dbUser.middleName, dbUser.lastName]
             .filter(Boolean)

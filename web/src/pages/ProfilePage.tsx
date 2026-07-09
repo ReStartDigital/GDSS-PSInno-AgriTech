@@ -219,7 +219,7 @@ export default function ProfilePage() {
                   }}
                 >
                   <option value="mtn">MTN Mobile Money</option>
-                  <option value="telecel">Telecel Cash</option>
+                  <option value="vodafone">Telecel Cash</option>
                   <option value="airteltigo">AirtelTigo Money</option>
                 </select>
               </div>

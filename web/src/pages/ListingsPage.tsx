@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { useMyListings, useCreateListing, useDeleteListing } from '../hooks/useListings'
 import { useMyClients } from '../hooks/useClients'
 import { useAuthStore } from '../store/auth.store'
@@ -6,7 +7,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createListingSchema, type CreateListingFormData } from '../schemas'
 import type { Listing } from '../types/api'
-import { getApiErrorMessage } from '../lib/errors'
+import { getApiErrorMessage, getApiErrorData } from '../lib/errors'
 import { Spinner, ErrorAlert, EmptyState } from '../components/ui/Feedback'
 import { Field } from '../components/ui/Field'
 import { PageHero } from '../components/ui/PageHero'
@@ -200,12 +201,27 @@ function ListingCard({ listing }: { listing: Listing }) {
           </p>
         )}
 
-        {/* Delete action */}
+{/* Delete action */}
+
         <button
           type="button"
           className="mp-order-btn"
           disabled={isPending}
-          onClick={() => { if (confirm('Delete this listing?')) deleteListing(listing.id) }}
+          onClick={() => {
+            if (confirm('Delete this listing?')) {
+              deleteListing(listing.id, {
+                onError: (err: any) => {
+                  const errorData = getApiErrorData(err);
+                  if (errorData?.code === 'LISTING_HAS_ACTIVE_ORDER') {
+                    toast.error('Cannot delete this listing: It has an active order. Please cancel the order first.');
+                  } else {
+                    toast.error(getApiErrorMessage(err) || 'Failed to delete listing.');
+                  }
+                },
+                onSuccess: () => toast.success('Listing deleted successfully.')
+              })
+            }
+          }}
           style={{ background: isPending ? '#9ca3af' : 'rgba(239,68,68,0.85)', marginTop: 'auto' }}
         >
           {isPending ? 'Deleting…' : 'Delete Listing'}
@@ -230,7 +246,7 @@ function CreateListingForm({
   onSuccess?: (cropName: string) => void
 }) {
   const { mutate, isPending, error } = useCreateListing()
-  const { register, handleSubmit, watch, setValue, formState: { errors }, reset } = useForm<CreateListingFormData, unknown, CreateListingFormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors }, reset, setError } = useForm<CreateListingFormData, unknown, CreateListingFormData>({
     resolver: zodResolver(createListingSchema) as never,
     defaultValues: {
       unit_of_measure: 'kg',
@@ -286,7 +302,18 @@ function CreateListingForm({
       onSuccess: () => {
         reset()
         onClose()
-        onSuccess?.(data.vegetable_type || 'Produce')
+        toast.success(`"${data.vegetable_type || 'Produce'}" listing created successfully!`)
+      },
+      onError: (err: any) => {
+        const errorData = getApiErrorData(err);
+        if (errorData?.details) {
+          Object.entries(errorData.details).forEach(([field, messages]) => {
+            setError(field as any, {
+              type: 'server',
+              message: messages[0]
+            });
+          });
+        }
       }
     })
   }
@@ -361,11 +388,11 @@ function CreateListingForm({
                       setValue('location.lng', parseFloat(position.coords.longitude.toFixed(6)))
                     },
                     (error) => {
-                      alert('Geolocation failed: ' + error.message)
+                      toast.error('Geolocation failed: ' + error.message)
                     }
                   );
                 } else {
-                  alert('Geolocation is not supported by this browser.')
+                  toast.error('Geolocation is not supported by this browser.')
                 }
               }}
               style={{
