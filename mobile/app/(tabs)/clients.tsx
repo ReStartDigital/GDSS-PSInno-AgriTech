@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   Pressable,
   RefreshControl,
@@ -15,6 +14,7 @@ import { User, Trash, Plus, Check } from "iconoir-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAgentClients, useRegisterClient, useUnassignClient } from "@/lib/user-api";
 import { initials } from "@/lib/utils";
+import { Alert } from "@/lib/alert-service";
 
 const regions = [
   "Greater Accra",
@@ -43,7 +43,7 @@ export default function AgentClientsScreen() {
 
   const handleRegister = () => {
     if (!firstName.trim() || !lastName.trim() || !phone.trim()) {
-      Alert.alert("Validation", "Please fill in all fields.");
+      Alert.alert("Validation", "Please fill in all fields.", [], { type: "warning" });
       return;
     }
 
@@ -56,15 +56,16 @@ export default function AgentClientsScreen() {
       },
       {
         onSuccess: () => {
-          Alert.alert("Success", "Farmer client registered successfully.");
+          Alert.alert("Success", "Farmer client registered successfully.", [], { type: "success" });
           setIsRegisterOpen(false);
           setFirstName("");
           setLastName("");
           setPhone("");
           setRegion("Greater Accra");
+          refetch();
         },
         onError: (err: any) => {
-          Alert.alert("Registration Failed", err.error?.message || "Could not register client.");
+          Alert.alert("Registration Failed", err.error?.message || "Could not register client.", [], { type: "error" });
         },
       }
     );
@@ -82,10 +83,11 @@ export default function AgentClientsScreen() {
           onPress: () =>
             unassignMutation.mutate(clientId, {
               onSuccess: () => {
-                Alert.alert("Unassigned", "Client has been removed from your list.");
+                Alert.alert("Unassigned", "Client has been removed from your list.", [], { type: "success" });
+                refetch();
               },
               onError: (err: any) => {
-                Alert.alert("Error", err.error?.message || "Could not unassign client.");
+                Alert.alert("Error", err.error?.message || "Could not unassign client.", [], { type: "error" });
               },
             }),
         },
@@ -100,7 +102,7 @@ export default function AgentClientsScreen() {
       {/* Register Floating Action Button */}
       <View className="absolute bottom-6 right-6 z-10">
         <Pressable
-          className="h-14 w-14 items-center justify-center rounded-full bg-purple-700 shadow-lg active:bg-purple-800"
+          className="h-14 w-14 items-center justify-center rounded-full bg-green-800 shadow-lg active:bg-green-900"
           onPress={() => setIsRegisterOpen(true)}
         >
           <Plus color="#FFFFFF" width={26} height={26} strokeWidth={2.5} />
@@ -109,18 +111,18 @@ export default function AgentClientsScreen() {
 
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#7C3AED" />
+          <ActivityIndicator size="large" color="#15803D" />
         </View>
       ) : clients.length === 0 ? (
         <ScrollView
           className="flex-1"
           contentContainerClassName="flex-1 items-center px-8 pt-20"
           refreshControl={
-            <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor="#7C3AED" />
+            <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor="#15803D" />
           }
         >
-          <View className="h-24 w-24 items-center justify-center rounded-3xl bg-purple-50">
-            <User color="#7C3AED" width={44} height={44} strokeWidth={1.5} />
+          <View className="h-24 w-24 items-center justify-center rounded-3xl bg-green-50">
+            <User color="#15803D" width={44} height={44} strokeWidth={1.5} />
           </View>
 
           <Text className="mt-6 text-center text-xl font-black text-gray-950">
@@ -135,7 +137,7 @@ export default function AgentClientsScreen() {
           className="flex-1"
           contentContainerClassName="px-5 pt-5 pb-24 gap-3"
           refreshControl={
-            <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor="#7C3AED" />
+            <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor="#15803D" />
           }
         >
           {clients.map((client) => {
@@ -146,8 +148,8 @@ export default function AgentClientsScreen() {
                 className="rounded-2xl border border-gray-150 bg-white p-4 flex-row items-center justify-between shadow-sm"
               >
                 <View className="flex-row items-center flex-1">
-                  <View className="h-14 w-14 items-center justify-center rounded-2xl bg-purple-100">
-                    <Text className="text-base font-black text-purple-700">
+                  <View className="h-14 w-14 items-center justify-center rounded-2xl bg-green-50">
+                    <Text className="text-base font-black text-green-800">
                       {initials(clientName)}
                     </Text>
                   </View>
@@ -228,12 +230,12 @@ export default function AgentClientsScreen() {
                     key={reg}
                     onPress={() => setRegion(reg)}
                     className={`px-4 py-2.5 rounded-xl border ${
-                      region === reg ? "bg-purple-50 border-purple-700" : "bg-gray-50 border-gray-200"
+                      region === reg ? "bg-green-50 border-green-800" : "bg-gray-50 border-gray-200"
                     }`}
                   >
                     <Text
                       className={`text-sm font-black ${
-                        region === reg ? "text-purple-700" : "text-gray-700"
+                        region === reg ? "text-green-800" : "text-gray-700"
                       }`}
                     >
                       {reg}
@@ -244,7 +246,7 @@ export default function AgentClientsScreen() {
             </View>
 
             <Pressable
-              className="mt-4 h-16 flex-row items-center justify-center gap-2 rounded-2xl bg-purple-700 active:bg-purple-800"
+              className="mt-4 h-16 flex-row items-center justify-center gap-2 rounded-2xl bg-green-800 active:bg-green-900"
               onPress={handleRegister}
               disabled={registerMutation.isPending}
             >

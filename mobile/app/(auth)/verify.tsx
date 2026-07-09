@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Pressable, Text, View, ActivityIndicator } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, Pressable, Text, View, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
 import { OTPInput } from "@/components/common/OTPInput";
@@ -113,6 +113,10 @@ export default function VerifyScreen() {
   };
 
   return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      className="flex-1"
+    >
     <View className={vlClassNames.screen} style={{ paddingTop: insets.top }}>
       <View className="flex-1 px-6 pb-10 pt-4">
         <View className="flex-row items-center gap-3">
@@ -202,6 +206,7 @@ export default function VerifyScreen() {
         </View>
       </View>
     </View>
+    </KeyboardAvoidingView>
   );
 }
 
