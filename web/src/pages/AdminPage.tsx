@@ -725,24 +725,71 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div className="stats-grid">
-              <div className="stat-card">
-                <span>Total Payment Intake</span>
-                <strong>GHS 128,450.00</strong>
+            <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', margin: '16px 0 24px 0' }}>
+              <div className="stat-card" style={{ borderRadius: 16, border: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', background: '#fff', boxShadow: '0 4px 6px -1px rgba(38, 65, 35, 0.03)' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Platform GTV</span>
+                <strong style={{ fontSize: '1.6rem', color: '#264123', fontWeight: 800 }}>GHS 128,450.00</strong>
+                <span style={{ fontSize: '0.75rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px', marginTop: 'auto' }}>
+                  📈 +12.4% vs last week
+                </span>
               </div>
-              <div className="stat-card">
-                <span>Active Conflict Disputes</span>
-                <strong style={{ color: '#d97706' }}>
-                  {conflicts.filter(c => c.status === 'pending').length}
+
+              <div className="stat-card" style={{ borderRadius: 16, border: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', background: '#fff', boxShadow: '0 4px 6px -1px rgba(38, 65, 35, 0.03)' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Escrow Pool</span>
+                <strong style={{ fontSize: '1.6rem', color: '#264123', fontWeight: 800 }}>GHS 18,340.00</strong>
+                <span style={{ fontSize: '0.75rem', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '4px', marginTop: 'auto' }}>
+                  🔒 14 active vaults locked
+                </span>
+              </div>
+
+              <div className="stat-card" style={{ borderRadius: 16, border: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', background: '#fff', boxShadow: '0 4px 6px -1px rgba(38, 65, 35, 0.03)' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Platform Users</span>
+                <strong style={{ fontSize: '1.6rem', color: '#264123', fontWeight: 800 }}>1,248</strong>
+                <span style={{ fontSize: '0.75rem', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '4px', marginTop: 'auto', flexWrap: 'wrap' }}>
+                  👨‍🌾 812 Farmers · 384 Buyers · 52 Drivers
+                </span>
+              </div>
+
+              <div className="stat-card" style={{ borderRadius: 16, border: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', background: '#fff', boxShadow: '0 4px 6px -1px rgba(38, 65, 35, 0.03)' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Onboarded Field Agents</span>
+                <strong style={{ fontSize: '1.6rem', color: '#264123', fontWeight: 800 }}>46 Active</strong>
+                <span style={{ fontSize: '0.75rem', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '4px', marginTop: 'auto' }}>
+                  📍 Ashanti, Eastern, Central
+                </span>
+              </div>
+
+              <div className="stat-card" style={{ borderRadius: 16, border: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', background: '#fff', boxShadow: '0 4px 6px -1px rgba(38, 65, 35, 0.03)' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Agent Onboarded Farmers</span>
+                <strong style={{ fontSize: '1.6rem', color: '#264123', fontWeight: 800 }}>812</strong>
+                <span style={{ fontSize: '0.75rem', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '4px', marginTop: 'auto' }}>
+                  📈 Avg. 17.6 farmers per agent
+                </span>
+              </div>
+
+              <div className="stat-card" style={{ borderRadius: 16, border: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', background: '#fff', boxShadow: '0 4px 6px -1px rgba(38, 65, 35, 0.03)' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Logistics Shipments</span>
+                <strong style={{ fontSize: '1.6rem', color: '#264123', fontWeight: 800 }}>12 Active</strong>
+                <span style={{ fontSize: '0.75rem', color: '#d97706', display: 'flex', alignItems: 'center', gap: '4px', marginTop: 'auto' }}>
+                  🚚 7 in transit · 5 pending claim
+                </span>
+              </div>
+
+              <div className="stat-card" style={{ borderRadius: 16, border: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', background: '#fff', boxShadow: '0 4px 6px -1px rgba(38, 65, 35, 0.03)' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Conflict Disputes</span>
+                <strong style={{ fontSize: '1.6rem', color: '#d97706', fontWeight: 800 }}>
+                  {conflicts.filter(c => c.status === 'pending').length} Pending
                 </strong>
+                <span style={{ fontSize: '0.75rem', color: '#059669', display: 'flex', alignItems: 'center', gap: '4px', marginTop: 'auto' }}>
+                  🤝 94.2% resolution rate
+                </span>
               </div>
-              <div className="stat-card">
-                <span>Agent Farmers Registered</span>
-                <strong>142</strong>
-              </div>
-              <div className="stat-card">
-                <span>API Health Load</span>
-                <strong>{latency} ms</strong>
+
+              <div className="stat-card" style={{ borderRadius: 16, border: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', background: '#fff', boxShadow: '0 4px 6px -1px rgba(38, 65, 35, 0.03)' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>System Telemetry</span>
+                <strong style={{ fontSize: '1.6rem', color: '#264123', fontWeight: 800 }}>{latency} ms</strong>
+                <span style={{ fontSize: '0.75rem', color: '#059669', display: 'flex', alignItems: 'center', gap: '4px', marginTop: 'auto' }}>
+                  🟢 99.98% Gateway API Uptime
+                </span>
               </div>
             </div>
 
