@@ -6,6 +6,7 @@ import { useUserSettingsStore } from "@/lib/user-settings-store";
 import { vlClassNames } from "@/lib/design-system";
 import { initials } from "@/lib/utils";
 import { useListingDetails, mapBackendListingToClient } from "@/lib/listings-api";
+import { chatRoutes } from "@/lib/messages-api";
 import { MarketplaceListing } from "@/lib/marketplace-data";
 
 import {
@@ -15,6 +16,7 @@ import {
   Star,
   MapPin,
   CheckCircle,
+  ChatBubble,
   Phone,
   Truck,
   Minus,
@@ -206,6 +208,25 @@ export default function ListingDetailScreen() {
                   </Text>
                 </View>
               </View>
+              <Link
+                href={{
+                  pathname: "/messages/[id]",
+                  params: {
+                    id: chatRoutes.listingThreadId(listing.id, listing.farmer.id),
+                    listingId: listing.id,
+                    listingTitle: listing.cropName,
+                    listingImageUrl: listing.imageUrls?.[0] || "",
+                    farmerId: listing.farmer.id,
+                    farmerName: listing.farmer.fullName,
+                    farmerPhone: listing.farmer.phone,
+                  },
+                } as any}
+                asChild
+              >
+                <Pressable className="mr-2 h-12 w-12 items-center justify-center rounded-2xl bg-green-800 active:bg-green-900">
+                  <ChatBubble color="#FFFFFF" width={20} height={20} strokeWidth={2} />
+                </Pressable>
+              </Link>
               <Pressable className="h-12 w-12 items-center justify-center rounded-2xl bg-green-50">
                 <Phone color="#166534" width={20} height={20} strokeWidth={2} />
               </Pressable>
