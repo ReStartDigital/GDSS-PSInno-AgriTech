@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { useMyListings, useCreateListing, useDeleteListing } from '../hooks/useListings'
 import { useMyClients } from '../hooks/useClients'
 import { useAuthStore } from '../store/auth.store'
@@ -200,12 +201,27 @@ function ListingCard({ listing }: { listing: Listing }) {
           </p>
         )}
 
-        {/* Delete action */}
+{/* Delete action */}
+
         <button
           type="button"
           className="mp-order-btn"
           disabled={isPending}
-          onClick={() => { if (confirm('Delete this listing?')) deleteListing(listing.id) }}
+          onClick={() => {
+            if (confirm('Delete this listing?')) {
+              deleteListing(listing.id, {
+                onError: (err: any) => {
+                  const errorData = getApiErrorData(err);
+                  if (errorData?.code === 'LISTING_HAS_ACTIVE_ORDER') {
+                    toast.error('Cannot delete this listing: It has an active order. Please cancel the order first.');
+                  } else {
+                    toast.error(getApiErrorMessage(err) || 'Failed to delete listing.');
+                  }
+                },
+                onSuccess: () => toast.success('Listing deleted successfully.')
+              })
+            }
+          }}
           style={{ background: isPending ? '#9ca3af' : 'rgba(239,68,68,0.85)', marginTop: 'auto' }}
         >
           {isPending ? 'Deleting…' : 'Delete Listing'}
@@ -286,7 +302,7 @@ function CreateListingForm({
       onSuccess: () => {
         reset()
         onClose()
-        onSuccess?.(data.vegetable_type || 'Produce')
+        toast.success(`"${data.vegetable_type || 'Produce'}" listing created successfully!`)
       },
       onError: (err: any) => {
         const errorData = getApiErrorData(err);
@@ -372,11 +388,11 @@ function CreateListingForm({
                       setValue('location.lng', parseFloat(position.coords.longitude.toFixed(6)))
                     },
                     (error) => {
-                      alert('Geolocation failed: ' + error.message)
+                      toast.error('Geolocation failed: ' + error.message)
                     }
                   );
                 } else {
-                  alert('Geolocation is not supported by this browser.')
+                  toast.error('Geolocation is not supported by this browser.')
                 }
               }}
               style={{
