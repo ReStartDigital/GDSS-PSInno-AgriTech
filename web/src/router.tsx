@@ -16,6 +16,7 @@ import VerifyPage from './pages/auth/VerifyPage'
 import SetPinPage from './pages/auth/SetPinPage'
 import AboutPage from './pages/AboutPage'
 import HowItWorksPage from './pages/HowItWorksPage'
+import AdminPage from './pages/AdminPage'
 
 export function AppRouter() {
   return (
@@ -32,6 +33,7 @@ export function AppRouter() {
       <Route path="/profile"    element={<Layout><ProfilePage /></Layout>} />
       <Route path="/about"      element={<Layout><AboutPage /></Layout>} />
       <Route path="/how-it-works" element={<Layout><HowItWorksPage /></Layout>} />
+      <Route path="/admin"      element={<Layout><AdminPage /></Layout>} />
 
       <Route element={<RequireAuth />}>
         <Route path="/overview" element={<Layout><OverviewPage /></Layout>} />
