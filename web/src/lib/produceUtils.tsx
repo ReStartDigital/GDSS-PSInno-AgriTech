@@ -1,18 +1,15 @@
-/**
- * Shared produce utilities — used by HomePage, MarketplacePage, ListingsPage.
- * Single source of truth for crop config, AgriRing, FreshnessBar, OrderModal.
- */
-
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { placeOrderSchema, type PlaceOrderFormData } from '../schemas'
-import type { Listing } from '../types/api'
+import { FulfilmentMode, placeOrderSchema, type PlaceOrderFormData } from '../schemas'
+import type { ListingResponse } from '../types/api'
 import { getApiErrorMessage } from './errors'
 import { usePlaceOrder } from '../hooks/useOrders'
 import { Field } from '../components/ui/Field'
 import { Modal } from '../components/ui/Modal'
 import { FormActions } from '../components/ui/FormActions'
 import { ErrorAlert } from '../components/ui/Feedback'
+import { toast } from 'sonner'
+import { Icon } from '../components/Icon'
 
 // ── Crop visual config ─────────────────────────────────────────────────────────
 
@@ -81,15 +78,15 @@ export function FreshnessBar({ freshness }: { freshness: 'High' | 'Medium' | 'Lo
 
 // ── Order Modal ────────────────────────────────────────────────────────────────
 
-export function OrderModal({ listing, onClose }: { listing: Listing; onClose: () => void }) {
+export function OrderModal({ listing, onClose }: { listing: ListingResponse; onClose: () => void }) {
   const cfg = getCropConfig(listing.vegetableType)
   const { mutate, isPending, error, isSuccess } = usePlaceOrder(listing.id)
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<PlaceOrderFormData, unknown, PlaceOrderFormData>({
+  const { register, handleSubmit, watch,setValue, formState: { errors } } = useForm<PlaceOrderFormData, unknown, PlaceOrderFormData>({
     resolver: zodResolver(placeOrderSchema) as never,
-    defaultValues: { mode: 'delivery' },
+    defaultValues: { mode: FulfilmentMode.DELIVERY, listing_id: listing.id },
   })
   const currentMode = watch('mode')
-  const onSubmit = (data: PlaceOrderFormData) => mutate(data, { 
+  const onSubmit = (data: PlaceOrderFormData) => mutate({ ...data, listing_id: listing.id }, { 
     onSuccess: () => {
         toast.success('Order placed successfully!')
         onClose()
@@ -103,7 +100,7 @@ export function OrderModal({ listing, onClose }: { listing: Listing; onClose: ()
   const subtotal = quantity > 0 ? quantity * listing.pricePerKgGhs : 0
   const processingFee = subtotal * 0.015
   const deliveryDistance = 12
-  const transportCost = currentMode === 'delivery' ? deliveryDistance * 2.00 : 0
+  const transportCost = currentMode === FulfilmentMode.DELIVERY ? deliveryDistance * 2.00 : 0
   const totalGhs = subtotal + processingFee + transportCost
 
   return (
@@ -146,14 +143,14 @@ export function OrderModal({ listing, onClose }: { listing: Listing; onClose: ()
             <p style={{ color: '#6b7280', margin: 0 }}>You'll receive an update when the farmer confirms.</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'grid', gap: 14 }}>
-            <Field label="Quantity (kg)" type="number" min="1" placeholder="e.g. 50" error={errors.quantity_kg} {...register('quantity_kg')} />
+          <form onSubmit={handleSubmit(onSubmit, (err) => console.log(err))} style={{ display: 'grid', gap: 14 }}>
+            <Field label="Quantity (kg)" type="number" min="1" placeholder="e.g. 50" error={errors.quantity_kg} {...register('quantity_kg', { valueAsNumber: true })} />
             <Field label="Delivery Address" placeholder="e.g. Kumasi Central Market" error={errors.delivery_address} {...register('delivery_address')} />
 
             <div>
               <p style={{ margin: '0 0 10px', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#374151', fontWeight: 600 }}>Fulfillment</p>
-              <div style={{ display: 'flex', gap: 10 }}>
-                {(['delivery', 'pickup'] as const).map((m) => {
+              <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+                {Object.values(FulfilmentMode).map((m) => {
                   const isSelected = currentMode === m
                   return (
                     <label
@@ -162,13 +159,14 @@ export function OrderModal({ listing, onClose }: { listing: Listing; onClose: ()
                         flex: 1,
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 10,
-                        padding: '12px 14px',
+                        justifyContent: 'center',
+                        gap: 8,
+                        padding: '10px',
                         border: `2px solid ${isSelected ? cfg.accent : '#e5e7eb'}`,
                         borderRadius: 12,
                         cursor: 'pointer',
                         background: isSelected ? cfg.tint : '#ffffff',
-                        transition: 'border-color 150ms ease, background-color 150ms ease',
+                        transition: 'all 150ms ease',
                       }}
                     >
                       <input type="radio" value={m} {...register('mode')} style={{ accentColor: cfg.accent }} />
@@ -179,6 +177,59 @@ export function OrderModal({ listing, onClose }: { listing: Listing; onClose: ()
               </div>
             </div>
 
+            {currentMode === FulfilmentMode.DELIVERY && (
+              <div style={{
+                background: '#f8faf5',
+                border: '1px solid #d6ffcd',
+                borderRadius: 12,
+                padding: 16,
+                display: 'grid',
+                gap: 12,
+                animation: 'fadeIn 0.3s ease'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#264123', fontSize: '0.85rem', fontWeight: 700 }}>
+                    Delivery Location
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                          (position) => {
+                            setValue('delivery_location.lat', parseFloat(position.coords.latitude.toFixed(6)))
+                            setValue('delivery_location.lng', parseFloat(position.coords.longitude.toFixed(6)))
+                          },
+                          (error) => toast.error('Geolocation failed: ' + error.message)
+                        );
+                      } else {
+                        toast.error('Geolocation not supported.')
+                      }
+                    }}
+                    style={{
+                      background: '#264123',
+                      border: 'none',
+                      borderRadius: 8,
+                      color: '#ffffff',
+                      fontSize: '0.75rem',
+                      padding: '6px 12px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6
+                    }}
+                  >
+                    <Icon name="map" /> Use My Location
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <Field label="Latitude" type="number" step="0.000001" error={errors.delivery_location?.lat} {...register('delivery_location.lat', { valueAsNumber: true })} />
+                  <Field label="Longitude" type="number" step="0.000001" error={errors.delivery_location?.lng} {...register('delivery_location.lng', { valueAsNumber: true })} />
+                </div>
+              </div>
+            )}
             {/* Real-time price breakdown panel */}
             <div style={{
               background: '#f8faf5',
@@ -199,50 +250,13 @@ export function OrderModal({ listing, onClose }: { listing: Listing; onClose: ()
                 <span>GH₵ {processingFee.toFixed(2)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', opacity: 0.8 }}>
-                <span>Logistics Fee ({currentMode === 'delivery' ? `${deliveryDistance} km` : 'Pickup'})</span>
+                <span>Logistics Fee ({currentMode === FulfilmentMode.DELIVERY ? `${deliveryDistance} km` : 'Pickup'})</span>
                 <span>GH₵ {transportCost.toFixed(2)}</span>
               </div>
               <div style={{ height: 1, background: '#e5e7eb', margin: '4px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem', fontWeight: 800, color: '#264123' }}>
                 <span>Estimated Total</span>
                 <span>GH₵ {totalGhs.toFixed(2)}</span>
-              </div>
-            </div>
-
-            {/* Trade flow timeline */}
-            <div style={{
-              padding: 12,
-              background: 'rgba(38,65,35,0.03)',
-              borderRadius: 12,
-              border: '1px solid rgba(38,65,35,0.05)',
-            }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'rgba(38,65,35,0.6)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 10 }}>
-                Trade Settlement Sequence
-              </span>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
-                {[
-                  { title: 'Checkout', active: true },
-                  { title: 'Confirm', active: false },
-                  { title: 'Logistics', active: false },
-                  { title: 'Payout', active: false }
-                ].map((step, idx) => (
-                  <div key={idx} style={{ textAlign: 'center', flex: 1 }}>
-                    <div style={{
-                      width: 20, height: 20, borderRadius: '50%',
-                      background: step.active ? '#264123' : '#e5e7eb',
-                      color: step.active ? '#fff' : '#9ca3af',
-                      fontSize: '0.65rem', fontWeight: 700,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      margin: '0 auto 6px'
-                    }}>
-                      {idx + 1}
-                    </div>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 600, color: step.active ? '#264123' : '#9ca3af', display: 'block' }}>
-                      {step.title}
-                    </span>
-                  </div>
-                ))}
               </div>
             </div>
 

@@ -91,11 +91,45 @@ export const createListingSchema = z
   })
 export type CreateListingFormData = z.infer<typeof createListingSchema>
 
-// ── Place order ───────────────────────────────────────────────────────────────
-export const placeOrderSchema = z.object({
-  quantity_kg: z.coerce.number().positive('Must be greater than 0'),
-  delivery_address: z.string().min(1, 'Delivery address is required'),
-  mode: z.enum(['delivery', 'pickup']),
+export const FulfilmentMode = {
+  DELIVERY: 'delivery',
+  PICKUP: 'pickup',
+} as const
+export type FulfilmentMode = (typeof FulfilmentMode)[keyof typeof FulfilmentMode]
+
+const locationSchema = z.object({
+  lat: z.number(),
+  lng: z.number(),
 })
+
+// ── Place order ───────────────────────────────────────────────────────────────
+export const placeOrderSchema = z
+  .object({
+    listing_id: z.string().uuid("Invalid listing identifier"),
+    quantity_kg: z.number().positive("Quantity must be greater than 0"),
+    mode: z.nativeEnum(FulfilmentMode).default(FulfilmentMode.DELIVERY),
+    delivery_address: z
+      .string()
+      .trim()
+      .min(5, "Address is too short")
+      .optional()
+      .nullable(),
+    delivery_location: locationSchema.optional().nullable(),
+    packaging_type_id: z.string().uuid().optional().nullable(),
+    packaging_type_name: z.string().trim().max(255).optional(),
+    special_handling: z.string().trim().max(1000).optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.mode === FulfilmentMode.DELIVERY) {
+        return !!data.delivery_address && !!data.delivery_location;
+      }
+      return true;
+    },
+    {
+      message: "Delivery address is required when fulfilment mode is set to delivery",
+      path: ["delivery_address"],
+    },
+  );
 export type PlaceOrderFormData = z.infer<typeof placeOrderSchema>
 

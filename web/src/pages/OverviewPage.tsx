@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/auth.store'
 import { useMyOrders } from '../hooks/useOrders'
 import { useMyListings } from '../hooks/useListings'
-import type { Order, Listing } from '../types/api'
+import type { Order, ListingResponse } from '../types/api'
 import { Icon } from '../components/Icon'
 import { Spinner, StatusBadge } from '../components/ui/Feedback'
 import { MARKET_PULSE } from '../lib/produceUtils'
@@ -143,7 +143,7 @@ function RoleDashboard({ role }: { role: string }) {
             </div>
           ) : (
             <div style={{ display: 'grid', gap: 8 }}>
-              {recentListings.map((l: Listing) => (
+              {recentListings.map((l: ListingResponse) => (
                 <div key={l.id} className="dashboard-row">
                   <StatusBadge status={l.status} />
                   <span style={{ color: '#374151', fontWeight: 600, fontSize: '0.88rem' }}>{l.vegetableType}</span>
