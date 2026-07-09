@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createListingSchema, type CreateListingFormData } from '../schemas'
 import type { Listing } from '../types/api'
-import { getApiErrorMessage } from '../lib/errors'
+import { getApiErrorMessage, getApiErrorData } from '../lib/errors'
 import { Spinner, ErrorAlert, EmptyState } from '../components/ui/Feedback'
 import { Field } from '../components/ui/Field'
 import { PageHero } from '../components/ui/PageHero'
@@ -230,7 +230,7 @@ function CreateListingForm({
   onSuccess?: (cropName: string) => void
 }) {
   const { mutate, isPending, error } = useCreateListing()
-  const { register, handleSubmit, watch, setValue, formState: { errors }, reset } = useForm<CreateListingFormData, unknown, CreateListingFormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors }, reset, setError } = useForm<CreateListingFormData, unknown, CreateListingFormData>({
     resolver: zodResolver(createListingSchema) as never,
     defaultValues: {
       unit_of_measure: 'kg',
@@ -287,6 +287,17 @@ function CreateListingForm({
         reset()
         onClose()
         onSuccess?.(data.vegetable_type || 'Produce')
+      },
+      onError: (err: any) => {
+        const errorData = getApiErrorData(err);
+        if (errorData?.details) {
+          Object.entries(errorData.details).forEach(([field, messages]) => {
+            setError(field as any, {
+              type: 'server',
+              message: messages[0]
+            });
+          });
+        }
       }
     })
   }
