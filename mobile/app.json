@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "VegeLink Ghana",
-    "slug": "vegelink-ghana",
+    "name": "VegeLink",
+    "slug": "vegelink",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
