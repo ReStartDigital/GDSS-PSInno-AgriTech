@@ -204,3 +204,40 @@ CREATE TRIGGER update_orders_modtime
     BEFORE UPDATE ON orders
     FOR EACH ROW
     EXECUTE FUNCTION update_modified_column();
+
+CREATE TABLE ratings (
+ id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+ rater_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+ ratee_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+ order_id UUID NOT NULL REFERENCES orders(id) ON DELETE RESTRICT,
+ role_rated VARCHAR(20) NOT NULL,
+ score SMALLINT NOT NULL CHECK (score BETWEEN 1 AND 5),
+ comment TEXT,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ UNIQUE (rater_id, order_id) -- one rating per rater per order
+);
+
+CREATE TABLE transport_requests (
+ id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+ order_id UUID NOT NULL UNIQUE REFERENCES orders(id) ON DELETE RESTRICT,
+ transporter_id UUID REFERENCES users(id) ON DELETE SET NULL, -- NULL until accepted
+ pickup_location GEOMETRY(Point, 4326) NOT NULL,
+ dropoff_location GEOMETRY(Point, 4326) NOT NULL,
+ distance_km NUMERIC(8, 2), -- calculated by PostGIS
+ estimated_cost_ghs NUMERIC(10, 2),
+ packaging_type_name VARCHAR(255), -- denormalised for transporter briefing
+ special_handling TEXT,
+ status transport_status NOT NULL DEFAULT 'open',
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_transport_order_id ON transport_requests(order_id);
+CREATE INDEX idx_transport_transporter_id ON transport_requests(transporter_id);
+CREATE INDEX idx_transport_status ON transport_requests(status);
+CREATE INDEX idx_transport_pickup ON transport_requests USING GIST(pickup_location);
+
+CREATE TRIGGER update_transport_modtime
+    BEFORE UPDATE ON transport_requests
+    FOR EACH ROW
+    EXECUTE FUNCTION update_modified_column();

@@ -92,4 +92,10 @@ export enum ErrorCode {
   LISTING_NOT_ACTIVE_FOR_ORDER = "LISTING_NOT_ACTIVE_FOR_ORDER",
   INBOUND_SMS_INVALID_SIGNATURE = "INBOUND_SMS_INVALID_SIGNATURE",
   INBOUND_SMS_UNKNOWN_COMMAND = "INBOUND_SMS_UNKNOWN_COMMAND",
+
+  // ── Ratings ────────────────────────────────────────────────────────────────
+  RATING_ALREADY_EXISTS = "RATING_ALREADY_EXISTS",
+
+  // ── Transport Request ────────────────────────────────────────────────────────────────
+  TRANSPORT_ALREADY_EXISTS = "TRANSPORT_ALREADY_EXISTS",
 }

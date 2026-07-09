@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { OrdersRepository } from "./orders.repository.js";
 import { ListingsRepository } from "../listings/listings.repository.js";
 import { UserRepository } from "../user/user.repository.js";
@@ -23,13 +24,29 @@ import {
   ForbiddenException,
 } from "../../common/exceptions/index.js";
 import { ErrorCode } from "../../common/constants/error-codes.enum.js";
+import { TransportService } from "../transport/transport.service.js";
+import { TransportRepository } from "../transport/transport.repository.js";
+import { AppDataSource } from "../../config/database.config.js";
+import { In, type DataSource } from "typeorm";
+import { ProduceListingEntity } from "../../database/entities/ProduceListing.js";
+import { User } from "../../database/entities/User.js";
+import { arkeselClient } from "../../infrastructure/arkesel/arkesel.client.js";
 
 export class OrdersService {
+  private transportService;
+  private transportRepo;
   constructor(
     private ordersRepo: OrdersRepository,
     private listingsRepo: ListingsRepository,
     private usersRepo: UserRepository,
-  ) {}
+    private dataSource: DataSource,
+  ) {
+    this.transportRepo = new TransportRepository(AppDataSource);
+    this.transportService = new TransportService(
+      this.transportRepo,
+      AppDataSource,
+    );
+  }
 
   /**
    * Places a new order and runs core pricing calculus
@@ -38,85 +55,151 @@ export class OrdersService {
     buyerId: string,
     dto: CreateOrderDto,
   ): Promise<OrderEntity> {
-    // 1. Fetch the produce listing
-    const listing = await this.listingsRepo.findById(dto.listing_id);
-    if (!listing || listing.status !== "active") {
-      throw new NotFoundException(
-        "Listing not found or no longer active",
-        ErrorCode.LISTING_NOT_ACTIVE_FOR_ORDER,
-      );
-    }
+    // We execute the entire lifecycle inside a managed database transaction closure
+    return await this.dataSource.transaction(async (manager) => {
+      const activeStatuses = [
+        OrderStatus.PENDING,
+        OrderStatus.PENDING_AGENT_CONFIRMATION,
+        OrderStatus.PENDING_SMS_CONFIRMATION,
+        OrderStatus.NEGOTIATING,
+      ];
+      // Use transactional managers instead of global unsynced repositories
+      const txListingsRepo = manager.getRepository(ProduceListingEntity);
+      const txUsersRepo = manager.getRepository(User);
+      const txOrdersRepo = manager.getRepository(OrderEntity);
 
-    // 2. Prevent farmers from buying their own items
-    if (listing.farmerId === buyerId) {
-      throw new BadRequestException(
-        "You cannot purchase your own produce listing",
-        ErrorCode.ORDER_FORBIDDEN,
-      );
-    }
+      // 1. Fetch the produce listing with a write lock to ensure stock doesn't shift mid-flight
+      const listing = await txListingsRepo.findOne({
+        where: { id: dto.listing_id },
+        lock: { mode: "pessimistic_write" },
+      });
 
-    // 3. Check stock capacity
-    const requestedQty = dto.quantity_kg;
-    const availableStock =
-      Number(listing.quantityKg) - Number(listing.committedKg || 0);
+      if (!listing || listing.status !== "active") {
+        throw new NotFoundException(
+          "Listing not found or no longer active",
+          ErrorCode.LISTING_NOT_ACTIVE_FOR_ORDER,
+        );
+      }
 
-    if (requestedQty > listing.quantityKg) {
-      throw new BadRequestException(
-        `Requested quantity exceeds available stock (${availableStock}kg remaining)`,
-        ErrorCode.QUANTITY_EXCEEDS_AVAILABLE,
-      );
-    }
+      // 2. Prevent farmers from buying their own items
+      if (listing.farmerId === buyerId) {
+        throw new BadRequestException(
+          "You cannot purchase your own produce listing",
+          ErrorCode.ORDER_FORBIDDEN,
+        );
+      }
 
-    // 4. Resolve the farmer's order mode workflow strategy
-    const farmer = await this.usersRepo.findById(listing.farmerId);
-    if (!farmer) {
-      throw new NotFoundException(
-        "Farmer account record not found",
-        ErrorCode.ORDER_FORBIDDEN,
-      );
-    }
+      // Check if an active contract already exists for this buyer/listing pair
+      const existingOrder = await txOrdersRepo.findOne({
+        where: {
+          buyerId,
+          listingId: dto.listing_id,
+          status: In(activeStatuses),
+        },
+      });
+      console.log(existingOrder);
+      if (existingOrder) {
+        throw new BadRequestException(
+          "You already have an active order pending confirmation for this listing.",
+          ErrorCode.BAD_REQUEST,
+        );
+      }
 
-    // 5. Billing Calculus: Produce subtotal + logistics (no extra arbitrary packaging upcharges)
-    const pricePerKg = Number(listing.pricePerKgGhs);
-    const produceSubtotal = requestedQty * pricePerKg;
+      // 3. Check stock capacity
+      const requestedQty = dto.quantity_kg;
+      const availableStock =
+        Number(listing.quantityKg) - Number(listing.committedKg || 0);
 
-    // In a future sprint, this will be calculated dynamically by your Transport/Logistics engine
-    const transportCostEstimate =
-      dto.mode === FulfilmentMode.DELIVERY ? 25.0 : 0.0;
-    const totalGhs = produceSubtotal + transportCostEstimate;
+      if (requestedQty > availableStock) {
+        throw new BadRequestException(
+          `Requested quantity exceeds available stock (${availableStock}kg remaining)`,
+          ErrorCode.QUANTITY_EXCEEDS_AVAILABLE,
+        );
+      }
 
-    // 6. Determine starting lifecycle state via the state machine rule set
-    const targetStatus = resolveInitialStatus(farmer.orderMode);
+      // 4. Resolve the farmer context and location markers
+      const farmer = await txUsersRepo.findOneBy({ id: listing.farmerId });
+      if (!farmer) {
+        throw new NotFoundException(
+          "Farmer account record not found",
+          ErrorCode.ORDER_FORBIDDEN,
+        );
+      }
 
-    // 7. Commit order parameters to the database
-    const order = await this.ordersRepo.create({
-      buyerId,
-      farmerId: listing.farmerId,
-      listingId: dto.listing_id,
-      mode: dto.mode,
-      quantityKg: requestedQty,
-      pricePerKgGhs: pricePerKg,
-      produceSubtotalGhs: produceSubtotal,
-      packagingTypeId: dto.packaging_type_id || null,
-      transportCostEstimateGhs: transportCostEstimate,
-      totalGhs,
-      deliveryAddress: dto.delivery_address || null,
-      deliveryLocation: dto.delivery_location
-        ? {
-            type: "Point",
-            coordinates: [dto.delivery_location.lng, dto.delivery_location.lat],
-          }
-        : null,
-      status: targetStatus,
+      // 5. Billing Calculus
+      const pricePerKg = Number(listing.pricePerKgGhs);
+      const produceSubtotal = requestedQty * pricePerKg;
+
+      // In a future sprint, this can be linked up directly to the PostGIS calculation tool
+      const transportCostEstimate =
+        dto.mode === FulfilmentMode.DELIVERY ? 25.0 : 0.0;
+      const totalGhs = produceSubtotal + transportCostEstimate;
+
+      // 6. Determine starting lifecycle state via the state machine ruleset
+      const targetStatus = resolveInitialStatus(farmer.orderMode);
+
+      // 7. Commit order parameters inside the transaction boundary
+      const orderData = txOrdersRepo.create({
+        buyerId,
+        farmerId: listing.farmerId,
+        listingId: dto.listing_id,
+        mode: dto.mode,
+        quantityKg: requestedQty,
+        pricePerKgGhs: pricePerKg,
+        produceSubtotalGhs: produceSubtotal,
+        packagingTypeId: dto.packaging_type_id || null,
+        transportCostEstimateGhs: transportCostEstimate,
+        totalGhs,
+        deliveryAddress: dto.delivery_address || null,
+        deliveryLocation: dto.delivery_location
+          ? {
+              type: "Point",
+              coordinates: [
+                dto.delivery_location.lng,
+                dto.delivery_location.lat,
+              ],
+            }
+          : null,
+        status: targetStatus,
+      });
+
+      const order = await txOrdersRepo.save(orderData);
+
+      // 8. Atomically reduce available stock quantity from the catalog listing
+      listing.committedKg = Number(listing.committedKg || 0) + requestedQty;
+      await txListingsRepo.save(listing);
+
+      // 9. Automated Transport Trigger Condition
+      if (
+        order.status === OrderStatus.CONFIRMED &&
+        order.mode === FulfilmentMode.DELIVERY
+      ) {
+        // Enforce location guards before dispatching to PostGIS parameters
+        if (!dto.delivery_location || !farmer.location) {
+          throw new BadRequestException(
+            "Spatial coordinates for both pickup (farmer) and dropoff (buyer) are mandatory for auto-confirmed delivery orders.",
+            ErrorCode.BAD_REQUEST,
+          );
+        }
+
+        // Automatically dispatch the transport job to the market pool
+        await this.transportService.requestHauling({
+          order_id: order.id,
+          pickup_location: {
+            latitude: farmer.location.coordinates[1], // Extracting Lat from GeoJSON point [lng, lat]
+            longitude: farmer.location.coordinates[0], // Extracting Lng from GeoJSON point [lng, lat]
+          },
+          dropoff_location: {
+            latitude: dto.delivery_location.lat,
+            longitude: dto.delivery_location.lng,
+          },
+          packaging_type_name: dto.packaging_type_name || "Standard Sacks",
+          special_handling: dto.special_handling,
+        });
+      }
+
+      return order;
     });
-
-    // 8. Atomically reduce available stock quantity from the catalog listing
-    await this.listingsRepo.updateCommittedQuantity(
-      listing.id,
-      Number(listing.committedKg || 0) + requestedQty,
-    );
-
-    return order;
   }
 
   /**
@@ -413,5 +496,102 @@ export class OrdersService {
         ErrorCode.INBOUND_SMS_UNKNOWN_COMMAND,
       );
     }
+  }
+
+  /**
+   * When the buyer physically arrives at the farm, the farmer inputs the code to release it.
+   */
+  async verifyBuyerPickup(
+    orderId: string,
+    farmerId: string,
+    inputPin: string,
+  ): Promise<OrderEntity> {
+    return await this.dataSource.transaction(async (manager) => {
+      const orderRepo = manager.getRepository(OrderEntity);
+      const userRepo = manager.getRepository(User);
+
+      const order = await orderRepo.findOne({
+        where: { id: orderId, farmerId },
+        lock: { mode: "pessimistic_write" },
+      });
+
+      if (!order || order.status !== OrderStatus.PACKED) {
+        throw new BadRequestException(
+          "Order is not ready for pickup collection.",
+          ErrorCode.BAD_REQUEST,
+        );
+      }
+
+      const buyer = await userRepo.findOneBy({ id: order.buyerId });
+
+      // Validate code directly via Arkesel
+      try {
+        // Evaluate verification code securely against Arkesel's session state
+        await arkeselClient.verifyOtp(buyer!.phone, inputPin);
+      } catch (otpError: any) {
+        throw new BadRequestException(otpError.message, ErrorCode.BAD_REQUEST);
+      }
+
+      // Transition state: PACKED -> COLLECTED (Terminal state)
+      // Transition state to terminal pickup status: PACKED -> COLLECTED
+      const terminalStatus = OrderStatus.COLLECTED;
+      assertValidTransition(order.status as OrderStatus, terminalStatus);
+
+      order.status = terminalStatus;
+      return await orderRepo.save(order);
+    });
+  }
+  async markReadyForPickup(
+    orderId: string,
+    farmerId: string,
+  ): Promise<OrderEntity> {
+    return await this.dataSource.transaction(async (manager) => {
+      const orderRepo = manager.getRepository(OrderEntity);
+      const userRepo = manager.getRepository(User);
+
+      const order = await orderRepo.findOne({
+        where: { id: orderId, farmerId },
+        lock: { mode: "pessimistic_write" },
+      });
+
+      if (!order) {
+        throw new NotFoundException(
+          "Active order context records not found.",
+          ErrorCode.ORDER_NOT_FOUND,
+        );
+      }
+      if (order.mode !== FulfilmentMode.PICKUP) {
+        throw new BadRequestException(
+          "This order is designated for delivery tracking pipelines.",
+          ErrorCode.BAD_REQUEST,
+        );
+      }
+
+      // Enforce state transition safety rule: CONFIRMED -> PACKED
+      const targetStatus = OrderStatus.PACKED;
+      assertValidTransition(order.status as OrderStatus, targetStatus);
+
+      const buyer = await userRepo.findOneBy({ id: order.buyerId });
+      if (!buyer || !buyer.phone) {
+        throw new BadRequestException(
+          "Buyer contact data is currently unavailable for OTP verification.",
+          ErrorCode.BAD_REQUEST,
+        );
+      }
+
+      // Update state locally
+      order.status = targetStatus;
+      const updatedOrder = await orderRepo.save(order);
+      const fullname = `${buyer.firstName} ${buyer.middleName} ${buyer.lastName}`;
+      // Dispatches the 6-minute Arkesel verification code to the buyer
+      try {
+        // Evaluate verification code securely against Arkesel's session state
+        await arkeselClient.generateAndSendDoorstepOtp(buyer.phone, fullname);
+      } catch (otpError: any) {
+        throw new BadRequestException(otpError.message, ErrorCode.BAD_REQUEST);
+      }
+
+      return updatedOrder;
+    });
   }
 }

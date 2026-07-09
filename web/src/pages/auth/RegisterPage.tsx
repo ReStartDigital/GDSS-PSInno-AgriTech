@@ -7,6 +7,7 @@ import { useRegister } from '../../hooks/useAuth'
 import { useAuthStore } from '../../store/auth.store'
 import { Field } from '../../components/ui/Field'
 import { ErrorAlert } from '../../components/ui/Feedback'
+import { getDisplayError } from '../../lib/errors'
 
 const ROLES = [
   { value: 'farmer', label: 'Farmer', desc: 'List and sell produce' },
@@ -72,13 +73,21 @@ export default function RegisterPage() {
   const onSubmit = (data: RegisterFormData) => {
     mutate(data, {
       onSuccess: () => {
+        // Store phone for the OTP verify step
         useAuthStore.setState({ pendingPhone: data.phone })
+        // Store region + language so SetPinPage can forward them to the backend
+        // after the PIN is set (via PATCH /users/me)
+        useAuthStore.setState((s) => ({
+          user: s.user
+            ? { ...s.user, region: data.region, language: data.language }
+            : { id: '', phone: data.phone, role: 'farmer', region: data.region, language: data.language },
+        }))
         navigate('/auth/verify')
       },
     })
   }
 
-  const apiError = error && (error as any).response?.data?.error?.message
+  const apiError = getDisplayError(error, '')
 
   return (
     <div className="page-stack">
@@ -89,7 +98,7 @@ export default function RegisterPage() {
           <p>Phone-only registration. No email required.</p>
         </div>
         <Link to="/auth/login" className="secondary-button" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 48, padding: '0 18px' }}>
-          Already have an account
+          Log in instead →
         </Link>
       </section>
 
@@ -103,7 +112,7 @@ export default function RegisterPage() {
               <Field label="First Name" dark placeholder="Abena" error={errors.firstName} {...register('firstName')} />
               <Field label="Last Name" dark placeholder="Mensah" error={errors.lastName} {...register('lastName')} />
             </div>
-            <Field label="Phone Number" dark type="tel" placeholder="0244123456" error={errors.phone} {...register('phone')} />
+            <Field label="Phone Number" dark type="tel" placeholder="+233244123456" error={errors.phone} {...register('phone')} />
 
             <div className="form-grid">
               <div style={{ display: 'grid', gap: 6 }}>
@@ -112,18 +121,12 @@ export default function RegisterPage() {
                 </span>
                 <select
                   {...register('region')}
-                  style={{
-                    minHeight: 50, padding: '0 14px', borderRadius: 12,
-                    border: `1px solid ${errors.region ? '#ef4444' : 'rgba(255,255,255,0.14)'}`,
-                    background: 'rgba(255,255,255,0.1)',
-                    color: '#f8faf5',
-                    fontSize: '1rem', width: '100%', boxSizing: 'border-box',
-                    outline: 'none',
-                  }}
+                  className="form-select dark"
+                  style={errors.region ? { borderColor: '#ef4444' } : undefined}
                 >
-                  <option value="" style={{ background: '#264123', color: '#f8faf5' }}>Select Region</option>
+                  <option value="">Select Region</option>
                   {REGIONS.map(r => (
-                    <option key={r.value} value={r.value} style={{ background: '#264123', color: '#f8faf5' }}>{r.label}</option>
+                    <option key={r.value} value={r.value}>{r.label}</option>
                   ))}
                 </select>
                 {errors.region && (
@@ -137,18 +140,12 @@ export default function RegisterPage() {
                 </span>
                 <select
                   {...register('language')}
-                  style={{
-                    minHeight: 50, padding: '0 14px', borderRadius: 12,
-                    border: `1px solid ${errors.language ? '#ef4444' : 'rgba(255,255,255,0.14)'}`,
-                    background: 'rgba(255,255,255,0.1)',
-                    color: '#f8faf5',
-                    fontSize: '1rem', width: '100%', boxSizing: 'border-box',
-                    outline: 'none',
-                  }}
+                  className="form-select dark"
+                  style={errors.language ? { borderColor: '#ef4444' } : undefined}
                 >
-                  <option value="" style={{ background: '#264123', color: '#f8faf5' }}>Select Language</option>
+                  <option value="">Select Language</option>
                   {LANGUAGES.map(l => (
-                    <option key={l.value} value={l.value} style={{ background: '#264123', color: '#f8faf5' }}>{l.label}</option>
+                    <option key={l.value} value={l.value}>{l.label}</option>
                   ))}
                 </select>
                 {errors.language && (

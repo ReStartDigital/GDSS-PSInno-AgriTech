@@ -3,6 +3,7 @@ import { RequireAuth, RedirectIfAuth } from './components/RequireAuth'
 import { Layout } from './components/layout/Layout'
 
 import HomePage from './pages/HomePage'
+import OverviewPage from './pages/OverviewPage'
 import MarketplacePage from './pages/MarketplacePage'
 import ListingsPage from './pages/ListingsPage'
 import OrdersPage from './pages/OrdersPage'
@@ -13,6 +14,8 @@ import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
 import VerifyPage from './pages/auth/VerifyPage'
 import SetPinPage from './pages/auth/SetPinPage'
+import AboutPage from './pages/AboutPage'
+import HowItWorksPage from './pages/HowItWorksPage'
 
 export function AppRouter() {
   return (
@@ -27,8 +30,11 @@ export function AppRouter() {
       <Route path="/"           element={<Layout><HomePage /></Layout>} />
       <Route path="/marketplace" element={<Layout><MarketplacePage /></Layout>} />
       <Route path="/profile"    element={<Layout><ProfilePage /></Layout>} />
+      <Route path="/about"      element={<Layout><AboutPage /></Layout>} />
+      <Route path="/how-it-works" element={<Layout><HowItWorksPage /></Layout>} />
 
       <Route element={<RequireAuth />}>
+        <Route path="/overview" element={<Layout><OverviewPage /></Layout>} />
         <Route path="/listings" element={<Layout><ListingsPage /></Layout>} />
         <Route path="/clients"  element={<Layout><ClientsPage /></Layout>} />
         <Route path="/jobs"     element={<Layout><JobsPage /></Layout>} />

@@ -1,12 +1,26 @@
 import { useState } from 'react'
 import { useMyOrders, useConfirmOrder, useCancelOrder } from '../hooks/useOrders'
 import { useAuthStore } from '../store/auth.store'
-import { Icon } from '../components/Icon'
 import { Spinner, ErrorAlert, EmptyState, StatusBadge } from '../components/ui/Feedback'
 import { Modal } from '../components/ui/Modal'
 import { PageHero } from '../components/ui/PageHero'
 import { ModalHeader } from '../components/ui/ModalHeader'
 import type { Order } from '../types/api'
+
+// Status-based visual config for order cards
+const ORDER_STATUS_CONFIG: Record<string, { emoji: string; tint: string; accent: string }> = {
+  pending:     { emoji: '⏳', tint: 'rgba(245,158,11,0.08)',   accent: '#d97706' },
+  negotiating: { emoji: '🤝', tint: 'rgba(99,102,241,0.08)',  accent: '#6366f1' },
+  confirmed:   { emoji: '✅', tint: 'rgba(22,101,52,0.08)',   accent: '#166534' },
+  packed:      { emoji: '📦', tint: 'rgba(59,130,246,0.08)',  accent: '#2563eb' },
+  in_transit:  { emoji: '🚛', tint: 'rgba(16,185,129,0.08)',  accent: '#059669' },
+  delivered:   { emoji: '🎉', tint: 'rgba(214,255,205,0.35)', accent: '#15803d' },
+  cancelled:   { emoji: '❌', tint: 'rgba(239,68,68,0.06)',   accent: '#dc2626' },
+}
+
+function getOrderConfig(status: string) {
+  return ORDER_STATUS_CONFIG[status] ?? { emoji: '📋', tint: 'rgba(107,114,128,0.08)', accent: '#374151' }
+}
 
 export default function OrdersPage() {
   const [selected, setSelected] = useState<Order | null>(null)
@@ -17,7 +31,7 @@ export default function OrdersPage() {
     <div className="page-stack">
       <PageHero
         eyebrow="Orders"
-        title="Your order history and active orders."
+        title="Your order history."
         description="Track status, confirm deliveries, and manage your order lifecycle."
       />
 
@@ -26,33 +40,96 @@ export default function OrdersPage() {
       {!isLoading && !error && orders.length === 0 && <EmptyState message="No orders yet." />}
 
       {orders.length > 0 && (
-        <section className="listing-grid">
+        <div className="mp-card-grid">
           {orders.map((order) => (
-            <article
+            <OrderCard
               key={order.id}
-              className="listing-card wide"
-              style={{ cursor: 'pointer' }}
+              order={order}
               onClick={() => setSelected(order)}
-            >
-              <div className="listing-top">
-                <StatusBadge status={order.status} />
-                <Icon name="truck" />
-              </div>
-              <h3 style={{ fontSize: '0.95rem', margin: '8px 0 4px' }}>#{order.id.slice(0, 8)}</h3>
-              <p style={{ color: '#6b7280', fontSize: '0.85rem', margin: 0 }}>{order.quantity_kg} kg</p>
-              <div className="listing-meta" style={{ marginTop: 8 }}>
-                <span style={{ fontWeight: 700, color: '#264123' }}>GH₵ {order.total_ghs}</span>
-                <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>{new Date(order.created_at).toLocaleDateString()}</span>
-              </div>
-            </article>
+            />
           ))}
-        </section>
+        </div>
       )}
 
       {selected && <OrderDetail order={selected} onClose={() => setSelected(null)} />}
     </div>
   )
 }
+
+// ── Order Card — mp-card style ─────────────────────────────────────────────────
+
+function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
+  const cfg = getOrderConfig(order.status)
+
+  return (
+    <article className="mp-card" onClick={onClick} style={{ cursor: 'pointer' }}>
+      {/* Visual band */}
+      <div className="mp-card-visual" style={{ background: cfg.tint }}>
+        <span className="mp-card-emoji">{cfg.emoji}</span>
+
+        {/* Status badge — top left */}
+        <div style={{ position: 'absolute', top: 12, left: 12 }}>
+          <StatusBadge status={order.status} />
+        </div>
+
+        {/* Mode badge — top right */}
+        {order.mode && (
+          <div style={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            background: 'rgba(255,255,255,0.9)',
+            borderRadius: 8,
+            padding: '4px 8px',
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+          }}>
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: cfg.accent, whiteSpace: 'nowrap', textTransform: 'capitalize' }}>
+              {order.mode}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Body */}
+      <div className="mp-card-body">
+        <h3 className="mp-card-name">#{order.id.slice(0, 8)}</h3>
+        <p className="mp-card-farmer">
+          <span style={{ opacity: 0.5, marginRight: 4 }}>Placed</span>
+          {new Date(order.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+        </p>
+
+        {/* Price + quantity meta */}
+        <div className="mp-card-meta">
+          <div>
+            <span className="mp-card-price">GH₵ {order.total_ghs}</span>
+            <span className="mp-card-per"> total</span>
+          </div>
+          <div className="mp-card-qty">{order.quantity_kg} kg</div>
+        </div>
+
+        {order.delivery_address && (
+          <p className="mp-card-date">
+            <span style={{ opacity: 0.55 }}>To:</span>{' '}
+            {order.delivery_address}
+          </p>
+        )}
+
+        {/* CTA */}
+        <button
+          type="button"
+          className="mp-order-btn"
+          style={{ background: cfg.accent, marginTop: 'auto' }}
+        >
+          View Details
+        </button>
+      </div>
+    </article>
+  )
+}
+
+// ── Order Detail Modal ─────────────────────────────────────────────────────────
 
 function OrderDetail({ order, onClose }: { order: Order; onClose: () => void }) {
   const user = useAuthStore((s) => s.user)
@@ -74,9 +151,9 @@ function OrderDetail({ order, onClose }: { order: Order; onClose: () => void }) 
       <div className="detail-grid" style={{ marginBottom: 20 }}>
         {[
           { label: 'Quantity', value: `${order.quantity_kg} kg` },
-          { label: 'Total', value: `GH₵ ${order.total_ghs}` },
+          { label: 'Total',    value: `GH₵ ${order.total_ghs}` },
           { label: 'Price/kg', value: `GH₵ ${order.price_per_kg_ghs}` },
-          { label: 'Mode', value: order.mode },
+          { label: 'Mode',     value: order.mode },
         ].map((item) => (
           <div key={item.label} className="detail-card">
             <strong>{item.label}</strong>

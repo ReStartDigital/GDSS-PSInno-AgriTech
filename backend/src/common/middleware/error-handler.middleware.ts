@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Request, Response, NextFunction } from "express";
 import { AppException } from "../exceptions/app.exceptions.js";
 import { sendError } from "../dto/api-response.dto.js";
 import { ErrorCode } from "../constants/error-codes.enum.js";
 import { createRequestLogger, logError } from "../utils/logger.js";
+import { QueryFailedError } from "typeorm";
 
 /**
  * Single global error handler. Express recognises this as an error handler
@@ -37,6 +39,8 @@ export function errorHandlerMiddleware(
       });
     }
 
+    // 2. NEW: Handle TypeORM Unique Constraint Violations
+
     const details =
       "details" in err
         ? (err as { details?: Record<string, string[]> }).details
@@ -44,9 +48,24 @@ export function errorHandlerMiddleware(
     sendError(res, err.statusCode, err.code, err.message, details);
     return;
   }
+  if (err instanceof QueryFailedError) {
+    const dbError = err as any; // TypeORM errors have a 'constraint' property
 
-  // Unexpected error — log everything, expose nothing.
-  logError("Unhandled error", err, { path: req.path, method: req.method });
+    console.log(dbError);
+    if (dbError.constraint === "idx_unique_active_buyer_listing") {
+      log.warn("Duplicate active order attempt", { path: req.path });
+
+      sendError(
+        res,
+        409, // HTTP Conflict
+        ErrorCode.VALIDATION_ERROR, // Or your custom DUPLICATE_ORDER code
+        "You already have an active order for this listing. Please manage your existing request.",
+      );
+    }
+  }
+
+  // 3. Existing Unexpected error handling...
+  logError("Unhandled error qyr", err, { path: req.path, method: req.method });
   // Extract human-readable error info dynamically without breaking type boundaries
   const errorInstance = err instanceof Error ? err : new Error(String(err));
 

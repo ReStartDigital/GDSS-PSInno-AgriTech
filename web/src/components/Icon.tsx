@@ -10,6 +10,12 @@ type IconName =
   | 'user'
   | 'clock'
   | 'map'
+  | 'pulse'
+  | 'home'
+  | 'search'
+  | 'check'
+  | 'menu'
+  | 'close'
 
 const paths: Record<IconName, string> = {
   leaf: 'M6 16c7-1 12-6 14-14-8 0-14 6-14 14 0 5 3 8 8 8 8 0 14-6 14-14 0-5-3-8-8-8-3 0-6 1-8 4',
@@ -25,6 +31,12 @@ const paths: Record<IconName, string> = {
   user: 'M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm-6 8a6 6 0 0 1 12 0',
   clock: 'M12 7v5l3 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
   map: 'M4 6l5-2 6 2 5-2v14l-5 2-6-2-5 2V6zm5-2v14m6-12v14',
+  pulse: 'M3 12h4l3-7 4 14 3-7h4',
+  home: 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z',
+  search: 'M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z',
+  check: 'M20 6L9 17l-5-5',
+  menu: 'M4 5h16v2H4zm0 6h16v2H4zm0 6h16v2H4z',
+  close: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z',
 }
 
 export function Icon({ name }: { name: IconName }) {

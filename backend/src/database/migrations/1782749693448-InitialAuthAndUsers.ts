@@ -22,7 +22,6 @@ export class InitialAuthAndUsers1782749693448 implements MigrationInterface {
         CREATE TYPE payment_status AS ENUM ('pending', 'success', 'failed', 'refunded');
         CREATE TYPE payment_channel AS ENUM ('mobile_money', 'card');
         CREATE TYPE mobile_money_provider AS ENUM ('mtn', 'vodafone', 'airteltigo', 'telecel');
-        CREATE TYPE transport_status AS ENUM ('open', 'accepted', 'en_route', 'picked_up', 'in_transit', 'delivered', 'cancelled');
         CREATE TYPE sms_status AS ENUM ('sent', 'failed');
         CREATE TYPE audit_action AS ENUM ('CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'PAYMENT');
 
@@ -132,7 +131,6 @@ export class InitialAuthAndUsers1782749693448 implements MigrationInterface {
         DROP TYPE IF EXISTS audit_action;
         DROP TYPE IF EXISTS sms_status;
         DROP TYPE IF EXISTS protection_level;
-        DROP TYPE IF EXISTS transport_status;
         DROP TYPE IF EXISTS mobile_money_provider;
         DROP TYPE IF EXISTS payment_channel;
         DROP TYPE IF EXISTS payment_status;

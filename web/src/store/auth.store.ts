@@ -7,8 +7,12 @@ export interface AuthUser {
   id: string
   phone: string
   role: UserRole
+  fullName?: string
   region?: string
   language?: string
+  paymentDetailsSet?: boolean
+  mobileMoneyNumber?: string | null
+  mobileMoneyNetwork?: string | null
 }
 
 interface AuthState {
