@@ -35,26 +35,10 @@
       "hidden" : false,
       "layers" : [
         {
-          "blend-mode" : "normal",
-          "fill" : "automatic",
-          "glass" : true,
-          "hidden" : true,
-          "image-name" : "vegelink.svg",
-          "name" : "vegelink",
-          "opacity" : 1,
+          "image-name" : "vegelink-Photoroom 2.png",
+          "name" : "vegelink-Photoroom 2",
           "position" : {
-            "scale" : 16,
-            "translation-in-points" : [
-              -17.534479000880765,
-              0
-            ]
-          }
-        },
-        {
-          "image-name" : "vegelink-Photoroom.png",
-          "name" : "vegelink-Photoroom",
-          "position" : {
-            "scale" : 16,
+            "scale" : 15,
             "translation-in-points" : [
               0,
               0
