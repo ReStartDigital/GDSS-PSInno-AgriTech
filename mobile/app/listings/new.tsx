@@ -1,6 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,10 +11,13 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
+import { Alert } from "@/lib/alert-service";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NavArrowLeft, NavArrowDown, Pin, Check, PlusCircle, Camera, Xmark } from "iconoir-react-native";
 import { useCreateListing, useUpdateListing, useListingDetails, useRecommendPackaging, useUploadListingImage } from "@/lib/listings-api";
+import { useAgentClients } from "@/lib/user-api";
+import { useAuthStore } from "@vegelink/shared";
 import * as ImagePicker from "expo-image-picker";
 
 const unitOptions = ["kg", "crate", "basket", "head", "bunch", "sack"] as const;
@@ -62,6 +64,17 @@ export default function NewListingScreen() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
 
+  // Agent farmer client selection state
+  const user = useAuthStore((s) => s.user);
+  const isAgent = user?.role === "agent";
+  const [selectedFarmerId, setSelectedFarmerId] = useState<string>("");
+  const [isFarmerModalOpen, setIsFarmerModalOpen] = useState(false);
+
+  const { data: clientsData } = useAgentClients();
+  const farmersList = useMemo(() => {
+    return clientsData?.data || [];
+  }, [clientsData]);
+
   // Load existing listing data in edit mode
   useEffect(() => {
     if (existingListing) {
@@ -82,6 +95,9 @@ export default function NewListingScreen() {
       else if (name.includes("yam") || name.includes("potato")) setSelectedEmoji("🍠");
       setImages(existingListing.images || []);
       /* eslint-enable react-hooks/set-state-in-effect */
+      if (existingListing.farmerId) {
+        setSelectedFarmerId(existingListing.farmerId);
+      }
     }
   }, [existingListing]);
 
@@ -139,7 +155,7 @@ export default function NewListingScreen() {
   const handlePickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissionResult.granted === false) {
-      Alert.alert("Permission Required", "Please allow gallery permissions to select produce photos.");
+      Alert.alert("Permission Required", "Please allow gallery permissions to select produce photos.", [], { type: "warning" });
       return;
     }
 
@@ -160,7 +176,7 @@ export default function NewListingScreen() {
         const urls = await Promise.all(uploadPromises);
         setImages((current) => [...current, ...urls]);
       } catch (err: any) {
-        Alert.alert("Upload Failed", err.message || "Failed to upload one or more images.");
+        Alert.alert("Upload Failed", err.message || "Failed to upload one or more images.", [], { type: "error" });
       } finally {
         setUploadingImage(false);
       }
@@ -174,6 +190,11 @@ export default function NewListingScreen() {
   const handleSubmit = () => {
     if (!hasValidListing) return;
 
+    if (isAgent && !selectedFarmerId && !isEditMode) {
+      Alert.alert("Validation", "Please select a farmer client to list on behalf of.", [], { type: "warning" });
+      return;
+    }
+
     const harvestDate = new Date().toISOString().split("T")[0]; // default to today
     const submitData = {
       vegetable_type: cropName.trim().toLowerCase(),
@@ -185,6 +206,7 @@ export default function NewListingScreen() {
       location: { lat: 5.7023, lng: -0.0194 }, // default Accra coordinate
       supports_delivery: true,
       supports_pickup: true,
+      farmer_id: isAgent ? selectedFarmerId : undefined,
     };
 
     if (isEditMode && id) {
@@ -196,7 +218,7 @@ export default function NewListingScreen() {
           setListingPosted(true);
         },
         onError: (err: any) => {
-          Alert.alert("Failed to Update", err.error?.message || "Could not update listing.");
+          Alert.alert("Failed to Update", err.error?.message || "Could not update listing.", [], { type: "error" });
         }
       });
     } else {
@@ -205,7 +227,7 @@ export default function NewListingScreen() {
           setListingPosted(true);
         },
         onError: (err: any) => {
-          Alert.alert("Failed to Post", err.error?.message || "Could not create listing.");
+          Alert.alert("Failed to Post", err.error?.message || "Could not create listing.", [], { type: "error" });
         }
       });
     }
@@ -316,6 +338,28 @@ export default function NewListingScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerClassName="px-5 pt-6 pb-28 gap-5"
           >
+            {/* Agent Farmer Selection Section */}
+            {isAgent && !isEditMode && (
+              <View>
+                <Text className="mb-2 text-xs font-black uppercase text-gray-400">
+                  Select Farmer Client *
+                </Text>
+                <Pressable
+                  onPress={() => setIsFarmerModalOpen(true)}
+                  className="h-16 flex-row items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 active:bg-gray-100"
+                >
+                  <Text className={`text-base font-extrabold ${selectedFarmerId ? "text-gray-950" : "text-gray-400"}`}>
+                    {selectedFarmerId
+                      ? farmersList.find((f) => f.id === selectedFarmerId)
+                        ? `${farmersList.find((f) => f.id === selectedFarmerId)?.firstName} ${farmersList.find((f) => f.id === selectedFarmerId)?.lastName}`
+                        : "Selected Farmer"
+                      : "Select represented farmer…"}
+                  </Text>
+                  <NavArrowDown color="#9CA3AF" width={20} height={20} strokeWidth={2} />
+                </Pressable>
+              </View>
+            )}
+
             {/* Emoji + Name Row */}
             <View className="flex-row gap-4">
               {/* Emoji Selector */}
@@ -625,6 +669,67 @@ export default function NewListingScreen() {
               ))}
             </View>
           </View>
+        </Pressable>
+      </Modal>
+
+      {/* Farmer Client Picker Modal */}
+      <Modal visible={isFarmerModalOpen} animationType="slide" transparent>
+        <Pressable
+          className="flex-1 bg-black/45 justify-end"
+          onPress={() => setIsFarmerModalOpen(false)}
+        >
+          <Pressable
+            className="bg-white rounded-t-3xl px-5 pt-5 pb-8 gap-4 max-h-[75%]"
+            style={{ paddingBottom: Math.max(insets.bottom, 28) }}
+          >
+            <Text className="text-2xl font-black text-gray-950 mb-2">Select Farmer Client</Text>
+            
+            {farmersList.length === 0 ? (
+              <View className="items-center py-10">
+                <Text className="text-base font-bold text-gray-400 text-center">
+                  No clients registered yet. Please go to the Clients tab to add one.
+                </Text>
+              </View>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false} className="gap-2">
+                {farmersList.map((farmer) => {
+                  const name = `${farmer.firstName} ${farmer.lastName}`;
+                  const active = selectedFarmerId === farmer.id;
+                  return (
+                    <Pressable
+                      key={farmer.id}
+                      onPress={() => {
+                        setSelectedFarmerId(farmer.id);
+                        setIsFarmerModalOpen(false);
+                      }}
+                      className={`flex-row items-center justify-between p-4 rounded-2xl border ${
+                        active
+                          ? "bg-green-50 border-green-800"
+                          : "bg-gray-50 border-gray-200"
+                      }`}
+                    >
+                      <View>
+                        <Text className={`text-base font-black ${active ? "text-green-800" : "text-gray-950"}`}>
+                          {name}
+                        </Text>
+                        <Text className="text-xs text-gray-400 mt-0.5">
+                          {farmer.phone} · {farmer.region || "No Region"}
+                        </Text>
+                      </View>
+                      {active && <Check color="#15803D" width={20} height={20} strokeWidth={2.5} />}
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            )}
+
+            <Pressable
+              className="mt-2 rounded-2xl border border-gray-200 py-4"
+              onPress={() => setIsFarmerModalOpen(false)}
+            >
+              <Text className="text-center font-black text-gray-600">Close</Text>
+            </Pressable>
+          </Pressable>
         </Pressable>
       </Modal>
     </View>

@@ -14,7 +14,7 @@ export default function ListingsScreen() {
   const [activeTab, setActiveTab] = useState<"active" | "all">("active");
 
   const { data: listingsData, isLoading, refetch, isFetching } = useMarketplaceListings({
-    farmer_id: user?.id,
+    farmer_id: user?.role === "farmer" ? user?.id : undefined,
   });
 
   const cancelListingMutation = useCancelListing();

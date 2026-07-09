@@ -10,6 +10,7 @@ import {
   Truck,
   BoxIso,
   User,
+  Group,
 } from "iconoir-react-native";
 
 const tabIconMap: Record<string, React.ComponentType<{ color: string; width: number; height: number; strokeWidth: number }>> = {
@@ -19,6 +20,7 @@ const tabIconMap: Record<string, React.ComponentType<{ color: string; width: num
   jobs: Truck,
   orders: BoxIso,
   profile: User,
+  clients: Group,
 };
 
 export default function TabLayout() {
@@ -78,7 +80,15 @@ export default function TabLayout() {
         name="listings"
         options={{
           title: "My Listings",
-          href: role === "farmer" ? "/(tabs)/listings" : null,
+          href: role === "farmer" || role === "agent" ? "/(tabs)/listings" : null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="clients"
+        options={{
+          title: "Clients",
+          href: role === "agent" ? ("/(tabs)/clients" as any) : null,
         }}
       />
 
