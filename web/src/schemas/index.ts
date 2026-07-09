@@ -98,3 +98,4 @@ export const placeOrderSchema = z.object({
   mode: z.enum(['delivery', 'pickup']),
 })
 export type PlaceOrderFormData = z.infer<typeof placeOrderSchema>
+

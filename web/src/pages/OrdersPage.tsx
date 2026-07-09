@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { useMyOrders, useConfirmOrder, useCancelOrder } from '../hooks/useOrders'
 import { useAuthStore } from '../store/auth.store'
+import { getApiErrorMessage } from '../lib/errors'
 import { Spinner, ErrorAlert, EmptyState, StatusBadge } from '../components/ui/Feedback'
 import { Modal } from '../components/ui/Modal'
 import { PageHero } from '../components/ui/PageHero'
@@ -16,6 +18,8 @@ const ORDER_STATUS_CONFIG: Record<string, { emoji: string; tint: string; accent:
   in_transit:  { emoji: '🚛', tint: 'rgba(16,185,129,0.08)',  accent: '#059669' },
   delivered:   { emoji: '🎉', tint: 'rgba(214,255,205,0.35)', accent: '#15803d' },
   cancelled:   { emoji: '❌', tint: 'rgba(239,68,68,0.06)',   accent: '#dc2626' },
+  pending_agent_confirmation: { emoji: '🕵️', tint: 'rgba(139,92,246,0.08)', accent: '#8b5cf6' },
+  pending_sms_confirmation:   { emoji: '💬', tint: 'rgba(16,185,129,0.08)', accent: '#059669' },
 }
 
 function getOrderConfig(status: string) {
@@ -172,14 +176,26 @@ function OrderDetail({ order, onClose }: { order: Order; onClose: () => void }) 
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         {canConfirm && (
           <button type="button" className="primary-button" disabled={confirming}
-            onClick={() => confirm(order.id, { onSuccess: onClose })}
+            onClick={() => confirm(order.id, { 
+              onSuccess: () => {
+                toast.success('Order confirmed!')
+                onClose()
+              },
+              onError: (err: any) => toast.error(getApiErrorMessage(err) || 'Failed to confirm order')
+            })}
             style={{ flex: 1, justifyContent: 'center' }}>
             {confirming ? 'Confirming…' : 'Confirm Order'}
           </button>
         )}
         {canCancel && (
           <button type="button" className="secondary-button" disabled={cancelling}
-            onClick={() => cancel({ id: order.id, reason: 'Cancelled by user' }, { onSuccess: onClose })}
+            onClick={() => cancel({ id: order.id, reason: 'Cancelled by user' }, { 
+              onSuccess: () => {
+                toast.success('Order cancelled!')
+                onClose()
+              },
+              onError: (err: any) => toast.error(getApiErrorMessage(err) || 'Failed to cancel order')
+            })}
             style={{ flex: 1, justifyContent: 'center', color: '#ef4444' }}>
             {cancelling ? 'Cancelling…' : 'Cancel Order'}
           </button>

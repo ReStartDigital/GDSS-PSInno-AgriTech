@@ -89,10 +89,16 @@ export function OrderModal({ listing, onClose }: { listing: Listing; onClose: ()
     defaultValues: { mode: 'delivery' },
   })
   const currentMode = watch('mode')
-  const onSubmit = (data: PlaceOrderFormData) => mutate(data, { onSuccess: onClose })
+  const onSubmit = (data: PlaceOrderFormData) => mutate(data, { 
+    onSuccess: () => {
+        toast.success('Order placed successfully!')
+        onClose()
+    },
+    onError: (err: any) => toast.error(getApiErrorMessage(err) || 'Failed to place order')
+  })
   const apiError = getApiErrorMessage(error)
 
-  const quantityStr = watch('quantityKg')
+  const quantityStr = watch('quantity_kg')
   const quantity = parseFloat(String(quantityStr || '0'))
   const subtotal = quantity > 0 ? quantity * listing.pricePerKgGhs : 0
   const processingFee = subtotal * 0.015
@@ -141,8 +147,8 @@ export function OrderModal({ listing, onClose }: { listing: Listing; onClose: ()
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'grid', gap: 14 }}>
-            <Field label="Quantity (kg)" type="number" min="1" placeholder="e.g. 50" error={errors.quantityKg} {...register('quantityKg')} />
-            <Field label="Delivery Address" placeholder="e.g. Kumasi Central Market" error={errors.deliveryAddress} {...register('deliveryAddress')} />
+            <Field label="Quantity (kg)" type="number" min="1" placeholder="e.g. 50" error={errors.quantity_kg} {...register('quantity_kg')} />
+            <Field label="Delivery Address" placeholder="e.g. Kumasi Central Market" error={errors.delivery_address} {...register('delivery_address')} />
 
             <div>
               <p style={{ margin: '0 0 10px', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#374151', fontWeight: 600 }}>Fulfillment</p>
