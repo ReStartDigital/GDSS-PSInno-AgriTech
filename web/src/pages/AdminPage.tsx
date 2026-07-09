@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { PageHero } from '../components/ui/PageHero'
+import { useState, useEffect } from 'react'
 import { Modal } from '../components/ui/Modal'
 import { ModalHeader } from '../components/ui/ModalHeader'
+
+// ── TYPES ────────────────────────────────────────────────────────────────────
 
 interface MockConflict {
   id: string
@@ -14,6 +15,7 @@ interface MockConflict {
   date: string
   status: 'pending' | 'resolved_refunded' | 'resolved_released' | 'investigating'
   details: string
+  chatLog: { sender: 'farmer' | 'buyer'; message: string; time: string }[]
 }
 
 interface MockListing {
@@ -36,10 +38,32 @@ interface MockTransaction {
   date: string
 }
 
+interface AgentVerificationRequest {
+  id: string
+  agentName: string
+  farmerName: string
+  region: string
+  vegetableType: string
+  docsProvided: string[]
+  status: 'pending' | 'approved' | 'rejected'
+  date: string
+}
+
+interface AuditLogEntry {
+  id: string
+  timestamp: string
+  actor: string
+  action: string
+  details: string
+}
+
+// ── COMPONENT ────────────────────────────────────────────────────────────────
+
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'conflicts' | 'listings' | 'transactions' | 'users'>('dashboard')
+  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'conflicts' | 'listings' | 'verifications' | 'paystack' | 'performance' | 'audit'>('dashboard')
+
+  // ── MOCK DATA STATES ───────────────────────────────────────────────────────
   
-  // Interactive mock state
   const [conflicts, setConflicts] = useState<MockConflict[]>([
     {
       id: 'CONF-001',
@@ -48,10 +72,16 @@ export default function AdminPage() {
       buyerName: 'Ama Serwaa',
       cropType: 'Cassava',
       amountGhs: 1200.00,
-      issue: 'Produce quality discrepancy',
+      issue: 'Quality discrepancy',
       date: '2026-07-08',
       status: 'pending',
-      details: 'Buyer reports that the Cassava tubers received were smaller than listed and partially damaged during transport. Farmer claims they were in pristine condition when loaded.'
+      details: 'Buyer reports that the Cassava tubers received were smaller than listed and partially damaged during transport. Farmer claims they were in pristine condition when loaded.',
+      chatLog: [
+        { sender: 'buyer', message: 'Hi Kofi, these cassava tubers are much smaller than the 500kg catalog sample. Some have rot.', time: '09:12 AM' },
+        { sender: 'farmer', message: 'Hello Ama, I harvested those tubers myself yesterday. They were fresh and clean.', time: '09:20 AM' },
+        { sender: 'buyer', message: 'Look at the pictures I sent. They are bruised. I want a refund of GHS 600.', time: '09:35 AM' },
+        { sender: 'farmer', message: 'No, that is transport damage. Take it up with the driver!', time: '09:42 AM' }
+      ]
     },
     {
       id: 'CONF-002',
@@ -63,7 +93,12 @@ export default function AdminPage() {
       issue: 'OTP verification failure',
       date: '2026-07-07',
       status: 'investigating',
-      details: 'Transporter claims delivery was completed successfully, but the buyer was unable to receive or verify the 6-digit OTP verification PIN due to connectivity issues.'
+      details: 'Transporter claims delivery was completed successfully, but the buyer was unable to receive or verify the 6-digit OTP verification PIN due to connectivity issues.',
+      chatLog: [
+        { sender: 'farmer', message: 'Kwame, has the delivery truck arrived at your warehouse yet?', time: '02:00 PM' },
+        { sender: 'buyer', message: 'Yes, it is here. But the network in the market is completely down. I cannot receive the OTP sms.', time: '02:15 PM' },
+        { sender: 'farmer', message: 'The transporter cannot offload without entering the delivery code in the portal.', time: '02:30 PM' }
+      ]
     },
     {
       id: 'CONF-003',
@@ -75,7 +110,11 @@ export default function AdminPage() {
       issue: 'Incorrect packaging size',
       date: '2026-07-09',
       status: 'pending',
-      details: 'Buyer states that tomatoes were delivered in loose crates rather than the agreed recommended standard ventilated baskets, resulting in crushing.'
+      details: 'Buyer states that tomatoes were delivered in loose crates rather than the agreed recommended standard ventilated baskets, resulting in crushing.',
+      chatLog: [
+        { sender: 'buyer', message: 'Yaw, why were these packed loose? The weight pressed down and half the crates are soup.', time: '11:05 AM' },
+        { sender: 'farmer', message: 'Esi, I ran out of ventilated baskets. The crates are sturdy enough usually.', time: '11:15 AM' }
+      ]
     }
   ])
 
@@ -86,18 +125,74 @@ export default function AdminPage() {
     { id: 'LIST-104', farmerName: 'Ama Darko', cropType: 'Onions', quantityKg: 1200, pricePerKgGhs: 14.20, status: 'active', region: 'Greater Accra' }
   ])
 
-  const [transactions] = useState<MockTransaction[]>([
+  const [transactions, setTransactions] = useState<MockTransaction[]>([
     { id: 'TX-701', buyerName: 'Ama Serwaa', amountGhs: 1200.00, paymentMethod: 'Mobile Money', status: 'success', reference: 'pay_momo_8972', date: '2026-07-08' },
     { id: 'TX-702', buyerName: 'Kwame Boateng', amountGhs: 3450.00, paymentMethod: 'Card (Paystack)', status: 'success', reference: 'pay_card_9021', date: '2026-07-07' },
     { id: 'TX-703', buyerName: 'John Mahama', amountGhs: 450.00, paymentMethod: 'Mobile Money', status: 'failed', reference: 'pay_momo_0091', date: '2026-07-09' }
   ])
 
+  const [verifications, setVerifications] = useState<AgentVerificationRequest[]>([
+    {
+      id: 'VER-001',
+      agentName: 'Emmanuel Ofori',
+      farmerName: 'Kwadwo Appiah',
+      region: 'Western',
+      vegetableType: 'Ginger',
+      docsProvided: ['National ID Card', 'Farm Land Ownership Deed', 'Accreditation Photo'],
+      status: 'pending',
+      date: '2026-07-09'
+    },
+    {
+      id: 'VER-002',
+      agentName: 'Grace Mensah',
+      farmerName: 'Rebecca Boateng',
+      region: 'Central',
+      vegetableType: 'Cabbage',
+      docsProvided: ['Voter Card', 'Local Chief Reference Letter'],
+      status: 'pending',
+      date: '2026-07-08'
+    }
+  ])
+
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([
+    { id: 'LOG-301', timestamp: '2026-07-09 09:15:33', actor: 'System Admin', action: 'Initialize Admin Panel', details: 'Sandbox environment loaded successfully.' }
+  ])
+
+  // Paystack Settings
+  const [paystackMode, setPaystackMode] = useState<'sandbox' | 'live'>('sandbox')
+  const [webhookUrl] = useState('https://api.vegelink.gov.gh/v1/payments/webhook')
+
+  // Performance metrics simulated state
+  const [cpuUsage, setCpuUsage] = useState(24)
+  const [memUsage] = useState(48)
+  const [latency, setLatency] = useState(12)
+
   const [selectedConflict, setSelectedConflict] = useState<MockConflict | null>(null)
   const [successNotification, setSuccessNotification] = useState<string | null>(null)
+
+  // Simulation timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCpuUsage(Math.floor(18 + Math.random() * 15))
+      setLatency(Math.floor(8 + Math.random() * 8))
+    }, 4000)
+    return () => clearInterval(timer)
+  }, [])
 
   const showToast = (message: string) => {
     setSuccessNotification(message)
     setTimeout(() => setSuccessNotification(null), 4000)
+  }
+
+  const logAction = (action: string, details: string) => {
+    const newEntry: AuditLogEntry = {
+      id: `LOG-${Math.floor(300 + Math.random() * 700)}`,
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      actor: 'Admin Agent (You)',
+      action,
+      details
+    }
+    setAuditLogs(prev => [newEntry, ...prev])
   }
 
   const handleConflictResolve = (conflictId: string, resolution: 'refund' | 'release' | 'investigate') => {
@@ -111,27 +206,222 @@ export default function AdminPage() {
       return c
     }))
     setSelectedConflict(null)
-    const resText = resolution === 'refund' ? 'Refund disbursed to Buyer' : resolution === 'release' ? 'Funds released to Farmer' : 'Investigation status updated'
-    showToast(`Conflict ${conflictId} resolved successfully: ${resText}`)
+    const resText = resolution === 'refund' ? 'Disbursed Refund to Buyer' : resolution === 'release' ? 'Funds Released to Farmer' : 'Marked Investigating'
+    showToast(`Conflict ${conflictId} resolved: ${resText}`)
+    logAction('Resolve Conflict', `ID: ${conflictId} - Action: ${resText}`)
   }
 
-  const handleListingModeration = (listingId: string, action: 'approve' | 'flag' | 'remove') => {
+  const handleListingModeration = (listingId: string, action: 'approve' | 'flag') => {
     setListings(prev => prev.map(l => {
       if (l.id === listingId) {
         return { ...l, status: action === 'approve' ? 'active' : 'flagged' }
       }
       return l
     }))
-    showToast(`Listing ${listingId} updated: Status set to ${action === 'approve' ? 'Active' : 'Flagged'}`)
+    showToast(`Listing ${listingId} updated to ${action === 'approve' ? 'Active' : 'Flagged'}`)
+    logAction('Moderate Listing', `ID: ${listingId} - Set to ${action === 'approve' ? 'Active' : 'Flagged'}`)
+  }
+
+  const handleVerifyAgentFarmer = (id: string, action: 'approve' | 'reject') => {
+    setVerifications(prev => prev.map(v => {
+      if (v.id === id) {
+        return { ...v, status: action === 'approve' ? 'approved' : 'rejected' }
+      }
+      return v
+    }))
+    showToast(`Verification ${id} request has been ${action === 'approve' ? 'Approved' : 'Rejected'}`)
+    logAction('Verify Farmer Registration', `Request ID: ${id} - Decision: ${action.toUpperCase()}`)
+  }
+
+  const triggerMockWebhook = () => {
+    const mockRef = `pay_mock_${Math.floor(1000 + Math.random() * 9000)}`
+    const mockAmount = Math.floor(150 + Math.random() * 1500)
+    const newTx: MockTransaction = {
+      id: `TX-${Math.floor(700 + Math.random() * 300)}`,
+      buyerName: 'Ama Serwaa (Mock Webhook)',
+      amountGhs: mockAmount,
+      paymentMethod: 'Paystack Sandbox',
+      status: 'success',
+      reference: mockRef,
+      date: new Date().toISOString().substring(0, 10)
+    }
+    setTransactions(prev => [newTx, ...prev])
+    showToast(`Webhook Sent! Captured transaction ${mockRef} worth GHS ${mockAmount}`)
+    logAction('Paystack Webhook Simulation', `Captured transaction ${mockRef} value GHS ${mockAmount}`)
   }
 
   return (
-    <div className="page-stack" style={{ position: 'relative' }}>
-      <PageHero
-        eyebrow="VegeLink Admin Operations"
-        title="Admin Control Center"
-        description="Monitor system transaction volume, manage platform conflicts, moderate listings, and view logs."
-      />
+    <div className="admin-page-container">
+      {/* Dynamic CSS styles injected specifically for this admin dashboard */}
+      <style>{`
+        .admin-page-container {
+          display: grid;
+          grid-template-columns: 240px 1fr;
+          min-height: calc(100vh - 120px);
+          gap: 20px;
+          margin-top: 10px;
+        }
+        
+        .admin-sidebar {
+          background: #264123;
+          border-radius: 16px;
+          padding: 24px 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          color: #f8faf5;
+          height: fit-content;
+          box-shadow: 0 4px 12px rgba(38, 65, 35, 0.08);
+        }
+
+        .admin-sidebar-header {
+          padding-bottom: 16px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          margin-bottom: 12px;
+        }
+
+        .admin-sidebar-header h4 {
+          margin: 0;
+          font-size: 0.95rem;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          color: #d6ffcd;
+        }
+
+        .admin-sidebar-header span {
+          font-size: 0.65rem;
+          opacity: 0.6;
+        }
+
+        .admin-sidebar-btn {
+          background: none;
+          border: none;
+          color: rgba(248, 250, 245, 0.8);
+          padding: 12px 16px;
+          border-radius: 8px;
+          text-align: left;
+          font-size: 0.85rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background-color 150ms, color 150ms;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .admin-sidebar-btn:hover {
+          background: rgba(255, 255, 255, 0.05);
+          color: #fff;
+        }
+
+        .admin-sidebar-btn.active {
+          background: #d6ffcd;
+          color: #264123;
+        }
+
+        .admin-main-panel {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        .admin-card {
+          background: #ffffff;
+          border-radius: 16px;
+          border: 1px solid #e5e7eb;
+          box-shadow: 0 4px 6px -1px rgba(38, 65, 35, 0.05);
+          padding: 24px;
+        }
+
+        .admin-title-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+        }
+
+        .admin-title-row h3 {
+          margin: 0;
+          color: #264123;
+          font-size: 1.25rem;
+        }
+
+        .admin-table {
+          width: 100%;
+          border-collapse: collapse;
+          text-align: left;
+        }
+
+        .admin-table th {
+          padding: 12px;
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: #6b7280;
+          border-bottom: 2px solid #f3f4f6;
+        }
+
+        .admin-table td {
+          padding: 12px;
+          font-size: 0.85rem;
+          border-bottom: 1px solid #f3f4f6;
+          vertical-align: middle;
+        }
+
+        .perf-bar {
+          height: 8px;
+          border-radius: 4px;
+          background: #e5e7eb;
+          overflow: hidden;
+          margin-top: 4px;
+        }
+
+        .perf-bar-fill {
+          height: 100%;
+          border-radius: 4px;
+          transition: width 300ms ease;
+        }
+
+        .chat-bubble {
+          padding: 10px 14px;
+          border-radius: 12px;
+          font-size: 0.8rem;
+          max-width: 80%;
+          line-height: 1.4;
+          margin-bottom: 8px;
+        }
+
+        .chat-buyer {
+          background: rgba(38, 65, 35, 0.06);
+          color: #264123;
+          align-self: flex-start;
+          border-bottom-left-radius: 2px;
+        }
+
+        .chat-farmer {
+          background: #264123;
+          color: #ffffff;
+          align-self: flex-end;
+          border-bottom-right-radius: 2px;
+        }
+
+        @media (max-width: 868px) {
+          .admin-page-container {
+            grid-template-columns: 1fr;
+          }
+          
+          .admin-sidebar {
+            flex-direction: row;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 12px;
+          }
+          
+          .admin-sidebar-header {
+            display: none;
+          }
+        }
+      `}</style>
 
       {/* Toast Notification */}
       {successNotification && (
@@ -143,232 +433,228 @@ export default function AdminPage() {
           border: '1px solid rgba(214, 255, 205, 0.3)',
           animation: 'fadeSlideUp 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards'
         }}>
-          <span style={{ fontSize: '1.2rem' }}>🌿</span>
+          <span>🌿</span>
           <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{successNotification}</span>
         </div>
       )}
 
-      {/* Admin Tabs */}
-      <div className="filter-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-        <button
-          className={`filter-chip ${activeTab === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveTab('dashboard')}
-          style={{ padding: '12px', justifyContent: 'center' }}
-        >
-          📊 Dashboard
-        </button>
-        <button
-          className={`filter-chip ${activeTab === 'conflicts' ? 'active' : ''}`}
-          onClick={() => setActiveTab('conflicts')}
-          style={{ padding: '12px', justifyContent: 'center' }}
-        >
-          ⚖️ Conflicts ({conflicts.filter(c => c.status === 'pending').length})
-        </button>
-        <button
-          className={`filter-chip ${activeTab === 'listings' ? 'active' : ''}`}
-          onClick={() => setActiveTab('listings')}
-          style={{ padding: '12px', justifyContent: 'center' }}
-        >
-          🌾 Listings
-        </button>
-        <button
-          className={`filter-chip ${activeTab === 'transactions' ? 'active' : ''}`}
-          onClick={() => setActiveTab('transactions')}
-          style={{ padding: '12px', justifyContent: 'center' }}
-        >
-          💸 Transactions
-        </button>
-        <button
-          className={`filter-chip ${activeTab === 'users' ? 'active' : ''}`}
-          onClick={() => setActiveTab('users')}
-          style={{ padding: '12px', justifyContent: 'center' }}
-        >
-          👥 Platform Users
-        </button>
-      </div>
-
-      {/* ── TAB CONTENT ────────────────────────────────────────────────────────── */}
-
-      {activeTab === 'dashboard' && (
-        <div style={{ display: 'grid', gap: 20 }}>
-          {/* Key Metrics */}
-          <div className="stats-grid">
-            <div className="stat-card">
-              <span>Gross Transaction Volume</span>
-              <strong>GHS 128,450.00</strong>
-            </div>
-            <div className="stat-card">
-              <span>Total Active Listings</span>
-              <strong>348</strong>
-            </div>
-            <div className="stat-card">
-              <span>Transporters Onboarded</span>
-              <strong>42</strong>
-            </div>
-            <div className="stat-card" style={{ borderLeft: '4px solid #d97706' }}>
-              <span>Pending Conflicts</span>
-              <strong style={{ color: '#d97706' }}>
-                {conflicts.filter(c => c.status === 'pending').length}
-              </strong>
-            </div>
-          </div>
-
-          {/* Quick Stats Grid */}
-          <div className="two-column-card">
-            <div className="section-card">
-              <div className="section-heading">
-                <h3>System Status Overview</h3>
-              </div>
-              <div style={{ display: 'grid', gap: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f0f0f0', paddingBottom: 8 }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Payment Gateway (Paystack)</span>
-                  <span style={{ fontSize: '0.85rem', color: '#15803d', fontWeight: 700 }}>🟢 Operational</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f0f0f0', paddingBottom: 8 }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>SMS Notification Gateway</span>
-                  <span style={{ fontSize: '0.85rem', color: '#15803d', fontWeight: 700 }}>🟢 Operational</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f0f0f0', paddingBottom: 8 }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>PostGIS Geolocation Server</span>
-                  <span style={{ fontSize: '0.85rem', color: '#15803d', fontWeight: 700 }}>🟢 Connected (423 nodes)</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Redis Cache Cluster</span>
-                  <span style={{ fontSize: '0.85rem', color: '#15803d', fontWeight: 700 }}>🟢 Active (0.2ms latency)</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="section-card">
-              <div className="section-heading">
-                <h3>Escalated Platform Conflicts</h3>
-              </div>
-              <div style={{ display: 'grid', gap: 12 }}>
-                {conflicts.map(conflict => (
-                  <div key={conflict.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: '#fcfdfa', border: '1px solid #e5e7eb', borderRadius: 8 }}>
-                    <div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6b7280' }}>{conflict.id}</span>
-                      <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: '#264123' }}>{conflict.issue}</p>
-                    </div>
-                    <button
-                      className="primary-button"
-                      style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem' }}
-                      onClick={() => {
-                        setSelectedConflict(conflict)
-                        setActiveTab('conflicts')
-                      }}
-                    >
-                      Inspect
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+      {/* ── SIDEBAR NAVIGATION ────────────────────────────────────────────────── */}
+      <aside className="admin-sidebar">
+        <div className="admin-sidebar-header">
+          <h4>VegeLink Systems</h4>
+          <span>Operations Command</span>
         </div>
-      )}
+        <button
+          className={`admin-sidebar-btn ${activeMenu === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setActiveMenu('dashboard')}
+        >
+          📊 Dashboard Overview
+        </button>
+        <button
+          className={`admin-sidebar-btn ${activeMenu === 'conflicts' ? 'active' : ''}`}
+          onClick={() => setActiveMenu('conflicts')}
+        >
+          ⚖️ Dispute Mediation ({conflicts.filter(c => c.status === 'pending').length})
+        </button>
+        <button
+          className={`admin-sidebar-btn ${activeMenu === 'listings' ? 'active' : ''}`}
+          onClick={() => setActiveMenu('listings')}
+        >
+          🌾 Catalog Moderation
+        </button>
+        <button
+          className={`admin-sidebar-btn ${activeMenu === 'verifications' ? 'active' : ''}`}
+          onClick={() => setActiveMenu('verifications')}
+        >
+          👥 Agent Auditing ({verifications.filter(v => v.status === 'pending').length})
+        </button>
+        <button
+          className={`admin-sidebar-btn ${activeMenu === 'paystack' ? 'active' : ''}`}
+          onClick={() => setActiveMenu('paystack')}
+        >
+          💳 Paystack Integrations
+        </button>
+        <button
+          className={`admin-sidebar-btn ${activeMenu === 'performance' ? 'active' : ''}`}
+          onClick={() => setActiveMenu('performance')}
+        >
+          📈 System Performance
+        </button>
+        <button
+          className={`admin-sidebar-btn ${activeMenu === 'audit' ? 'active' : ''}`}
+          onClick={() => setActiveMenu('audit')}
+        >
+          📑 Operations Log
+        </button>
+      </aside>
 
-      {activeTab === 'conflicts' && (
-        <div className="section-card">
-          <div className="section-heading">
-            <h3>Discrepancy Resolution & Mediation Log</h3>
-            <span className="section-note">Active Disputes</span>
-          </div>
+      {/* ── MAIN CONTENT VIEWPORT ─────────────────────────────────────────────── */}
+      <main className="admin-main-panel">
+        
+        {/* 1. DASHBOARD OVERVIEW */}
+        {activeMenu === 'dashboard' && (
+          <>
+            <div className="stats-grid">
+              <div className="stat-card">
+                <span>Total Payment Intake</span>
+                <strong>GHS 128,450.00</strong>
+              </div>
+              <div className="stat-card">
+                <span>Active Conflict Disputes</span>
+                <strong style={{ color: '#d97706' }}>
+                  {conflicts.filter(c => c.status === 'pending').length}
+                </strong>
+              </div>
+              <div className="stat-card">
+                <span>Agent Farmers Registered</span>
+                <strong>142</strong>
+              </div>
+              <div className="stat-card">
+                <span>API Health Load</span>
+                <strong>{latency} ms</strong>
+              </div>
+            </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <div className="two-column-card">
+              <div className="admin-card">
+                <div className="admin-title-row">
+                  <h3>Operations Status Checklist</h3>
+                </div>
+                <div style={{ display: 'grid', gap: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 10 }}>
+                    <span style={{ fontWeight: 600 }}>Paystack Webhook Handler</span>
+                    <span style={{ color: '#15803d', fontWeight: 700 }}>🟢 Operational</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 10 }}>
+                    <span style={{ fontWeight: 600 }}>SMS Verification Gateway</span>
+                    <span style={{ color: '#15803d', fontWeight: 700 }}>🟢 Active</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 10 }}>
+                    <span style={{ fontWeight: 600 }}>PostGIS Spatial Engine</span>
+                    <span style={{ color: '#15803d', fontWeight: 700 }}>🟢 Linked</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: 600 }}>Paystack Gateway Mode</span>
+                    <span style={{ color: paystackMode === 'sandbox' ? '#d97706' : '#15803d', fontWeight: 800, textTransform: 'uppercase' }}>
+                      {paystackMode}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-card">
+                <div className="admin-title-row">
+                  <h3>Recent Audit Log</h3>
+                  <button onClick={() => setActiveMenu('audit')} style={{ background: 'none', border: 'none', color: '#15803d', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>View All</button>
+                </div>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {auditLogs.slice(0, 3).map(log => (
+                    <div key={log.id} style={{ padding: '8px 12px', background: '#f9fafb', borderRadius: 8, fontSize: '0.8rem' }}>
+                      <span style={{ fontWeight: 700, color: '#6b7280' }}>[{log.timestamp}]</span> <span style={{ fontWeight: 600, color: '#264123' }}>{log.action}</span>
+                      <p style={{ margin: '2px 0 0 0', opacity: 0.8 }}>{log.details}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* 2. DISPUTE MEDIATION (CONFLICTS) */}
+        {activeMenu === 'conflicts' && (
+          <div className="admin-card">
+            <div className="admin-title-row">
+              <h3>Discrepancy Mediation Hub</h3>
+              <span style={{ background: 'rgba(217,119,6,0.1)', color: '#d97706', padding: '4px 10px', borderRadius: 12, fontSize: '0.75rem', fontWeight: 700 }}>
+                {conflicts.filter(c => c.status === 'pending').length} Actions Required
+              </span>
+            </div>
+
+            <table className="admin-table">
               <thead>
-                <tr style={{ borderBottom: '2px solid #e5e7eb', color: '#6b7280', fontSize: '0.8rem' }}>
-                  <th style={{ padding: 12 }}>ID</th>
-                  <th style={{ padding: 12 }}>Order</th>
-                  <th style={{ padding: 12 }}>Dispute Issue</th>
-                  <th style={{ padding: 12 }}>Involved Parties</th>
-                  <th style={{ padding: 12 }}>Value</th>
-                  <th style={{ padding: 12 }}>Status</th>
-                  <th style={{ padding: 12 }}>Actions</th>
+                <tr>
+                  <th>Conflict ID</th>
+                  <th>Order Ref</th>
+                  <th>Issue Description</th>
+                  <th>Parties Involved</th>
+                  <th>Value</th>
+                  <th>Status</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {conflicts.map(conflict => {
-                  const isPending = conflict.status === 'pending'
-                  const isInvestigating = conflict.status === 'investigating'
-                  const resolvedText = conflict.status === 'resolved_refunded' ? 'Refunded' : 'Released'
-                  
-                  return (
-                    <tr key={conflict.id} style={{ borderBottom: '1px solid #e5e7eb', fontSize: '0.85rem' }}>
-                      <td style={{ padding: 12, fontWeight: 700, color: '#6b7280' }}>{conflict.id}</td>
-                      <td style={{ padding: 12, fontWeight: 600 }}>{conflict.orderId}</td>
-                      <td style={{ padding: 12 }}>{conflict.issue}</td>
-                      <td style={{ padding: 12 }}>
-                        <span style={{ fontWeight: 600 }}>Farmer:</span> {conflict.farmerName}<br />
-                        <span style={{ fontWeight: 600 }}>Buyer:</span> {conflict.buyerName}
-                      </td>
-                      <td style={{ padding: 12, fontWeight: 700 }}>GHS {conflict.amountGhs.toFixed(2)}</td>
-                      <td style={{ padding: 12 }}>
-                        <span style={{
-                          padding: '3px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
-                          background: isPending ? 'rgba(217,119,6,0.1)' : isInvestigating ? 'rgba(59,130,246,0.1)' : 'rgba(16,185,129,0.1)',
-                          color: isPending ? '#d97706' : isInvestigating ? '#2563eb' : '#059669'
-                        }}>
-                          {isPending ? 'PENDING' : isInvestigating ? 'INVESTIGATING' : `RESOLVED (${resolvedText})`}
-                        </span>
-                      </td>
-                      <td style={{ padding: 12 }}>
-                        <button
-                          className="secondary-button"
-                          style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}
-                          onClick={() => setSelectedConflict(conflict)}
-                        >
-                          Resolve Panel
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                })}
+                {conflicts.map(conflict => (
+                  <tr key={conflict.id}>
+                    <td style={{ fontWeight: 700, color: '#6b7280' }}>{conflict.id}</td>
+                    <td style={{ fontWeight: 600 }}>{conflict.orderId}</td>
+                    <td>{conflict.issue}</td>
+                    <td>
+                      <span style={{ fontWeight: 600 }}>Farmer:</span> {conflict.farmerName}<br />
+                      <span style={{ fontWeight: 600 }}>Buyer:</span> {conflict.buyerName}
+                    </td>
+                    <td style={{ fontWeight: 700 }}>GHS {conflict.amountGhs.toFixed(2)}</td>
+                    <td>
+                      <span style={{
+                        padding: '4px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
+                        background: conflict.status === 'pending' ? 'rgba(217,119,6,0.1)' : conflict.status === 'investigating' ? 'rgba(59,130,246,0.1)' : 'rgba(16,185,129,0.1)',
+                        color: conflict.status === 'pending' ? '#d97706' : conflict.status === 'investigating' ? '#2563eb' : '#059669'
+                      }}>
+                        {conflict.status.replace('_', ' ').toUpperCase()}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        className="primary-button"
+                        style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem' }}
+                        onClick={() => setSelectedConflict(conflict)}
+                      >
+                        Mediate
+                      </button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
 
-      {activeTab === 'listings' && (
-        <div className="section-card">
-          <div className="section-heading">
-            <h3>Crop Catalog Listing Moderation</h3>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        {/* 3. CATALOG MODERATION (LISTINGS) */}
+        {activeMenu === 'listings' && (
+          <div className="admin-card">
+            <div className="admin-title-row">
+              <h3>Produce Catalog Moderation</h3>
+            </div>
+
+            <table className="admin-table">
               <thead>
-                <tr style={{ borderBottom: '2px solid #e5e7eb', color: '#6b7280', fontSize: '0.8rem' }}>
-                  <th style={{ padding: 12 }}>Listing ID</th>
-                  <th style={{ padding: 12 }}>Farmer</th>
-                  <th style={{ padding: 12 }}>Produce Type</th>
-                  <th style={{ padding: 12 }}>Quantity / Price</th>
-                  <th style={{ padding: 12 }}>Region</th>
-                  <th style={{ padding: 12 }}>Status</th>
-                  <th style={{ padding: 12 }}>Moderate Action</th>
+                <tr>
+                  <th>Listing ID</th>
+                  <th>Farmer</th>
+                  <th>Vegetable</th>
+                  <th>Quantity / Price</th>
+                  <th>Region</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {listings.map(l => (
-                  <tr key={l.id} style={{ borderBottom: '1px solid #e5e7eb', fontSize: '0.85rem' }}>
-                    <td style={{ padding: 12, fontWeight: 700, color: '#6b7280' }}>{l.id}</td>
-                    <td style={{ padding: 12, fontWeight: 600 }}>{l.farmerName}</td>
-                    <td style={{ padding: 12 }}>{l.cropType}</td>
-                    <td style={{ padding: 12 }}>
-                      {l.quantityKg} kg @ GHS {l.pricePerKgGhs.toFixed(2)}/kg
-                    </td>
-                    <td style={{ padding: 12 }}>{l.region} Region</td>
-                    <td style={{ padding: 12 }}>
+                  <tr key={l.id}>
+                    <td style={{ fontWeight: 700, color: '#6b7280' }}>{l.id}</td>
+                    <td style={{ fontWeight: 600 }}>{l.farmerName}</td>
+                    <td>{l.cropType}</td>
+                    <td>{l.quantityKg} kg @ GHS {l.pricePerKgGhs.toFixed(2)}</td>
+                    <td>{l.region} Region</td>
+                    <td>
                       <span style={{
-                        padding: '3px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
+                        padding: '4px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
                         background: l.status === 'active' ? 'rgba(16,185,129,0.1)' : l.status === 'flagged' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
                         color: l.status === 'active' ? '#059669' : l.status === 'flagged' ? '#dc2626' : '#d97706'
                       }}>
                         {l.status.replace('_', ' ').toUpperCase()}
                       </span>
                     </td>
-                    <td style={{ padding: 12, display: 'flex', gap: 6 }}>
+                    <td style={{ display: 'flex', gap: 6 }}>
                       {l.status !== 'active' && (
                         <button
                           className="primary-button"
@@ -393,91 +679,266 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
 
-      {activeTab === 'transactions' && (
-        <div className="section-card">
-          <div className="section-heading">
-            <h3>Paystack Gateway Transactions Ledger</h3>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        {/* 4. AGENT FARMER VERIFICATIONS */}
+        {activeMenu === 'verifications' && (
+          <div className="admin-card">
+            <div className="admin-title-row">
+              <h3>Agent Farmer Registration Audit Queue</h3>
+              <span className="section-note">Documents Verification Checks</span>
+            </div>
+
+            <table className="admin-table">
               <thead>
-                <tr style={{ borderBottom: '2px solid #e5e7eb', color: '#6b7280', fontSize: '0.8rem' }}>
-                  <th style={{ padding: 12 }}>TX ID</th>
-                  <th style={{ padding: 12 }}>Buyer Name</th>
-                  <th style={{ padding: 12 }}>Amount</th>
-                  <th style={{ padding: 12 }}>Method</th>
-                  <th style={{ padding: 12 }}>Reference</th>
-                  <th style={{ padding: 12 }}>Date</th>
-                  <th style={{ padding: 12 }}>Status</th>
+                <tr>
+                  <th>Request ID</th>
+                  <th>Submitting Agent</th>
+                  <th>Farmer Name</th>
+                  <th>Region & Crop</th>
+                  <th>Verification Files</th>
+                  <th>Status</th>
+                  <th>Decision</th>
                 </tr>
               </thead>
               <tbody>
-                {transactions.map(t => (
-                  <tr key={t.id} style={{ borderBottom: '1px solid #e5e7eb', fontSize: '0.85rem' }}>
-                    <td style={{ padding: 12, fontWeight: 700, color: '#6b7280' }}>{t.id}</td>
-                    <td style={{ padding: 12, fontWeight: 600 }}>{t.buyerName}</td>
-                    <td style={{ padding: 12, fontWeight: 700 }}>GHS {t.amountGhs.toFixed(2)}</td>
-                    <td style={{ padding: 12 }}>{t.paymentMethod}</td>
-                    <td style={{ padding: 12, fontFamily: 'monospace' }}>{t.reference}</td>
-                    <td style={{ padding: 12 }}>{t.date}</td>
-                    <td style={{ padding: 12 }}>
+                {verifications.map(v => (
+                  <tr key={v.id}>
+                    <td style={{ fontWeight: 700, color: '#6b7280' }}>{v.id}</td>
+                    <td style={{ fontWeight: 600 }}>{v.agentName}</td>
+                    <td style={{ fontWeight: 600 }}>{v.farmerName}</td>
+                    <td>{v.region} Region · {v.vegetableType}</td>
+                    <td>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                        {v.docsProvided.map((doc, idx) => (
+                          <span key={idx} style={{ fontSize: '0.65rem', background: '#f3f4f6', color: '#374151', padding: '2px 6px', borderRadius: 4 }}>
+                            📄 {doc}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td>
                       <span style={{
-                        padding: '3px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
-                        background: t.status === 'success' ? 'rgba(16,185,129,0.1)' : t.status === 'failed' ? 'rgba(239,68,68,0.1)' : 'rgba(107,114,128,0.1)',
-                        color: t.status === 'success' ? '#059669' : t.status === 'failed' ? '#dc2626' : '#374151'
+                        padding: '4px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
+                        background: v.status === 'pending' ? 'rgba(245,158,11,0.1)' : v.status === 'approved' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                        color: v.status === 'pending' ? '#d97706' : v.status === 'approved' ? '#059669' : '#dc2626'
                       }}>
-                        {t.status.toUpperCase()}
+                        {v.status.toUpperCase()}
                       </span>
+                    </td>
+                    <td style={{ display: 'flex', gap: 6 }}>
+                      {v.status === 'pending' && (
+                        <>
+                          <button
+                            className="primary-button"
+                            style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem', background: '#15803d' }}
+                            onClick={() => handleVerifyAgentFarmer(v.id, 'approve')}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            className="secondary-button"
+                            style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem', borderColor: '#dc2626', color: '#dc2626' }}
+                            onClick={() => handleVerifyAgentFarmer(v.id, 'reject')}
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
 
-      {activeTab === 'users' && (
-        <div className="section-card">
-          <div className="section-heading">
-            <h3>Registered Platform Users (Accreditation & Auditing)</h3>
+        {/* 5. PAYSTACK INTEGRATION ENVIRONMENT */}
+        {activeMenu === 'paystack' && (
+          <div className="admin-card">
+            <div className="admin-title-row">
+              <h3>Paystack Payment Gateway Settings</h3>
+            </div>
+
+            <div style={{ display: 'grid', gap: 20 }}>
+              <div className="two-column-card">
+                <div style={{ padding: 18, border: '1px solid #e5e7eb', borderRadius: 12, background: '#fcfdfa' }}>
+                  <h4 style={{ margin: '0 0 10px 0', color: '#264123' }}>Environment Selector</h4>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button
+                      className={`filter-chip ${paystackMode === 'sandbox' ? 'active' : ''}`}
+                      onClick={() => {
+                        setPaystackMode('sandbox')
+                        logAction('Change Paystack Mode', 'Set environment to Sandbox.')
+                      }}
+                    >
+                      🧪 Sandbox Test
+                    </button>
+                    <button
+                      className={`filter-chip ${paystackMode === 'live' ? 'active' : ''}`}
+                      onClick={() => {
+                        setPaystackMode('live')
+                        logAction('Change Paystack Mode', 'Set environment to Live (Production).')
+                      }}
+                    >
+                      ⚡ Production Live
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ padding: 18, border: '1px solid #e5e7eb', borderRadius: 12, background: '#fcfdfa' }}>
+                  <h4 style={{ margin: '0 0 10px 0', color: '#264123' }}>Webhook Simulation Tools</h4>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '0.75rem', color: '#6b7280' }}>
+                    Send a test payload to <code>{webhookUrl}</code>.
+                  </p>
+                  <button
+                    className="primary-button"
+                    style={{ minHeight: 38, fontSize: '0.8rem' }}
+                    onClick={triggerMockWebhook}
+                  >
+                    Simulate Payment Hook
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h4 style={{ margin: '0 0 10px 0', color: '#264123' }}>Recent Transactions Ledger</h4>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>TX ID</th>
+                      <th>Buyer Name</th>
+                      <th>Amount</th>
+                      <th>Reference</th>
+                      <th>Method</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transactions.map(t => (
+                      <tr key={t.id}>
+                        <td style={{ fontWeight: 700, color: '#6b7280' }}>{t.id}</td>
+                        <td style={{ fontWeight: 600 }}>{t.buyerName}</td>
+                        <td style={{ fontWeight: 700 }}>GHS {t.amountGhs.toFixed(2)}</td>
+                        <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{t.reference}</td>
+                        <td>{t.paymentMethod}</td>
+                        <td>{t.date}</td>
+                        <td>
+                          <span style={{
+                            padding: '3px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
+                            background: t.status === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                            color: t.status === 'success' ? '#059669' : '#dc2626'
+                          }}>
+                            {t.status.toUpperCase()}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-          <div style={{ display: 'grid', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 16, border: '1px solid #e5e7eb', borderRadius: 12, background: '#ffffff' }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(38,65,35,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#264123' }}>KM</div>
-              <div>
-                <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9rem' }}>Kofi Mensah</p>
-                <p style={{ margin: 0, fontSize: '0.75rem', color: '#6b7280' }}>Role: Farmer · Region: Ashanti · Phone: +233 24 123 4567</p>
-              </div>
-              <span style={{ marginLeft: 'auto', background: 'rgba(16,185,129,0.1)', color: '#059669', fontSize: '0.7rem', fontWeight: 800, padding: '4px 10px', borderRadius: 20 }}>VERIFIED</span>
+        )}
+
+        {/* 6. PERFORMANCE & INFRASTRUCTURE */}
+        {activeMenu === 'performance' && (
+          <div className="admin-card">
+            <div className="admin-title-row">
+              <h3>System Cluster Metrics</h3>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 16, border: '1px solid #e5e7eb', borderRadius: 12, background: '#ffffff' }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(38,65,35,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#264123' }}>AS</div>
-              <div>
-                <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9rem' }}>Ama Serwaa</p>
-                <p style={{ margin: 0, fontSize: '0.75rem', color: '#6b7280' }}>Role: Buyer · Region: Greater Accra · Phone: +233 20 987 6543</p>
+            <div style={{ display: 'grid', gap: 20 }}>
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <span>Server Nodes</span>
+                  <strong>03 (US-East)</strong>
+                </div>
+                <div className="stat-card">
+                  <span>Active Connections</span>
+                  <strong>1,492 / sec</strong>
+                </div>
+                <div className="stat-card">
+                  <span>DB Connection Pool</span>
+                  <strong>32 / 50 Active</strong>
+                </div>
+                <div className="stat-card">
+                  <span>Cache Hit Rate</span>
+                  <strong>99.85 %</strong>
+                </div>
               </div>
-              <span style={{ marginLeft: 'auto', background: 'rgba(16,185,129,0.1)', color: '#059669', fontSize: '0.7rem', fontWeight: 800, padding: '4px 10px', borderRadius: 20 }}>VERIFIED</span>
-            </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 16, border: '1px solid #e5e7eb', borderRadius: 12, background: '#ffffff' }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(38,65,35,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#264123' }}>AO</div>
-              <div>
-                <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9rem' }}>Abena Osei</p>
-                <p style={{ margin: 0, fontSize: '0.75rem', color: '#6b7280' }}>Role: Transporter · Region: Eastern · Phone: +233 27 654 3210</p>
+              <div style={{ display: 'grid', gap: 16, padding: 18, border: '1px solid #e5e7eb', borderRadius: 12 }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                    <span style={{ fontWeight: 600 }}>CPU Performance load</span>
+                    <strong>{cpuUsage}%</strong>
+                  </div>
+                  <div className="perf-bar">
+                    <div className="perf-bar-fill" style={{ width: `${cpuUsage}%`, background: cpuUsage > 75 ? '#dc2626' : '#15803d' }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                    <span style={{ fontWeight: 600 }}>Memory load</span>
+                    <strong>{memUsage}%</strong>
+                  </div>
+                  <div className="perf-bar">
+                    <div className="perf-bar-fill" style={{ width: `${memUsage}%`, background: '#15803d' }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                    <span style={{ fontWeight: 600 }}>API latency (Vercel Edge Gateway)</span>
+                    <strong>{latency} ms</strong>
+                  </div>
+                  <div className="perf-bar">
+                    <div className="perf-bar-fill" style={{ width: `${latency * 4}%`, background: '#15803d' }} />
+                  </div>
+                </div>
               </div>
-              <span style={{ marginLeft: 'auto', background: 'rgba(245,158,11,0.1)', color: '#d97706', fontSize: '0.7rem', fontWeight: 800, padding: '4px 10px', borderRadius: 20 }}>PENDING OTP CHECK</span>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* 7. OPERATIONS LOG (AUDIT LOGS) */}
+        {activeMenu === 'audit' && (
+          <div className="admin-card">
+            <div className="admin-title-row">
+              <h3>Platform Operations Audit Trail</h3>
+            </div>
+            
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Log ID</th>
+                  <th>Actor</th>
+                  <th>Action</th>
+                  <th>Event Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {auditLogs.map(log => (
+                  <tr key={log.id}>
+                    <td style={{ color: '#6b7280' }}>{log.timestamp}</td>
+                    <td style={{ fontWeight: 700, color: '#6b7280' }}>{log.id}</td>
+                    <td style={{ fontWeight: 600 }}>{log.actor}</td>
+                    <td style={{ fontWeight: 600, color: '#264123' }}>{log.action}</td>
+                    <td>{log.details}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+      </main>
 
       {/* ── CONFLICT DETAIL MEDIATION PANEL MODAL ────────────────────────────────────── */}
-
       {selectedConflict && (
         <Modal onClose={() => setSelectedConflict(null)}>
           <ModalHeader
@@ -493,6 +954,29 @@ export default function AdminPage() {
               </span>
               <h3 style={{ margin: '8px 0 12px 0', color: '#264123' }}>{selectedConflict.issue}</h3>
               <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.5 }}>{selectedConflict.details}</p>
+            </div>
+
+            {/* Chat log visual mediation trail */}
+            <div>
+              <span style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+                💬 Chat Mediation Log Trail
+              </span>
+              <div style={{
+                maxHeight: 200, overflowY: 'auto', padding: 12, border: '1px solid #e5e7eb',
+                borderRadius: 8, background: '#f9fafb', display: 'flex', flexDirection: 'column'
+              }}>
+                {selectedConflict.chatLog.map((chat, idx) => (
+                  <div
+                    key={idx}
+                    className={`chat-bubble ${chat.sender === 'farmer' ? 'chat-farmer' : 'chat-buyer'}`}
+                  >
+                    <strong style={{ display: 'block', fontSize: '0.65rem', marginBottom: 2 }}>
+                      {chat.sender === 'farmer' ? selectedConflict.farmerName : selectedConflict.buyerName} ({chat.time})
+                    </strong>
+                    {chat.message}
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="two-column-card">
