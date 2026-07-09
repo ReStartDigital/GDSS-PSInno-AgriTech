@@ -35,8 +35,13 @@
       "hidden" : false,
       "layers" : [
         {
+          "blend-mode" : "normal",
+          "fill" : "automatic",
+          "glass" : true,
+          "hidden" : true,
           "image-name" : "vegelink.svg",
           "name" : "vegelink",
+          "opacity" : 1,
           "position" : {
             "scale" : 16,
             "translation-in-points" : [
@@ -46,6 +51,18 @@
           }
         },
         {
+          "image-name" : "vegelink-Photoroom.png",
+          "name" : "vegelink-Photoroom",
+          "position" : {
+            "scale" : 16,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "hidden" : false,
           "image-name" : "grid.png",
           "name" : "grid"
         }
