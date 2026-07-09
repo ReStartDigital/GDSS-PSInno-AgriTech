@@ -7,10 +7,10 @@ import { ErrorCode } from "../../common/constants/error-codes.enum.js";
  * Maps VegeLink's mobile network names to Paystack's bank codes
  * for mobile money settlement accounts in Ghana.
  */
-export const MOBILE_NETWORK_TO_PAYSTACK_BANK: Record<string, string> = {
-  mtn: "MTN",
-  vodafone: "VDF",
-  airteltigo: "ATL",
+export const MOBILE_NETWORK_TO_PAYSTACK_BANK: Record<string, number> = {
+  mtn: 67,
+  vodafone: 66,
+  airteltigo: 68,
 };
 
 export const SUPPORTED_MOBILE_NETWORKS = Object.keys(
@@ -55,6 +55,7 @@ class PaystackClient {
   ): Promise<PaystackSubaccountResult> {
     const bankCode =
       MOBILE_NETWORK_TO_PAYSTACK_BANK[payload.mobileNetwork.toLowerCase()];
+    console.log(bankCode)
     if (!bankCode) {
       throw new AppException(
         400,
@@ -72,9 +73,8 @@ class PaystackClient {
         business_name: payload.business_name,
         settlement_bank: bankCode,
         account_number: localNumber,
-        // percentage_charge: 0 — VegeLink controls the split config dynamically
-        // per order; we do not want a blanket % auto-deducted by Paystack on
-        // every settlement.
+        currency: "GHS",
+        country: "GH",
         percentage_charge: 0,
         primary_contact_email: payload.primary_contact_email,
         description: `VegeLink ${payload.mobileNetwork.toUpperCase()} payout route`,
@@ -92,6 +92,7 @@ class PaystackClient {
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
+      console.log(error.response.data)
       throw new AppException(
         422,
         ErrorCode.PAYSTACK_SUBACCOUNT_FAILED,

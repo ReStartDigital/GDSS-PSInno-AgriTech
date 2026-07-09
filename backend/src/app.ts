@@ -1,6 +1,7 @@
 import express from "express";
 import { type Application } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger.js";
@@ -29,6 +30,7 @@ export function createApp(): Application {
   app.set("trust proxy", 1);
 
   app.use(express.json());
+  app.use(cookieParser()); // Register cookie-parser
 
   app.use(morganMiddleware);
 

@@ -28,26 +28,31 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
-    const original = error.config
+    const originalRequest = error.config
 
-    // Only attempt a single refresh per failed request
-    if (error.response?.status === 401 && !original._retry) {
-      original._retry = true
+    // 1. If 401 and not a retry, and NOT the refresh endpoint itself
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/auth/refresh')
+    ) {
+      originalRequest._retry = true
       try {
-        // The refresh token travels via the httpOnly cookie automatically.
-        // Backend response: { success, data: { accessToken, refreshToken } }
+        // Use the bare axios instance to avoid triggering this interceptor again
         const res = await axios.post(
           `${BASE_URL}/auth/refresh`,
           {},
           { withCredentials: true },
         )
-        const newAccessToken: string = res.data.data.accessToken
+        const newAccessToken = res.data.data.accessToken
         useAuthStore.getState().setAccessToken(newAccessToken)
-        original.headers.Authorization = `Bearer ${newAccessToken}`
-        return api(original)
-      } catch {
-        // Refresh failed — session is dead. Clear state so RequireAuth redirects.
+        
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+        return api(originalRequest) // Retry original
+      } catch (refreshError) {
+        // Refresh failed — session is dead. Clear state.
         useAuthStore.getState().clearAuth()
+        return Promise.reject(refreshError)
       }
     }
 

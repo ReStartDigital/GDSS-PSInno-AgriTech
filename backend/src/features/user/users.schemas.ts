@@ -39,6 +39,39 @@ const phoneSchema = z
     return normalized;
   });
 
+
+export const paystackPhone = z
+  .string()
+  .min(1, "Phone number is required")
+  .transform((val, ctx) => {
+    // 1. Strip out non-numeric characters (handles spaces, +, -, parentheses)
+    const cleaned = val.replace(/\D/g, "");
+
+    // 2. Normalize international format with country code (e.g., 233209117002 -> 0209117002)
+    if (cleaned.startsWith("233") && cleaned.length === 12) {
+      return `0${cleaned.slice(3)}`;
+    }
+
+    // 3. Normalize already correct local format (e.g., 0209117002)
+    if (cleaned.startsWith("0") && cleaned.length === 10) {
+      return cleaned;
+    }
+
+    // 4. Normalize short entry missing leading zero (e.g., 209117002 -> 0209117002)
+    // Ghanaian mobile numbers are 9 digits without the leading '0'
+    if (cleaned.length === 9) {
+      return `0${cleaned}`;
+    }
+
+    // If it doesn't match any standard Ghanaian mobile structure, fail validation
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Enter a valid 10-digit Ghanaian phone number (e.g. 020XXXXXXX)",
+    });
+    
+    return z.NEVER;
+  });
+
 // ── PATCH /users/me ────────────────────────────────────────────────────────────
 export const updateProfileSchema = z
   .object({
@@ -91,7 +124,7 @@ export type ChangePinDto = z.infer<typeof changePinSchema>;
 
 // ── POST /users/me/payment-details ────────────────────────────────────────────
 export const paymentDetailsSchema = z.object({
-  mobile_number: phoneSchema,
+  mobile_number: paystackPhone,
   mobile_network: z.enum(SUPPORTED_MOBILE_NETWORKS as [string, ...string[]], {
     message: `Network must be one of: ${SUPPORTED_MOBILE_NETWORKS.join(", ")}`, // ✨ Corrected to 'message'
   }),

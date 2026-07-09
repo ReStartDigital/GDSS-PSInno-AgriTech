@@ -13,7 +13,7 @@ const node_env = process.env.NODE_ENV ?? "production";
 let privateKey = "";
 let publicKey = "";
 
-if (node_env === "development") {
+if (node_env !== "development") {
   privateKey = process.env.JWT_PRIVATE_KEY_PATH ?? "";
   publicKey = process.env.JWT_PUBLIC_KEY_PATH ?? "";
 } else {
