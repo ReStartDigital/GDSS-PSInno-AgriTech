@@ -6,7 +6,7 @@ import { listingCategories, marketplaceListings } from "@/lib/marketplace-data";
 import { vlColors } from "@/lib/design-system";
 import { getGreeting } from "@/lib/utils";
 import {
-  BellNotification,
+  ChatBubble,
   Search,
   StatUp,
   Shop,
@@ -53,10 +53,12 @@ export default function HomeScreen() {
               <Text className="text-lg font-black text-white">VegeLink</Text>
             </View>
 
-            <Pressable className="h-11 w-11 items-center justify-center rounded-full bg-white/20">
-              <BellNotification color="#FFFFFF" width={22} height={22} strokeWidth={2} />
-              <View className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-yellow-400" />
-            </Pressable>
+            <Link href={"/messages" as any} asChild>
+              <Pressable className="h-11 w-11 items-center justify-center rounded-full bg-white/20">
+                <ChatBubble color="#FFFFFF" width={22} height={22} strokeWidth={2} />
+                <View className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-yellow-400" />
+              </Pressable>
+            </Link>
           </View>
 
           <Text className="mt-9 text-sm font-black text-green-100">
