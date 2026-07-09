@@ -193,7 +193,12 @@ function JobCard({ job }: { job: Job }) {
           {job.status === 'in_transit' && (
             <button type="button" className="mp-order-btn"
               disabled={updating}
-              onClick={() => updateStatus({ id: job.id, status: 'delivered' })}
+              onClick={() => {
+                const pin = prompt('Enter the 6-digit verification PIN provided by the buyer:')
+                if (pin) {
+                  updateStatus({ id: job.id, status: 'delivered', pin })
+                }
+              }}
               style={{ background: '#059669' }}>
               {updating ? 'Updating…' : '✅ Confirm Delivery'}
             </button>

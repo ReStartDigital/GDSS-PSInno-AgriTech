@@ -19,7 +19,16 @@ export function useMyOrders() {
   return useQuery<Order[]>({
     queryKey: ['orders'],
     queryFn: () =>
-      ordersApi.getMyOrders().then((r) => (r.data.data.data ?? []) as Order[]),
+      ordersApi.getMyOrders().then((r) => {
+        const resData = r.data
+        if (resData.success && Array.isArray(resData.data)) {
+          return resData.data as Order[]
+        }
+        if (resData.success && resData.data && Array.isArray(resData.data.data)) {
+          return resData.data.data as Order[]
+        }
+        return [] as Order[]
+      }),
   })
 }
 
@@ -27,7 +36,13 @@ export function useOrder(id: string) {
   return useQuery<Order>({
     queryKey: ['orders', id],
     queryFn: () =>
-      ordersApi.getById(id).then((r) => r.data.data.order as Order),
+      ordersApi.getById(id).then((r) => {
+        const resData = r.data
+        if (resData.success && resData.data) {
+          return (resData.data.order ?? resData.data) as Order
+        }
+        return {} as Order
+      }),
     enabled: !!id,
   })
 }

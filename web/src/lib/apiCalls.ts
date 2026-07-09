@@ -119,7 +119,7 @@ export const listingsApi = {
   create: (data: CreateListingFormData & { farmer_id?: string }) => {
     const { location, ...rest } = data
     const backendLocation = location
-      ? { latitude: location.lat, longitude: location.lng }
+      ? { lat: location.lat, lng: location.lng }
       : undefined
 
     return api.post('/listings', {
@@ -138,7 +138,7 @@ export const listingsApi = {
   ) => {
     const { location, ...rest } = data
     const backendLocation = location
-      ? { latitude: location.lat, longitude: location.lng }
+      ? { lat: location.lat, lng: location.lng }
       : undefined
 
     return api.patch(`/listings/${id}`, {
@@ -151,10 +151,7 @@ export const listingsApi = {
   delete: (id: string) => api.delete(`/listings/${id}`),
 }
 
-// ── Orders API ── (backend endpoints not yet implemented) ─────────────────────
-// These paths will 404 until the backend orders feature is built.
-// Hooks reading these will land in their error state — this is expected.
-
+// ── Orders API ──
 export const ordersApi = {
   getMyOrders: () => api.get('/orders'),
   getById: (id: string) => api.get(`/orders/${id}`),
@@ -162,17 +159,17 @@ export const ordersApi = {
     api.post('/orders', { listing_id: listingId, ...data }),
   confirm: (id: string) => api.patch(`/orders/${id}/confirm`, {}),
   cancel: (id: string, reason: string) =>
-    api.patch(`/orders/${id}/cancel`, { reason }),
+    api.patch(`/orders/${id}/cancel`, { cancellation_reason: reason }),
 }
 
-// ── Transport API ── (backend endpoints not yet implemented) ──────────────────
-// These paths will 404 until the backend transport feature is built.
-
+// ── Transport API ──
 export const transportApi = {
-  getJobs: () => api.get('/transport/jobs'),
-  accept: (id: string) => api.patch(`/transport/jobs/${id}/accept`, {}),
-  updateStatus: (id: string, status: string) =>
-    api.patch(`/transport/jobs/${id}/status`, { status }),
+  getJobs: (params?: Record<string, string | number | undefined>) =>
+    api.get('/transport/available', { params }),
+  accept: (id: string) => api.patch(`/transport/${id}/accept`, {}),
+  arrive: (id: string) => api.patch(`/transport/${id}/arrive`, {}),
+  confirmDelivery: (id: string, verification_pin: string) =>
+    api.post(`/transport/${id}/delivered`, { verification_pin }),
 }
 
 // ── Users API ─────────────────────────────────────────────────────────────────
