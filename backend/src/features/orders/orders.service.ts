@@ -56,7 +56,7 @@ export class OrdersService {
     dto: CreateOrderDto,
   ): Promise<OrderEntity> {
     // We execute the entire lifecycle inside a managed database transaction closure
-    return await this.dataSource.transaction(async (manager) => {
+    const {saveOrder, farmer} = await this.dataSource.transaction(async (manager) => {
       const activeStatuses = [
         OrderStatus.PENDING,
         OrderStatus.PENDING_AGENT_CONFIRMATION,
@@ -163,43 +163,44 @@ export class OrdersService {
         status: targetStatus,
       });
 
-      const order = await txOrdersRepo.save(orderData);
+      const saveOrder = await txOrdersRepo.save(orderData);
 
       // 8. Atomically reduce available stock quantity from the catalog listing
       listing.committedKg = Number(listing.committedKg || 0) + requestedQty;
       await txListingsRepo.save(listing);
 
-      // 9. Automated Transport Trigger Condition
-      if (
-        order.status === OrderStatus.CONFIRMED &&
-        order.mode === FulfilmentMode.DELIVERY
-      ) {
-        // Enforce location guards before dispatching to PostGIS parameters
-        if (!dto.delivery_location || !farmer.location) {
-          throw new BadRequestException(
-            "Spatial coordinates for both pickup (farmer) and dropoff (buyer) are mandatory for auto-confirmed delivery orders.",
-            ErrorCode.BAD_REQUEST,
-          );
-        }
+      return {saveOrder, farmer};
+    });
 
-        // Automatically dispatch the transport job to the market pool
-        await this.transportService.requestHauling({
-          order_id: order.id,
-          pickup_location: {
-            latitude: farmer.location.coordinates[1], // Extracting Lat from GeoJSON point [lng, lat]
-            longitude: farmer.location.coordinates[0], // Extracting Lng from GeoJSON point [lng, lat]
-          },
-          dropoff_location: {
-            latitude: dto.delivery_location.lat,
-            longitude: dto.delivery_location.lng,
-          },
-          packaging_type_name: dto.packaging_type_name || "Standard Sacks",
-          special_handling: dto.special_handling,
-        });
+    // 9. Automated Transport Trigger Condition
+    if (
+      saveOrder.status === OrderStatus.CONFIRMED &&
+      saveOrder.mode === FulfilmentMode.DELIVERY
+    ) {
+      // Enforce location guards before dispatching to PostGIS parameters
+      if (!dto.delivery_location || !farmer.location) {
+        throw new BadRequestException(
+          "Spatial coordinates for both pickup (farmer) and dropoff (buyer) are mandatory for auto-confirmed delivery orders.",
+          ErrorCode.BAD_REQUEST,
+        );
       }
 
-      return order;
-    });
+      // Automatically dispatch the transport job to the market pool
+      await this.transportService.requestHauling({
+        order_id: saveOrder.id,
+        pickup_location: {
+          latitude: farmer.location.coordinates[1], // Extracting Lat from GeoJSON point [lng, lat]
+          longitude: farmer.location.coordinates[0], // Extracting Lng from GeoJSON point [lng, lat]
+        },
+        dropoff_location: {
+          latitude: dto.delivery_location.lat,
+          longitude: dto.delivery_location.lng,
+        },
+        packaging_type_name: dto.packaging_type_name || "Standard Sacks",
+        special_handling: dto.special_handling,
+      });
+    }
+    return saveOrder;
   }
 
   /**

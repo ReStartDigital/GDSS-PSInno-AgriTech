@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useAllListings } from '../hooks/useListings'
 import { useAuthStore } from '../store/auth.store'
-import type { Listing } from '../types/api'
+import type { ListingResponse } from '../types/api'
 import { Icon } from '../components/Icon'
 import { Spinner, ErrorAlert, EmptyState } from '../components/ui/Feedback'
 import { getCropConfig, AgriRing, FreshnessBar, OrderModal, PRODUCE_FILTERS } from '../lib/produceUtils'
@@ -11,14 +11,14 @@ import { getCropConfig, AgriRing, FreshnessBar, OrderModal, PRODUCE_FILTERS } fr
 export default function MarketplacePage() {
   const [filter, setFilter]       = useState('All')
   const [search, setSearch]       = useState('')
-  const [selected, setSelected]   = useState<Listing | null>(null)
+  const [selected, setSelected]   = useState<ListingResponse | null>(null)
   const user = useAuthStore((s) => s.user)
 
   const params = filter !== 'All' ? { vegetable_type: filter } : undefined
   const { data, isLoading, error } = useAllListings(params)
 
   const listings = useMemo(() => {
-    const all: Listing[] = Array.isArray(data) ? data : []
+    const all: ListingResponse[] = Array.isArray(data) ? data : []
     if (!search.trim()) return all
     return all.filter((l) =>
       l.vegetableType.toLowerCase().includes(search.toLowerCase()) ||
@@ -103,7 +103,7 @@ function ProduceCard({
   canOrder,
   onOrder,
 }: {
-  listing: Listing
+  listing: ListingResponse
   canOrder: boolean
   onOrder: () => void
 }) {

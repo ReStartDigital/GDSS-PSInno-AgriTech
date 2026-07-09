@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/auth.store'
 import { useAllListings } from '../hooks/useListings'
-import type { Listing } from '../types/api'
+import type { ListingResponse } from '../types/api'
 import { Icon } from '../components/Icon'
 import { Spinner, ErrorAlert, EmptyState } from '../components/ui/Feedback'
 import { getCropConfig, AgriRing, FreshnessBar, OrderModal, PRODUCE_FILTERS } from '../lib/produceUtils'
@@ -16,7 +16,7 @@ const TRUST_VALS = [
 export default function HomePage() {
   const [filter, setFilter]     = useState('All')
   const [search, setSearch]     = useState('')
-  const [selected, setSelected] = useState<Listing | null>(null)
+  const [selected, setSelected] = useState<ListingResponse | null>(null)
 
   const user = useAuthStore((s) => s.user)
   const navigate = useNavigate()
@@ -25,13 +25,14 @@ export default function HomePage() {
   const { data, isLoading, error } = useAllListings(params)
 
   const listings = useMemo(() => {
-    const all: Listing[] = Array.isArray(data) ? data : []
+    const all: ListingResponse[] = Array.isArray(data) ? data : []
     if (!search.trim()) return all
     return all.filter((l) =>
       l.vegetableType.toLowerCase().includes(search.toLowerCase()) ||
       l.farmer?.firstName?.toLowerCase().includes(search.toLowerCase())
     )
   }, [data, search])
+
 
   return (
     <div className="page-stack">
