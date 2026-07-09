@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Pressable, Text, TextInput, View, ActivityIndicator, Alert } from "react-native";
+import { Pressable, Text, TextInput, View, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthUser, UserRole, useAuthStore } from "@vegelink/shared";
 import { vlClassNames, vlStyles } from "@/lib/design-system";
@@ -142,6 +142,10 @@ export default function PinScreen() {
   };
 
   return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      className="flex-1"
+    >
     <View className={vlClassNames.screen} style={{ paddingTop: insets.top }}>
       <View className="flex-1 px-6 pb-10 pt-4">
         {/* Header with progress */}
@@ -257,6 +261,7 @@ export default function PinScreen() {
         </View>
       </View>
     </View>
+    </KeyboardAvoidingView>
   );
 }
 

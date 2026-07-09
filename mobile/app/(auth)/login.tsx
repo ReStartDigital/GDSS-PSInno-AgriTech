@@ -11,7 +11,8 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { NavArrowRight, Phone, Lock } from "iconoir-react-native";
+import { NavArrowRight, Phone } from "iconoir-react-native";
+import { OTPInput } from "@/components/common/OTPInput";
 import { useAuthStore } from "@vegelink/shared";
 import { apiClient } from "@/lib/api-client";
 import { vlClassNames, vlStyles } from "@/lib/design-system";
@@ -130,31 +131,25 @@ export default function LoginScreen() {
                   placeholder="e.g. 024 123 4567"
                   placeholderTextColor="#9CA3AF"
                   keyboardType="phone-pad"
-                  className="flex-1 text-base font-extrabold text-gray-950 p-0"
+                  className="flex-1 text-xl font-extrabold text-gray-950 p-0"
                 />
               </View>
             </View>
 
-            {/* PIN passcode input wrapper */}
+            {/* PIN passcode input */}
             <View>
               <Text className="mb-2 text-xs font-black uppercase text-gray-400">
                 PIN Passcode
               </Text>
-              <View className="h-16 flex-row items-center rounded-2xl border border-gray-200 bg-gray-50 px-4">
-                <Lock color="#9CA3AF" width={20} height={20} className="mr-3" />
-                <TextInput
-                  value={pinVal}
-                  onChangeText={(val) => {
-                    setPinVal(val.replace(/\D/g, "").slice(0, 4));
-                    setError("");
-                  }}
-                  placeholder="Enter your 4-digit PIN"
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="numeric"
-                  secureTextEntry
-                  className="flex-1 text-base font-extrabold text-gray-950 p-0"
-                />
-              </View>
+              <OTPInput
+                length={4}
+                value={pinVal}
+                onChange={(val) => {
+                  setPinVal(val);
+                  setError("");
+                }}
+                secure
+              />
             </View>
           </View>
 
