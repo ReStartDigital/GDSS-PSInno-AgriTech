@@ -50,8 +50,7 @@ export function OTPInput({ length = 6, value, onChange, secure = false }: OTPInp
         maxLength={length}
         value={value}
         onChangeText={handleChange}
-        textContentType={secure ? "password" : "oneTimeCode"}
-        secureTextEntry={secure}
+        textContentType={secure ? "none" : "oneTimeCode"}
       />
     </Pressable>
   );

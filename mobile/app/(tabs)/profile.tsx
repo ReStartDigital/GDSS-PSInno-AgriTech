@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert, Image, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { UserRole, useAuthStore } from "@vegelink/shared";
+import { useAuthStore } from "@vegelink/shared";
 import { useUserSettingsStore } from "@/lib/user-settings-store";
 import { marketplaceListings } from "@/lib/marketplace-data";
-import { getProduceEmoji } from "@/lib/utils";
 import { BottomSheet } from "@/components/layout/BottomSheet";
-import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
+import { vlClassNames, vlStyles } from "@/lib/design-system";
 import { useUpdateProfile, useMyEarnings } from "@/lib/user-api";
 import {
   User,
@@ -20,15 +19,8 @@ import {
   Star,
   Check,
   Trash,
+  MediaImage,
 } from "iconoir-react-native";
-
-const roleLabels: Record<UserRole, string> = {
-  farmer: "Farmer Account",
-  buyer: "Buyer Account",
-  transporter: "Transporter Account",
-  agent: "Agent Account",
-  admin: "Admin Account",
-};
 
 const regions = [
   "Ahafo",
@@ -76,8 +68,6 @@ export default function ProfileScreen() {
   const firstName = user?.firstName ?? user?.fullName?.split(" ")[0] ?? "Kofi";
   const lastName = user?.lastName ?? user?.fullName?.split(" ").slice(1).join(" ") ?? "Mensah";
   const fullName = `${firstName} ${lastName}`.trim();
-  const role = user?.role ?? "buyer";
-
   // Modal control state
   const [activeModal, setActiveModal] = useState<"edit_profile" | "notifications" | "saved" | "language" | "help" | null>(null);
 
@@ -392,8 +382,12 @@ export default function ProfileScreen() {
                       router.push({ pathname: "/listings/[id]", params: { id: item.id } });
                     }}
                   >
-                    <View className="h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm">
-                      <Text className="text-2xl">{getProduceEmoji(item.cropName)}</Text>
+                    <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm">
+                      {item.imageUrls?.[0] ? (
+                        <Image source={{ uri: item.imageUrls[0] }} className="h-full w-full" resizeMode="cover" />
+                      ) : (
+                        <MediaImage color="#9CA3AF" width={20} height={20} strokeWidth={2} />
+                      )}
                     </View>
                     <View className="ml-3 flex-1">
                       <Text className="text-sm font-black text-gray-950">{item.cropName}</Text>

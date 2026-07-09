@@ -1,6 +1,6 @@
 import { Link } from "expo-router";
 import { useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, Text, TextInput, View, ActivityIndicator, RefreshControl } from "react-native";
+import { Image, Modal, Pressable, ScrollView, Text, TextInput, View, ActivityIndicator, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   listingCategories,
@@ -9,7 +9,6 @@ import {
 } from "@/lib/marketplace-data";
 import { useMarketplaceListings, mapBackendListingToClient } from "@/lib/listings-api";
 import { vlClassNames, vlColors } from "@/lib/design-system";
-import { getProduceEmoji } from "@/lib/utils";
 import {
   ViewGrid,
   List as ListIcon,
@@ -389,26 +388,19 @@ function ProduceThumb({
   size: "sm" | "lg";
 }) {
   const dimensions = size === "sm" ? "h-20 w-20" : "h-24 w-24";
-  const emoji = getProduceEmoji(listing.cropName);
+  const imageUrl = listing.imageUrls?.[0];
 
   return (
     <View
-      className={`${dimensions} items-center justify-center rounded-2xl`}
-      style={{ backgroundColor: listing.tintColor }}
+      className={`${dimensions} items-center justify-center overflow-hidden rounded-2xl bg-gray-100`}
     >
-      <View
-        className="h-14 w-14 items-center justify-center rounded-full"
-        style={{
-          backgroundColor: listing.accentColor,
-          shadowColor: listing.accentColor,
-          shadowOpacity: 0.22,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 7 },
-        }}
-      >
-        <View className="absolute -right-1 -top-1 h-5 w-7 rotate-45 rounded-full bg-white/40" />
-        <Text className="text-2xl">{emoji}</Text>
-      </View>
+      {imageUrl ? (
+        <Image source={{ uri: imageUrl }} className="h-full w-full" resizeMode="cover" />
+      ) : (
+        <Text className="px-2 text-center text-[10px] font-black uppercase text-gray-400">
+          No Photo
+        </Text>
+      )}
     </View>
   );
 }
