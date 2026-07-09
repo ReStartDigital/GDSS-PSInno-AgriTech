@@ -11,6 +11,14 @@ export interface Job {
   route: string
   createdAt: string
   order?: any
+  pickupLocation?: {
+    type: 'Point'
+    coordinates: [number, number]
+  }
+  dropoffLocation?: {
+    type: 'Point'
+    coordinates: [number, number]
+  }
 }
 
 export function useJobs() {

@@ -2,6 +2,7 @@ import { useJobs, useAcceptJob, useUpdateJobStatus, type Job } from '../hooks/us
 import { Spinner, ErrorAlert, EmptyState } from '../components/ui/Feedback'
 import { PageHero } from '../components/ui/PageHero'
 import { getCropConfig } from '../lib/produceUtils'
+import { GoogleRouteMap } from '../components/GoogleRouteMap'
 
 // Job status visual config
 const JOB_STATUS_CONFIG: Record<string, { emoji: string; tint: string; accent: string }> = {
@@ -55,6 +56,14 @@ function JobCard({ job }: { job: Job }) {
   const produceName = job.order?.listing?.vegetableType ?? 'Vegetables'
   const cropCfg = getCropConfig(produceName)
 
+  const pickup = job.pickupLocation?.coordinates
+    ? { lat: job.pickupLocation.coordinates[1], lng: job.pickupLocation.coordinates[0] }
+    : { lat: 5.6037, lng: -0.1870 }
+
+  const dropoff = job.dropoffLocation?.coordinates
+    ? { lat: job.dropoffLocation.coordinates[1], lng: job.dropoffLocation.coordinates[0] }
+    : { lat: 6.6666, lng: -1.6163 }
+
   return (
     <article className="mp-card">
       {/* Visual band — uses produce crop tint if available, else status tint */}
@@ -95,55 +104,13 @@ function JobCard({ job }: { job: Job }) {
         height: 120,
         position: 'relative',
         overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
       }}>
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.1, background: 'radial-gradient(circle, #264123 10%, transparent 10%)', backgroundSize: '16px 16px' }} />
-        
-        <svg style={{ position: 'absolute', width: '100%', height: '100%', zIndex: 1 }}>
-          <path
-            d="M 50 60 Q 150 20 250 60"
-            fill="none"
-            stroke="#264123"
-            strokeWidth="3"
-            strokeDasharray="6,4"
-          />
-          {job.status === 'in_transit' && (
-            <circle r="6" fill="#10b981">
-              <animateMotion
-                path="M 50 60 Q 150 20 250 60"
-                dur="4s"
-                repeatCount="indefinite"
-              />
-            </circle>
-          )}
-        </svg>
+        <GoogleRouteMap pickup={pickup} dropoff={dropoff} status={job.status} />
 
-        <div style={{
-          position: 'absolute', left: 42, top: 46, zIndex: 2,
-          background: '#264123', color: '#fff', borderRadius: '50%',
-          width: 22, height: 22, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', fontSize: '0.65rem', fontWeight: 800,
-          boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-        }}>
-          A
-        </div>
-        
-        <div style={{
-          position: 'absolute', right: 42, top: 46, zIndex: 2,
-          background: '#15803d', color: '#fff', borderRadius: '50%',
-          width: 22, height: 22, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', fontSize: '0.65rem', fontWeight: 800,
-          boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-        }}>
-          B
-        </div>
-
-        <span style={{ position: 'absolute', bottom: 10, left: 16, fontSize: '0.65rem', fontWeight: 700, color: '#264123', background: 'rgba(255,255,255,0.85)', padding: '2px 6px', borderRadius: 4 }}>
+        <span style={{ position: 'absolute', bottom: 10, left: 16, fontSize: '0.65rem', fontWeight: 700, color: '#264123', background: 'rgba(255,255,255,0.85)', padding: '2px 6px', borderRadius: 4, zIndex: 3 }}>
           {job.route.split(' to ')[0] || 'Origin'}
         </span>
-        <span style={{ position: 'absolute', bottom: 10, right: 16, fontSize: '0.65rem', fontWeight: 700, color: '#15803d', background: 'rgba(255,255,255,0.85)', padding: '2px 6px', borderRadius: 4 }}>
+        <span style={{ position: 'absolute', bottom: 10, right: 16, fontSize: '0.65rem', fontWeight: 700, color: '#15803d', background: 'rgba(255,255,255,0.85)', padding: '2px 6px', borderRadius: 4, zIndex: 3 }}>
           {job.route.split(' to ')[1] || 'Destination'}
         </span>
       </div>
