@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert } from "@/lib/alert-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { useAuthStore } from "@vegelink/shared";
@@ -104,53 +105,33 @@ export default function OrderDetailScreen() {
         text: "Confirm",
         onPress: () =>
           confirmMutation.mutate(id!, {
-            onSuccess: () => Alert.alert("Confirmed", "Order has been confirmed."),
+            onSuccess: () => Alert.alert("Confirmed", "Order has been confirmed.", [], { type: "success" }),
             onError: (err: any) =>
-              Alert.alert("Error", err.error?.message || "Could not confirm order."),
+              Alert.alert("Error", err.error?.message || "Could not confirm order.", [], { type: "error" }),
           }),
       },
     ]);
   };
 
   const handleDecline = () => {
-    if (Alert.prompt) {
-      Alert.prompt(
-        "Decline Order",
-        "Provide a reason for declining:",
-        (reason) => {
-          if (!reason || reason.length < 4) {
-            Alert.alert("Validation", "Reason must be at least 4 characters.");
-            return;
+    Alert.prompt(
+      "Decline Order",
+      "Provide a reason for declining:",
+      (reason) => {
+        if (!reason || reason.length < 4) {
+          Alert.alert("Validation", "Reason must be at least 4 characters.", [], { type: "warning" });
+          return;
+        }
+        declineMutation.mutate(
+          { id: id!, reason },
+          {
+            onSuccess: () => Alert.alert("Declined", "Order has been declined.", [], { type: "success" }),
+            onError: (err: any) =>
+              Alert.alert("Error", err.error?.message || "Could not decline order.", [], { type: "error" }),
           }
-          declineMutation.mutate(
-            { id: id!, reason },
-            {
-              onSuccess: () => Alert.alert("Declined", "Order has been declined."),
-              onError: (err: any) =>
-                Alert.alert("Error", err.error?.message || "Could not decline order."),
-            }
-          );
-        },
-        "plain-text"
-      );
-    } else {
-      Alert.alert("Decline Order", "Are you sure you want to decline this order?", [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Decline",
-          style: "destructive",
-          onPress: () =>
-            declineMutation.mutate(
-              { id: id!, reason: "Farmer declined via app" },
-              {
-                onSuccess: () => Alert.alert("Declined", "Order has been declined."),
-                onError: (err: any) =>
-                  Alert.alert("Error", err.error?.message || "Could not decline order."),
-              }
-            ),
-        },
-      ]);
-    }
+        );
+      }
+    );
   };
 
   const handlePack = () => {
@@ -160,9 +141,9 @@ export default function OrderDetailScreen() {
         text: "Mark Packed",
         onPress: () =>
           packMutation.mutate(id!, {
-            onSuccess: () => Alert.alert("Packed", "Order marked as packed."),
+            onSuccess: () => Alert.alert("Packed", "Order marked as packed.", [], { type: "success" }),
             onError: (err: any) =>
-              Alert.alert("Error", err.error?.message || "Could not mark as packed."),
+              Alert.alert("Error", err.error?.message || "Could not mark as packed.", [], { type: "error" }),
           }),
       },
     ]);
@@ -178,9 +159,9 @@ export default function OrderDetailScreen() {
           cancelMutation.mutate(
             { id: id!, reason: "Cancelled via mobile app" },
             {
-              onSuccess: () => Alert.alert("Cancelled", "Order has been cancelled."),
+              onSuccess: () => Alert.alert("Cancelled", "Order has been cancelled.", [], { type: "success" }),
               onError: (err: any) =>
-                Alert.alert("Error", err.error?.message || "Could not cancel order."),
+                Alert.alert("Error", err.error?.message || "Could not cancel order.", [], { type: "error" }),
             }
           ),
       },
@@ -201,11 +182,15 @@ export default function OrderDetailScreen() {
                 Alert.alert(
                   "PIN Sent ✅",
                   "A 6-minute collection PIN has been sent to the buyer.",
+                  [],
+                  { type: "success" }
                 ),
               onError: (err: any) =>
                 Alert.alert(
                   "Error",
                   err.error?.message || "Could not mark as ready for pickup.",
+                  [],
+                  { type: "error" }
                 ),
             }),
         },
@@ -220,7 +205,12 @@ export default function OrderDetailScreen() {
 
   const handleSubmitPickupPin = () => {
     if (verifyPin.length < 4) {
-      Alert.alert("Invalid PIN", "Please enter the buyer's verification code (at least 4 digits).");
+      Alert.alert(
+        "Invalid PIN",
+        "Please enter the buyer's verification code (at least 4 digits).",
+        [],
+        { type: "warning" }
+      );
       return;
     }
     verifyPickupMutation.mutate(
@@ -232,12 +222,16 @@ export default function OrderDetailScreen() {
           Alert.alert(
             "Pickup Verified ✅",
             "Order complete. The buyer has collected the produce.",
+            [],
+            { type: "success" }
           );
         },
         onError: (err: any) => {
           Alert.alert(
             "Verification Failed",
             err.error?.message || "Invalid or expired PIN. Please try again.",
+            [],
+            { type: "error" }
           );
         },
       },
@@ -267,11 +261,15 @@ export default function OrderDetailScreen() {
                   Alert.alert(
                     "Transport Requested ✅",
                     "Your order has been posted to the jobs board. A transporter will accept it soon.",
+                    [],
+                    { type: "success" }
                   ),
                 onError: (err: any) =>
                   Alert.alert(
                     "Error",
                     err.error?.message || "Could not request transport.",
+                    [],
+                    { type: "error" }
                   ),
               },
             ),
@@ -288,7 +286,12 @@ export default function OrderDetailScreen() {
 
   const handleSubmitRating = () => {
     if (ratingScore < 1 || ratingScore > 5) {
-      Alert.alert("Select Rating", "Please tap a star to select your rating.");
+      Alert.alert(
+        "Select Rating",
+        "Please tap a star to select your rating.",
+        [],
+        { type: "warning" }
+      );
       return;
     }
 
@@ -306,12 +309,19 @@ export default function OrderDetailScreen() {
       {
         onSuccess: () => {
           setRatingModalVisible(false);
-          Alert.alert("Review Submitted ✅", "Thank you for your feedback.");
+          Alert.alert(
+            "Review Submitted ✅",
+            "Thank you for your feedback.",
+            [],
+            { type: "success" }
+          );
         },
         onError: (err: any) => {
           Alert.alert(
             "Error",
             err.error?.message || "Could not submit rating.",
+            [],
+            { type: "error" }
           );
         },
       },

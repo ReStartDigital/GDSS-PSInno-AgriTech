@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View, ActivityIndicator, Linking, Platform } from "react-native";
+import { Pressable, ScrollView, Text, View, ActivityIndicator, Linking, Platform } from "react-native";
+import { Alert } from "@/lib/alert-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { vlClassNames } from "@/lib/design-system";
@@ -136,11 +137,17 @@ export default function ListingOrderScreen() {
               text: "View Order",
               onPress: () => router.replace(`/orders/${createdOrder.id}`),
             }
-          ]
+          ],
+          { type: "success" }
         );
       },
       onError: (err: any) => {
-        Alert.alert("Checkout Failed", err.error?.message || "Could not place order.");
+        Alert.alert(
+          "Checkout Failed",
+          err.error?.message || "Could not place order.",
+          [],
+          { type: "error" }
+        );
       }
     });
   };

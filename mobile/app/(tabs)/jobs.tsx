@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View, Text, Pressable, ScrollView, Alert, TextInput, Modal, RefreshControl, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, ScrollView, TextInput, Modal, RefreshControl, ActivityIndicator } from "react-native";
+import { Alert } from "@/lib/alert-service";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Truck, NavArrowRight, BoxIso } from "iconoir-react-native";
 import {
@@ -59,6 +60,8 @@ export default function JobsScreen() {
                 Alert.alert(
                   "Job Accepted ✅",
                   "You can now pick up the produce from the farmer.",
+                  [],
+                  { type: "success" }
                 );
                 refetchAvailable();
               },
@@ -66,6 +69,8 @@ export default function JobsScreen() {
                 Alert.alert(
                   "Error",
                   err.error?.message || "Could not accept job.",
+                  [],
+                  { type: "error" }
                 ),
             });
           },
@@ -88,6 +93,8 @@ export default function JobsScreen() {
                 Alert.alert(
                   "Arrival Registered ✅",
                   "A verification PIN has been sent to the buyer. Ask them for the code.",
+                  [],
+                  { type: "success" }
                 );
                 refetchAvailable();
               },
@@ -95,6 +102,8 @@ export default function JobsScreen() {
                 Alert.alert(
                   "Error",
                   err.error?.message || "Could not register arrival.",
+                  [],
+                  { type: "error" }
                 ),
             });
           },
@@ -113,7 +122,12 @@ export default function JobsScreen() {
 
   const handleSubmitDeliveryOtp = () => {
     if (!activeJobId || otpPin.length < 4) {
-      Alert.alert("Invalid PIN", "Please enter the buyer's verification code (at least 4 digits).");
+      Alert.alert(
+        "Invalid PIN",
+        "Please enter the buyer's verification code (at least 4 digits).",
+        [],
+        { type: "warning" }
+      );
       return;
     }
     confirmDeliveryMutation.mutate(
@@ -126,6 +140,8 @@ export default function JobsScreen() {
           Alert.alert(
             "Delivery Complete ✅",
             "Delivery verified. Payment will be credited to your account.",
+            [],
+            { type: "success" }
           );
           refetchAvailable();
         },
@@ -133,6 +149,8 @@ export default function JobsScreen() {
           Alert.alert(
             "Verification Failed",
             err.error?.message || "Invalid or expired PIN. Please try again.",
+            [],
+            { type: "error" }
           );
         },
       },
