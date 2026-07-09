@@ -16,6 +16,11 @@ interface MockConflict {
   status: 'pending' | 'resolved_refunded' | 'resolved_released' | 'investigating'
   details: string
   chatLog: { sender: 'farmer' | 'buyer'; message: string; time: string }[]
+  evidence: {
+    catalogReference: string
+    buyerPhotoLabel: string
+    discrepancyNotes: string
+  }
 }
 
 interface MockListing {
@@ -57,6 +62,46 @@ interface AuditLogEntry {
   details: string
 }
 
+interface EscrowAccount {
+  id: string
+  orderId: string
+  farmerName: string
+  buyerName: string
+  amountGhs: number
+  status: 'held' | 'released' | 'disputed'
+  dateDeposited: string
+}
+
+interface ActiveTruck {
+  id: string
+  driverName: string
+  cargo: string
+  weightKg: number
+  route: string
+  position: { lat: number; lng: number }
+  speedKmh: number
+  status: 'in_transit' | 'loading' | 'completed'
+}
+
+interface AgentPerformance {
+  id: string
+  agentName: string
+  region: string
+  farmersRegistered: number
+  totalTradeVolumeGhs: number
+  commissionEarnedGhs: number
+  commissionPaid: boolean
+}
+
+interface CropPrice {
+  crop: string
+  ashantiPrice: number
+  greaterAccraPrice: number
+  easternPrice: number
+  weeklyChange: string
+  direction: 'up' | 'down'
+}
+
 // ── COMPONENT ────────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
@@ -81,7 +126,12 @@ export default function AdminPage() {
         { sender: 'farmer', message: 'Hello Ama, I harvested those tubers myself yesterday. They were fresh and clean.', time: '09:20 AM' },
         { sender: 'buyer', message: 'Look at the pictures I sent. They are bruised. I want a refund of GHS 600.', time: '09:35 AM' },
         { sender: 'farmer', message: 'No, that is transport damage. Take it up with the driver!', time: '09:42 AM' }
-      ]
+      ],
+      evidence: {
+        catalogReference: 'Fresh Cassava Tubers: grade A thick tubers, length 30cm - 45cm, harvested dry soil.',
+        buyerPhotoLabel: 'Delivered tubers: short root sizes (<15cm), severe skin cuts, mold spots on 25% of load.',
+        discrepancyNotes: 'Inspection shows physical packaging failure allowing water log to rot roots during transit.'
+      }
     },
     {
       id: 'CONF-002',
@@ -98,7 +148,12 @@ export default function AdminPage() {
         { sender: 'farmer', message: 'Kwame, has the delivery truck arrived at your warehouse yet?', time: '02:00 PM' },
         { sender: 'buyer', message: 'Yes, it is here. But the network in the market is completely down. I cannot receive the OTP sms.', time: '02:15 PM' },
         { sender: 'farmer', message: 'The transporter cannot offload without entering the delivery code in the portal.', time: '02:30 PM' }
-      ]
+      ],
+      evidence: {
+        catalogReference: 'Pona Yams (1200kg): medium size yams, straw tied bundles.',
+        buyerPhotoLabel: 'No physical product issues noted. Transporter location confirmed at coordinates via cell tower.',
+        discrepancyNotes: 'Escrow release pending manual administrator verification of driver drop-off manifest.'
+      }
     },
     {
       id: 'CONF-003',
@@ -114,7 +169,12 @@ export default function AdminPage() {
       chatLog: [
         { sender: 'buyer', message: 'Yaw, why were these packed loose? The weight pressed down and half the crates are soup.', time: '11:05 AM' },
         { sender: 'farmer', message: 'Esi, I ran out of ventilated baskets. The crates are sturdy enough usually.', time: '11:15 AM' }
-      ]
+      ],
+      evidence: {
+        catalogReference: 'Ventilated baskets standard size: 25kg crates stacked maximum 3 units high.',
+        buyerPhotoLabel: 'Loose sack bundles piled 5 units high. Bottom layers completely crushed with pulp leakage.',
+        discrepancyNotes: 'Transporter reported that loose stacking was authorized by farmer to fit truck volume.'
+      }
     }
   ])
 
@@ -158,6 +218,35 @@ export default function AdminPage() {
     { id: 'LOG-301', timestamp: '2026-07-09 09:15:33', actor: 'System Admin', action: 'Initialize Admin Panel', details: 'Sandbox environment loaded successfully.' }
   ])
 
+  // 1. FLEET LOGISTICS STATE
+  const [activeTrucks, setActiveTrucks] = useState<ActiveTruck[]>([
+    { id: 'TRK-202', driverName: 'Emmanuel Badu', cargo: 'Cassava Roots', weightKg: 1200, route: 'Kumasi to Accra', position: { lat: 6.204, lng: -0.803 }, speedKmh: 65, status: 'in_transit' },
+    { id: 'TRK-405', driverName: 'Robert Osei', cargo: 'Tomatoes', weightKg: 500, route: 'Techiman to Tema', position: { lat: 7.583, lng: -1.933 }, speedKmh: 72, status: 'in_transit' },
+    { id: 'TRK-911', driverName: 'Kojo Antwi', cargo: 'Yam straw bundles', weightKg: 3000, route: 'Tamale to Kumasi', position: { lat: 9.400, lng: -0.839 }, speedKmh: 0, status: 'loading' }
+  ])
+
+  // 2. CROP PRICE INDEX STATE
+  const [cropPrices] = useState<CropPrice[]>([
+    { crop: 'Cassava Tubers', ashantiPrice: 12.00, greaterAccraPrice: 15.50, easternPrice: 11.20, weeklyChange: '+3.4%', direction: 'up' },
+    { crop: 'Tomatoes', ashantiPrice: 28.50, greaterAccraPrice: 34.00, easternPrice: 26.80, weeklyChange: '-4.8%', direction: 'down' },
+    { crop: 'Okra', ashantiPrice: 8.50, greaterAccraPrice: 10.20, easternPrice: 8.00, weeklyChange: '+1.2%', direction: 'up' },
+    { crop: 'Pona Yam', ashantiPrice: 22.00, greaterAccraPrice: 27.50, easternPrice: 20.00, weeklyChange: '+5.6%', direction: 'up' }
+  ])
+
+  // 3. MARKETPLACE ESCROW LEDGER STATE
+  const [escrowAccounts, setEscrowAccounts] = useState<EscrowAccount[]>([
+    { id: 'ESC-701', orderId: 'ORD-894A', farmerName: 'Kofi Mensah', buyerName: 'Ama Serwaa', amountGhs: 1200.00, status: 'held', dateDeposited: '2026-07-08' },
+    { id: 'ESC-702', orderId: 'ORD-302B', farmerName: 'Abena Osei', buyerName: 'Kwame Boateng', amountGhs: 3450.00, status: 'disputed', dateDeposited: '2026-07-07' },
+    { id: 'ESC-703', orderId: 'ORD-991A', farmerName: 'Yaw Addo', buyerName: 'Esi Ansah', amountGhs: 850.00, status: 'held', dateDeposited: '2026-07-09' }
+  ])
+
+  // 4. AGENT COMMISSIONS LEDGER STATE
+  const [agentPerformance, setAgentPerformance] = useState<AgentPerformance[]>([
+    { id: 'AG-901', agentName: 'Emmanuel Ofori', region: 'Western', farmersRegistered: 14, totalTradeVolumeGhs: 24500, commissionEarnedGhs: 612.50, commissionPaid: false },
+    { id: 'AG-902', agentName: 'Grace Mensah', region: 'Central', farmersRegistered: 9, totalTradeVolumeGhs: 11200, commissionEarnedGhs: 280.00, commissionPaid: false },
+    { id: 'AG-903', agentName: 'Frank Appiah', region: 'Ashanti', farmersRegistered: 28, totalTradeVolumeGhs: 68000, commissionEarnedGhs: 1700.00, commissionPaid: true }
+  ])
+
   // Paystack Settings
   const [paystackMode, setPaystackMode] = useState<'sandbox' | 'live'>('sandbox')
   const [webhookUrl] = useState('https://api.vegelink.gov.gh/v1/payments/webhook')
@@ -170,11 +259,26 @@ export default function AdminPage() {
   const [selectedConflict, setSelectedConflict] = useState<MockConflict | null>(null)
   const [successNotification, setSuccessNotification] = useState<string | null>(null)
 
-  // Simulation timer
+  // Simulation timer for fleet updates
   useEffect(() => {
     const timer = setInterval(() => {
       setCpuUsage(Math.floor(18 + Math.random() * 15))
       setLatency(Math.floor(8 + Math.random() * 8))
+
+      // Simulate slight driver coordinate updates
+      setActiveTrucks(prev => prev.map(t => {
+        if (t.status === 'in_transit') {
+          return {
+            ...t,
+            position: {
+              lat: t.position.lat + (Math.random() - 0.5) * 0.002,
+              lng: t.position.lng + (Math.random() - 0.5) * 0.002
+            },
+            speedKmh: Math.floor(60 + Math.random() * 15)
+          }
+        }
+        return t
+      }))
     }, 4000)
     return () => clearInterval(timer)
   }, [])
@@ -231,6 +335,30 @@ export default function AdminPage() {
     }))
     showToast(`Verification ${id} request has been ${action === 'approve' ? 'Approved' : 'Rejected'}`)
     logAction('Verify Farmer Registration', `Request ID: ${id} - Decision: ${action.toUpperCase()}`)
+  }
+
+  // FORCE ESCROW RELEASE INTERACTION
+  const handleReleaseEscrow = (escrowId: string) => {
+    setEscrowAccounts(prev => prev.map(e => {
+      if (e.id === escrowId) {
+        return { ...e, status: 'released' }
+      }
+      return e
+    }))
+    showToast(`Escrow Account ${escrowId} released successfully!`)
+    logAction('Force Payout Release', `Escrow Account ID: ${escrowId} payout initiated manually by Administrator override.`)
+  }
+
+  // AGENT COMMISSION PAYOUT INTERACTION
+  const handlePayAgentCommission = (agentId: string) => {
+    setAgentPerformance(prev => prev.map(a => {
+      if (a.id === agentId) {
+        return { ...a, commissionPaid: true }
+      }
+      return a
+    }))
+    showToast(`Commission payout processed successfully!`)
+    logAction('Payout Agent Commission', `Commission for Agent ID ${agentId} marked paid.`)
   }
 
   const triggerMockWebhook = () => {
@@ -405,6 +533,83 @@ export default function AdminPage() {
           border-bottom-right-radius: 2px;
         }
 
+        /* Fleet Tracker Simulation Grid styling */
+        .fleet-tracker-panel {
+          background: #111827;
+          border-radius: 12px;
+          padding: 20px;
+          color: #10b981;
+          font-family: 'Courier New', Courier, monospace;
+          margin-bottom: 20px;
+          border: 1px solid #065f46;
+        }
+
+        .fleet-header {
+          display: flex;
+          justify-content: space-between;
+          border-bottom: 1px solid #065f46;
+          padding-bottom: 10px;
+          margin-bottom: 14px;
+          font-size: 0.85rem;
+        }
+
+        .truck-node {
+          padding: 8px 12px;
+          border-radius: 6px;
+          background: rgba(16, 185, 129, 0.05);
+          border: 1px dashed rgba(16, 185, 129, 0.2);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 0.75rem;
+          margin-bottom: 8px;
+        }
+
+        .conflict-evidence-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+
+        .conflict-parties-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+
+        .conflict-footer {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          border-top: 1px solid #e5e7eb;
+          padding-top: 16px;
+        }
+
+        .conflict-buttons {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          width: 100%;
+        }
+
+        @media (min-width: 640px) {
+          .conflict-evidence-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+          .conflict-parties-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+          .conflict-footer {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+          }
+          .conflict-buttons {
+            flex-direction: row;
+            width: auto;
+          }
+        }
+
         @media (max-width: 868px) {
           .admin-page-container {
             grid-template-columns: 1fr;
@@ -494,6 +699,32 @@ export default function AdminPage() {
         {/* 1. DASHBOARD OVERVIEW */}
         {activeMenu === 'dashboard' && (
           <>
+            {/* Fleet Logistics Live Tracker Panel */}
+            <div className="fleet-tracker-panel">
+              <div className="fleet-header">
+                <strong>🛰️ FLEET GPS LIVE TRACKER SIMULATOR</strong>
+                <span>Active Channels: {activeTrucks.length} Node Links</span>
+              </div>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {activeTrucks.map(truck => (
+                  <div key={truck.id} className="truck-node">
+                    <div>
+                      <span style={{ color: '#34d399', fontWeight: 'bold' }}>[{truck.id}]</span> - {truck.driverName} ({truck.cargo})
+                      <br />
+                      <span style={{ color: '#6ee7b7', fontSize: '0.7rem' }}>Route: {truck.route} | GPS: {truck.position.lat.toFixed(5)}, {truck.position.lng.toFixed(5)}</span>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ color: truck.speedKmh > 0 ? '#10b981' : '#f59e0b', fontWeight: 'bold' }}>
+                        {truck.status.toUpperCase()}
+                      </span>
+                      <br />
+                      <span style={{ fontSize: '0.7rem', color: '#6ee7b7' }}>{truck.speedKmh} KM/H</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="stats-grid">
               <div className="stat-card">
                 <span>Total Payment Intake</span>
@@ -620,136 +851,225 @@ export default function AdminPage() {
 
         {/* 3. CATALOG MODERATION (LISTINGS) */}
         {activeMenu === 'listings' && (
-          <div className="admin-card">
-            <div className="admin-title-row">
-              <h3>Produce Catalog Moderation</h3>
+          <div style={{ display: 'grid', gap: 20 }}>
+            {/* Crop Price Index Comparison Card (Market Intelligence) */}
+            <div className="admin-card">
+              <div className="admin-title-row">
+                <h3>Regional crop price indexes (Market Intelligence Benchmark)</h3>
+                <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Pricing group averages per KG</span>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Produce Item</th>
+                      <th>Ashanti region</th>
+                      <th>Greater Accra region</th>
+                      <th>Eastern region</th>
+                      <th>Weekly Change</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cropPrices.map((cp, idx) => (
+                      <tr key={idx}>
+                        <td style={{ fontWeight: 700, color: '#264123' }}>{cp.crop}</td>
+                        <td style={{ fontWeight: 600 }}>GHS {cp.ashantiPrice.toFixed(2)}</td>
+                        <td style={{ fontWeight: 600 }}>GHS {cp.greaterAccraPrice.toFixed(2)}</td>
+                        <td style={{ fontWeight: 600 }}>GHS {cp.easternPrice.toFixed(2)}</td>
+                        <td>
+                          <span style={{
+                            padding: '3px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
+                            background: cp.direction === 'up' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                            color: cp.direction === 'up' ? '#059669' : '#dc2626'
+                          }}>
+                            {cp.weeklyChange}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Listing ID</th>
-                  <th>Farmer</th>
-                  <th>Vegetable</th>
-                  <th>Quantity / Price</th>
-                  <th>Region</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {listings.map(l => (
-                  <tr key={l.id}>
-                    <td style={{ fontWeight: 700, color: '#6b7280' }}>{l.id}</td>
-                    <td style={{ fontWeight: 600 }}>{l.farmerName}</td>
-                    <td>{l.cropType}</td>
-                    <td>{l.quantityKg} kg @ GHS {l.pricePerKgGhs.toFixed(2)}</td>
-                    <td>{l.region} Region</td>
-                    <td>
-                      <span style={{
-                        padding: '4px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
-                        background: l.status === 'active' ? 'rgba(16,185,129,0.1)' : l.status === 'flagged' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
-                        color: l.status === 'active' ? '#059669' : l.status === 'flagged' ? '#dc2626' : '#d97706'
-                      }}>
-                        {l.status.replace('_', ' ').toUpperCase()}
-                      </span>
-                    </td>
-                    <td style={{ display: 'flex', gap: 6 }}>
-                      {l.status !== 'active' && (
-                        <button
-                          className="primary-button"
-                          style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem', background: '#15803d' }}
-                          onClick={() => handleListingModeration(l.id, 'approve')}
-                        >
-                          Approve
-                        </button>
-                      )}
-                      {l.status !== 'flagged' && (
-                        <button
-                          className="secondary-button"
-                          style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem', borderColor: '#dc2626', color: '#dc2626' }}
-                          onClick={() => handleListingModeration(l.id, 'flag')}
-                        >
-                          Flag/Suspend
-                        </button>
-                      )}
-                    </td>
+            <div className="admin-card">
+              <div className="admin-title-row">
+                <h3>Produce Catalog Moderation</h3>
+              </div>
+
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Listing ID</th>
+                    <th>Farmer</th>
+                    <th>Vegetable</th>
+                    <th>Quantity / Price</th>
+                    <th>Region</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {listings.map(l => (
+                    <tr key={l.id}>
+                      <td style={{ fontWeight: 700, color: '#6b7280' }}>{l.id}</td>
+                      <td style={{ fontWeight: 600 }}>{l.farmerName}</td>
+                      <td>{l.cropType}</td>
+                      <td>{l.quantityKg} kg @ GHS {l.pricePerKgGhs.toFixed(2)}</td>
+                      <td>{l.region} Region</td>
+                      <td>
+                        <span style={{
+                          padding: '4px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
+                          background: l.status === 'active' ? 'rgba(16,185,129,0.1)' : l.status === 'flagged' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
+                          color: l.status === 'active' ? '#059669' : l.status === 'flagged' ? '#dc2626' : '#d97706'
+                        }}>
+                          {l.status.replace('_', ' ').toUpperCase()}
+                        </span>
+                      </td>
+                      <td style={{ display: 'flex', gap: 6 }}>
+                        {l.status !== 'active' && (
+                          <button
+                            className="primary-button"
+                            style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem', background: '#15803d' }}
+                            onClick={() => handleListingModeration(l.id, 'approve')}
+                          >
+                            Approve
+                          </button>
+                        )}
+                        {l.status !== 'flagged' && (
+                          <button
+                            className="secondary-button"
+                            style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem', borderColor: '#dc2626', color: '#dc2626' }}
+                            onClick={() => handleListingModeration(l.id, 'flag')}
+                          >
+                            Flag/Suspend
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
         {/* 4. AGENT FARMER VERIFICATIONS */}
         {activeMenu === 'verifications' && (
-          <div className="admin-card">
-            <div className="admin-title-row">
-              <h3>Agent Farmer Registration Audit Queue</h3>
-              <span className="section-note">Documents Verification Checks</span>
+          <div style={{ display: 'grid', gap: 20 }}>
+            <div className="admin-card">
+              <div className="admin-title-row">
+                <h3>Agent Farmer Registration Audit Queue</h3>
+                <span className="section-note">Documents Verification Checks</span>
+              </div>
+
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Request ID</th>
+                    <th>Submitting Agent</th>
+                    <th>Farmer Name</th>
+                    <th>Region & Crop</th>
+                    <th>Verification Files</th>
+                    <th>Status</th>
+                    <th>Decision</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {verifications.map(v => (
+                    <tr key={v.id}>
+                      <td style={{ fontWeight: 700, color: '#6b7280' }}>{v.id}</td>
+                      <td style={{ fontWeight: 600 }}>{v.agentName}</td>
+                      <td style={{ fontWeight: 600 }}>{v.farmerName}</td>
+                      <td>{v.region} Region · {v.vegetableType}</td>
+                      <td>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                          {v.docsProvided.map((doc, idx) => (
+                            <span key={idx} style={{ fontSize: '0.65rem', background: '#f3f4f6', color: '#374151', padding: '2px 6px', borderRadius: 4 }}>
+                              📄 {doc}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{
+                          padding: '4px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
+                          background: v.status === 'pending' ? 'rgba(245,158,11,0.1)' : v.status === 'approved' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                          color: v.status === 'pending' ? '#d97706' : v.status === 'approved' ? '#059669' : '#dc2626'
+                        }}>
+                          {v.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td style={{ display: 'flex', gap: 6 }}>
+                        {v.status === 'pending' && (
+                          <>
+                            <button
+                              className="primary-button"
+                              style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem', background: '#15803d' }}
+                              onClick={() => handleVerifyAgentFarmer(v.id, 'approve')}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              className="secondary-button"
+                              style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem', borderColor: '#dc2626', color: '#dc2626' }}
+                              onClick={() => handleVerifyAgentFarmer(v.id, 'reject')}
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Request ID</th>
-                  <th>Submitting Agent</th>
-                  <th>Farmer Name</th>
-                  <th>Region & Crop</th>
-                  <th>Verification Files</th>
-                  <th>Status</th>
-                  <th>Decision</th>
-                </tr>
-              </thead>
-              <tbody>
-                {verifications.map(v => (
-                  <tr key={v.id}>
-                    <td style={{ fontWeight: 700, color: '#6b7280' }}>{v.id}</td>
-                    <td style={{ fontWeight: 600 }}>{v.agentName}</td>
-                    <td style={{ fontWeight: 600 }}>{v.farmerName}</td>
-                    <td>{v.region} Region · {v.vegetableType}</td>
-                    <td>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                        {v.docsProvided.map((doc, idx) => (
-                          <span key={idx} style={{ fontSize: '0.65rem', background: '#f3f4f6', color: '#374151', padding: '2px 6px', borderRadius: 4 }}>
-                            📄 {doc}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td>
-                      <span style={{
-                        padding: '4px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
-                        background: v.status === 'pending' ? 'rgba(245,158,11,0.1)' : v.status === 'approved' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-                        color: v.status === 'pending' ? '#d97706' : v.status === 'approved' ? '#059669' : '#dc2626'
-                      }}>
-                        {v.status.toUpperCase()}
-                      </span>
-                    </td>
-                    <td style={{ display: 'flex', gap: 6 }}>
-                      {v.status === 'pending' && (
-                        <>
-                          <button
-                            className="primary-button"
-                            style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem', background: '#15803d' }}
-                            onClick={() => handleVerifyAgentFarmer(v.id, 'approve')}
-                          >
-                            Approve
-                          </button>
+            {/* Agent Onboarding Commissions Ledger */}
+            <div className="admin-card">
+              <div className="admin-title-row">
+                <h3>Agent Performance & Onboarding Commission Ledger</h3>
+              </div>
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Agent ID</th>
+                    <th>Agent Name</th>
+                    <th>Region</th>
+                    <th>Farmers Onboarded</th>
+                    <th>Gross Sales Closed</th>
+                    <th>Commission Earned (2.5%)</th>
+                    <th>Payout Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {agentPerformance.map(ap => (
+                    <tr key={ap.id}>
+                      <td style={{ fontWeight: 700, color: '#6b7280' }}>{ap.id}</td>
+                      <td style={{ fontWeight: 600 }}>{ap.agentName}</td>
+                      <td>{ap.region} Region</td>
+                      <td style={{ fontWeight: 700 }}>{ap.farmersRegistered}</td>
+                      <td style={{ fontWeight: 600 }}>GHS {ap.totalTradeVolumeGhs.toFixed(2)}</td>
+                      <td style={{ fontWeight: 700, color: '#15803d' }}>GHS {ap.commissionEarnedGhs.toFixed(2)}</td>
+                      <td>
+                        {ap.commissionPaid ? (
+                          <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 'bold' }}>🟢 Disbursed</span>
+                        ) : (
                           <button
                             className="secondary-button"
-                            style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem', borderColor: '#dc2626', color: '#dc2626' }}
-                            onClick={() => handleVerifyAgentFarmer(v.id, 'reject')}
+                            style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem', borderColor: '#15803d', color: '#15803d' }}
+                            onClick={() => handlePayAgentCommission(ap.id)}
                           >
-                            Reject
+                            Pay Commission
                           </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -799,6 +1119,57 @@ export default function AdminPage() {
                     Simulate Payment Hook
                   </button>
                 </div>
+              </div>
+
+              {/* Escrow Vault Management Section */}
+              <div>
+                <h4 style={{ margin: '0 0 10px 0', color: '#264123' }}>Marketplace Escrow holding accounts</h4>
+                <table className="admin-table" style={{ marginBottom: 20 }}>
+                  <thead>
+                    <tr>
+                      <th>Escrow ID</th>
+                      <th>Order ID</th>
+                      <th>Farmer Name</th>
+                      <th>Buyer Name</th>
+                      <th>Total Escrowed</th>
+                      <th>Status</th>
+                      <th>Payout Override</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {escrowAccounts.map(e => (
+                      <tr key={e.id}>
+                        <td style={{ fontWeight: 700, color: '#6b7280' }}>{e.id}</td>
+                        <td style={{ fontWeight: 600 }}>{e.orderId}</td>
+                        <td>{e.farmerName}</td>
+                        <td>{e.buyerName}</td>
+                        <td style={{ fontWeight: 700 }}>GHS {e.amountGhs.toFixed(2)}</td>
+                        <td>
+                          <span style={{
+                            padding: '3px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
+                            background: e.status === 'held' ? 'rgba(245,158,11,0.1)' : e.status === 'released' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                            color: e.status === 'held' ? '#d97706' : e.status === 'released' ? '#059669' : '#dc2626'
+                          }}>
+                            {e.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td>
+                          {e.status === 'released' ? (
+                            <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 'bold' }}>🟢 Released</span>
+                          ) : (
+                            <button
+                              className="primary-button"
+                              style={{ minHeight: 32, padding: '0 12px', fontSize: '0.75rem', background: '#15803d' }}
+                              onClick={() => handleReleaseEscrow(e.id)}
+                            >
+                              Force Payout Release
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
 
               <div>
@@ -962,7 +1333,7 @@ export default function AdminPage() {
                 💬 Chat Mediation Log Trail
               </span>
               <div style={{
-                maxHeight: 200, overflowY: 'auto', padding: 12, border: '1px solid #e5e7eb',
+                maxHeight: 180, overflowY: 'auto', padding: 12, border: '1px solid #e5e7eb',
                 borderRadius: 8, background: '#f9fafb', display: 'flex', flexDirection: 'column'
               }}>
                 {selectedConflict.chatLog.map((chat, idx) => (
@@ -979,7 +1350,38 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div className="two-column-card">
+            {/* 5. Dispute Evidence Board visual elements */}
+            <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, background: '#f9fafb' }}>
+              <span style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+                📸 Dispute Evidence Inspection Board
+              </span>
+              <div className="conflict-evidence-grid">
+                <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: 10 }}>
+                  <strong style={{ fontSize: '0.7rem', color: '#15803d', display: 'block', marginBottom: 4 }}>Catalog Reference Photo Check</strong>
+                  <div style={{ height: 80, background: '#e2e8f0', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', border: '1px dashed #cbd5e1' }}>
+                    📦
+                  </div>
+                  <p style={{ margin: '6px 0 0 0', fontSize: '0.68rem', color: '#4b5563', lineHeight: 1.3 }}>
+                    {selectedConflict.evidence.catalogReference}
+                  </p>
+                </div>
+
+                <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: 10 }}>
+                  <strong style={{ fontSize: '0.7rem', color: '#dc2626', display: 'block', marginBottom: 4 }}>Buyer Uploaded Dispute Evidence</strong>
+                  <div style={{ height: 80, background: '#fee2e2', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', border: '1px dashed #fca5a5' }}>
+                    ⚠️
+                  </div>
+                  <p style={{ margin: '6px 0 0 0', fontSize: '0.68rem', color: '#4b5563', lineHeight: 1.3 }}>
+                    {selectedConflict.evidence.buyerPhotoLabel}
+                  </p>
+                </div>
+              </div>
+              <div style={{ marginTop: 10, background: 'rgba(217,119,6,0.06)', borderLeft: '3px solid #d97706', padding: 8, borderRadius: 4, fontSize: '0.7rem', color: '#b45309' }}>
+                <strong>Mediator notes:</strong> {selectedConflict.evidence.discrepancyNotes}
+              </div>
+            </div>
+
+            <div className="conflict-parties-grid">
               <div style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff' }}>
                 <strong style={{ fontSize: '0.8rem', color: '#6b7280' }}>FARMER PARTY</strong>
                 <p style={{ margin: '4px 0 0 0', fontWeight: 600, fontSize: '0.9rem' }}>{selectedConflict.farmerName}</p>
@@ -990,13 +1392,13 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e5e7eb', paddingTop: 16 }}>
+            <div className="conflict-footer">
               <div>
                 <span style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 600 }}>DISPUTED VALUE</span>
                 <p style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#264123' }}>GHS {selectedConflict.amountGhs.toFixed(2)}</p>
               </div>
               
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div className="conflict-buttons">
                 <button
                   className="secondary-button"
                   style={{ minHeight: 40, fontSize: '0.8rem', borderColor: '#dc2626', color: '#dc2626' }}
