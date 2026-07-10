@@ -14,8 +14,9 @@ const otpLength = 6;
 export default function VerifyScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { firstName, lastName, phone, role, region, language } = useLocalSearchParams<{
+  const { firstName, middleName, lastName, phone, role, region, language } = useLocalSearchParams<{
     firstName?: string;
+    middleName?: string;
     lastName?: string;
     phone?: string;
     role?: UserRole;
@@ -53,6 +54,7 @@ export default function VerifyScreen() {
         pathname: "/(auth)/pin" as any,
         params: {
           firstName,
+          middleName,
           lastName,
           phone: safePhone,
           role: safeRole,
@@ -106,6 +108,7 @@ export default function VerifyScreen() {
       pathname: "/(auth)/phone",
       params: {
         firstName,
+        middleName,
         lastName,
         role: safeRole,
       },

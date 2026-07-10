@@ -31,6 +31,7 @@ export default function AgentClientsScreen() {
 
   // Form State
   const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [region, setRegion] = useState<(typeof regions)[number]>("Greater Accra");
@@ -49,9 +50,11 @@ export default function AgentClientsScreen() {
 
     registerMutation.mutate(
       {
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
+        firstName: firstName.trim(),
+        middleName: middleName.trim() || null,
+        lastName: lastName.trim(),
         phone: phone.trim(),
+        role: "farmer",
         region,
       },
       {
@@ -59,6 +62,7 @@ export default function AgentClientsScreen() {
           Alert.alert("Success", "Farmer client registered successfully.", [], { type: "success" });
           setIsRegisterOpen(false);
           setFirstName("");
+          setMiddleName("");
           setLastName("");
           setPhone("");
           setRegion("Greater Accra");
@@ -141,7 +145,7 @@ export default function AgentClientsScreen() {
           }
         >
           {clients.map((client) => {
-            const clientName = `${client.firstName} ${client.lastName}`;
+            const clientName = [client.firstName, client.middleName, client.lastName].filter(Boolean).join(" ");
             return (
               <View
                 key={client.id}
@@ -194,6 +198,17 @@ export default function AgentClientsScreen() {
                 value={firstName}
                 onChangeText={setFirstName}
                 placeholder="e.g. Abena"
+                placeholderTextColor="#9CA3AF"
+                className="h-14 rounded-2xl border border-gray-200 bg-gray-50 px-4 text-base font-extrabold text-gray-950"
+              />
+            </View>
+
+            <View>
+              <Text className="mb-2 text-xs font-black uppercase text-gray-400">Middle Name (Optional)</Text>
+              <TextInput
+                value={middleName}
+                onChangeText={setMiddleName}
+                placeholder="e.g. Kwesi"
                 placeholderTextColor="#9CA3AF"
                 className="h-14 rounded-2xl border border-gray-200 bg-gray-50 px-4 text-base font-extrabold text-gray-950"
               />

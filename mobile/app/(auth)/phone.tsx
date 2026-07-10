@@ -20,8 +20,9 @@ const roleLabels: Record<UserRole, string> = {
 export default function PhoneScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { firstName, lastName, role, region, language } = useLocalSearchParams<{
+  const { firstName, middleName, lastName, role, region, language } = useLocalSearchParams<{
     firstName?: string;
+    middleName?: string;
     lastName?: string;
     role?: UserRole;
     region?: string;
@@ -70,7 +71,10 @@ export default function PhoneScreen() {
       await apiClient.post("/auth/register", {
         phone: fullPhone,
         firstName: firstName || "",
+        middleName: middleName || null,
         lastName: lastName || "",
+        region: region || "Ashanti",
+        language: language ? language.toLowerCase() : "en",
         role: safeRole,
       });
 
@@ -78,6 +82,7 @@ export default function PhoneScreen() {
         pathname: "/(auth)/verify",
         params: {
           firstName,
+          middleName,
           lastName,
           phone: fullPhone,
           role: safeRole,

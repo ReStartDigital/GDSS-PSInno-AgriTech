@@ -7,6 +7,7 @@ export interface UserProfile {
   id: string;
   phone: string;
   firstName: string;
+  middleName?: string | null;
   lastName: string;
   email?: string | null;
   role: string;
@@ -39,6 +40,7 @@ export interface ManagedClient {
   id: string;
   phone: string;
   firstName: string;
+  middleName?: string | null;
   lastName: string;
   role: string;
   profilePhotoUrl: string | null;
@@ -49,8 +51,10 @@ export interface ManagedClient {
 
 export interface RegisterClientDto {
   phone: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  middleName?: string | null;
+  lastName: string;
+  role: "farmer" | "buyer" | "transporter" | "agent" | "admin";
   region?: string;
 }
 
@@ -71,8 +75,9 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: Partial<{
-      first_name: string;
-      last_name: string;
+      firstName: string;
+      middleName: string | null;
+      lastName: string;
       email: string | null;
       region: string;
       language: string;

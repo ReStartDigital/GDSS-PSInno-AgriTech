@@ -36,6 +36,7 @@ export default function DetailsScreen() {
     role?: UserRole;
   }>();
   const [first, setFirst] = useState("");
+  const [middle, setMiddle] = useState("");
   const [last, setLast] = useState("");
   const [region, setRegion] = useState("Greater Accra");
   const [isRegionSheetVisible, setIsRegionSheetVisible] = useState(false);
@@ -62,6 +63,7 @@ export default function DetailsScreen() {
       pathname: "/(auth)/phone",
       params: {
         firstName: first.trim(),
+        middleName: middle.trim() || undefined,
         lastName: last.trim(),
         role: safeRole,
         region,
@@ -106,6 +108,7 @@ export default function DetailsScreen() {
 
         <View className="mt-8 gap-5">
           <Field label="First name" value={first} onChangeText={setFirst} placeholder="e.g. Kofi" />
+          <Field label="Middle name (Optional)" value={middle} onChangeText={setMiddle} placeholder="e.g. Kwesi" />
           <Field label="Last name" value={last} onChangeText={setLast} placeholder="e.g. Mensah" />
 
           <View>

@@ -15,8 +15,9 @@ export default function PinScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const { firstName, lastName, phone, role, region, language, registrationToken } = useLocalSearchParams<{
+  const { firstName, middleName, lastName, phone, role, region, language, registrationToken } = useLocalSearchParams<{
     firstName?: string;
+    middleName?: string;
     lastName?: string;
     phone?: string;
     role?: UserRole;
@@ -28,6 +29,7 @@ export default function PinScreen() {
   const safeRole: UserRole = role ?? "farmer";
   const safePhone = phone?.trim() || "+233059983273";
   const safeFirst = firstName?.trim() || "Kofi";
+  const safeMiddle = middleName?.trim() || "";
   const safeLast = lastName?.trim() || "Mensah";
 
   const [pin, setPin] = useState("");
@@ -90,28 +92,30 @@ export default function PinScreen() {
         id: user.id,
         phone: user.phone,
         role: user.role as UserRole,
-        fullName: `${user.firstName || safeFirst} ${user.lastName || safeLast}`.trim(),
+        fullName: [user.firstName || safeFirst, user.middleName || safeMiddle, user.lastName || safeLast].filter(Boolean).join(" ").trim(),
         firstName: user.firstName || safeFirst,
+        middleName: user.middleName !== undefined ? user.middleName : (safeMiddle || null),
         lastName: user.lastName || safeLast,
         email: user.email,
       };
       setAuth(mappedUser, accessToken);
 
       // Post-onboarding update profile (region & preferred language)
-      if (region || language) {
+      if (region || language || safeMiddle) {
         try {
           await apiClient.patch("/users/me", {
             firstName: safeFirst,
+            middleName: safeMiddle || null,
             lastName: safeLast,
             region: region || undefined,
-            language: language || undefined,
+            language: language ? language.toLowerCase() : undefined,
           }, {
             headers: {
               Authorization: `Bearer ${accessToken}`
             }
           });
         } catch (profileErr) {
-          console.warn("Failed to set onboarding region/language", profileErr);
+          console.warn("Failed to set onboarding region/language/middleName", profileErr);
         }
       }
 
@@ -134,6 +138,7 @@ export default function PinScreen() {
       pathname: "/(auth)/details",
       params: {
         firstName: safeFirst,
+        middleName: safeMiddle,
         lastName: safeLast,
         phone: safePhone,
         role: safeRole,
