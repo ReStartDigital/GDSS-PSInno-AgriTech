@@ -58,6 +58,15 @@ export interface RegisterClientDto {
   region?: string;
 }
 
+function unwrapApiData<T>(response: any): T {
+  return response?.success === true && "data" in response ? response.data : response;
+}
+
+function unwrapUser<T>(response: any): T {
+  const data = unwrapApiData<any>(response);
+  return data?.user ?? data;
+}
+
 // ── PROFILE HOOKS ────────────────────────────────────────────────────────────
 
 export function useMyProfile() {
@@ -65,7 +74,7 @@ export function useMyProfile() {
     queryKey: ["profile", "me"],
     queryFn: async () => {
       const response = await apiClient.get<UserProfile>("/users/me");
-      return response as any;
+      return unwrapUser<UserProfile>(response);
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -83,7 +92,7 @@ export function useUpdateProfile() {
       language: string;
     }>) => {
       const response = await apiClient.patch<UserProfile>("/users/me", data);
-      return response as any;
+      return unwrapUser<UserProfile>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
@@ -109,7 +118,7 @@ export function useUploadAvatar() {
       const response = await apiClient.post<{ url: string }>("/users/me/photo", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      return response.data;
+      return unwrapApiData<{ url: string }>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
@@ -121,7 +130,7 @@ export function useChangePin() {
   return useMutation({
     mutationFn: async (data: { current_pin: string; new_pin: string }) => {
       const response = await apiClient.patch("/users/me/pin", data);
-      return response as any;
+      return unwrapApiData(response);
     },
   });
 }
@@ -133,7 +142,7 @@ export function useMyEarnings() {
     queryKey: ["earnings", "me"],
     queryFn: async () => {
       const response = await apiClient.get<EarningsMetrics>("/users/me/earnings");
-      return response as any;
+      return unwrapApiData<EarningsMetrics>(response);
     },
     staleTime: 1000 * 60 * 2,
   });
@@ -143,7 +152,7 @@ export function useConfigurePaymentDetails() {
   return useMutation({
     mutationFn: async (data: PaymentDetailsDto) => {
       const response = await apiClient.post("/users/me/payment-details", data);
-      return response as any;
+      return unwrapApiData(response);
     },
   });
 }
@@ -158,7 +167,7 @@ export function useAgentClients(filters: { page?: number; limit?: number } = {})
         data: ManagedClient[];
         meta: { total: number; page: number; limit: number; totalPages: number };
       }>("/users/agent/clients", { params: filters });
-      return response.data;
+      return unwrapApiData(response);
     },
     staleTime: 1000 * 60 * 2,
   });
@@ -169,7 +178,7 @@ export function useRegisterClient() {
   return useMutation({
     mutationFn: async (data: RegisterClientDto) => {
       const response = await apiClient.post<ManagedClient>("/users/agent/clients", data);
-      return response as any;
+      return unwrapUser<ManagedClient>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agent", "clients"] });
@@ -182,7 +191,7 @@ export function useUnassignClient() {
   return useMutation({
     mutationFn: async (clientId: string) => {
       const response = await apiClient.patch(`/users/agent/clients/${clientId}/unassign`);
-      return response as any;
+      return unwrapApiData(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agent", "clients"] });
@@ -197,7 +206,7 @@ export function usePublicProfile(userId: string) {
     queryKey: ["profile", userId],
     queryFn: async () => {
       const response = await apiClient.get<UserProfile>(`/users/${userId}`);
-      return response as any;
+      return unwrapUser<UserProfile>(response);
     },
     enabled: !!userId,
   });

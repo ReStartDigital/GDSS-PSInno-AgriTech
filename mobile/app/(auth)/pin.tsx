@@ -1,13 +1,14 @@
 import { useRef, useState } from "react";
 import { Pressable, Text, TextInput, View, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { AuthUser, UserRole, useAuthStore } from "@vegelink/shared";
+import { UserRole, useAuthStore } from "@vegelink/shared";
 import { vlClassNames, vlStyles } from "@/lib/design-system";
 import { ProgressStep } from "@/components/common/ProgressStep";
 import { NavArrowLeft, NavArrowRight, Lock } from "iconoir-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as SecureStore from "expo-secure-store";
 import { apiClient } from "@/lib/api-client";
+import { mapProfileToAuthUser } from "@/lib/profile-utils";
 
 const PIN_LENGTH = 4;
 
@@ -28,9 +29,9 @@ export default function PinScreen() {
 
   const safeRole: UserRole = role ?? "farmer";
   const safePhone = phone?.trim() || "+233059983273";
-  const safeFirst = firstName?.trim() || "Kofi";
+  const safeFirst = firstName?.trim() || "";
   const safeMiddle = middleName?.trim() || "";
-  const safeLast = lastName?.trim() || "Mensah";
+  const safeLast = lastName?.trim() || "";
 
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
@@ -87,19 +88,6 @@ export default function PinScreen() {
       // Save refresh token
       await SecureStore.setItemAsync("vegelink_refresh_token", refreshToken);
 
-      // Save credentials in memory store
-      const mappedUser: AuthUser = {
-        id: user.id,
-        phone: user.phone,
-        role: user.role as UserRole,
-        fullName: [user.firstName || safeFirst, user.middleName || safeMiddle, user.lastName || safeLast].filter(Boolean).join(" ").trim(),
-        firstName: user.firstName || safeFirst,
-        middleName: user.middleName !== undefined ? user.middleName : (safeMiddle || null),
-        lastName: user.lastName || safeLast,
-        email: user.email,
-      };
-      setAuth(mappedUser, accessToken);
-
       // Post-onboarding update profile (region & preferred language)
       if (region || language || safeMiddle) {
         try {
@@ -118,6 +106,13 @@ export default function PinScreen() {
           console.warn("Failed to set onboarding region/language/middleName", profileErr);
         }
       }
+
+      const profileResponse = await apiClient.get("/users/me", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }) as any;
+      setAuth(mapProfileToAuthUser(profileResponse.data?.user, user), accessToken);
 
       router.replace("/(auth)/success");
     } catch (err: any) {

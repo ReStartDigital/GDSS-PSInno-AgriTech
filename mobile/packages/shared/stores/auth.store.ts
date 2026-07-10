@@ -12,6 +12,8 @@ export interface AuthUser {
   middleName?: string | null;
   lastName?: string;
   email?: string | null;
+  region?: string | null;
+  language?: string | null;
 }
 
 interface AuthState {

@@ -17,6 +17,7 @@ import { OTPInput } from "@/components/common/OTPInput";
 import { useAuthStore } from "@vegelink/shared";
 import { apiClient } from "@/lib/api-client";
 import { vlClassNames, vlStyles } from "@/lib/design-system";
+import { mapProfileToAuthUser } from "@/lib/profile-utils";
 import * as SecureStore from "expo-secure-store";
 
 export default function LoginScreen() {
@@ -55,20 +56,11 @@ export default function LoginScreen() {
       // Persist opaque refresh token
       await SecureStore.setItemAsync("vegelink_refresh_token", refreshToken);
 
-      // Save user session in global store
-      setAuth(
-        {
-          id: user.id,
-          phone: user.phone,
-          role: user.role,
-          fullName: [user.firstName, user.middleName, user.lastName].filter(Boolean).join(" ").trim(),
-          firstName: user.firstName,
-          middleName: user.middleName,
-          lastName: user.lastName,
-          email: user.email,
-        },
-        accessToken
-      );
+      const profileResponse = await apiClient.get("/users/me", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }) as any;
+
+      setAuth(mapProfileToAuthUser(profileResponse.data?.user, user), accessToken);
 
       // Redirect directly to home dashboard
       router.replace("/(tabs)/home");

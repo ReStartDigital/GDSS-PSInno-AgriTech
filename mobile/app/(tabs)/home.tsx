@@ -1,10 +1,14 @@
 import { Link } from "expo-router";
-import { Image, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@vegelink/shared";
-import { listingCategories, marketplaceListings } from "@/lib/marketplace-data";
+import { useEffect, useMemo } from "react";
+import { listingCategories } from "@/lib/marketplace-data";
+import { mapBackendListingToClient, useMarketplaceListings } from "@/lib/listings-api";
+import { useMyProfile } from "@/lib/user-api";
 import { vlColors } from "@/lib/design-system";
 import { getGreeting } from "@/lib/utils";
+import { composeFullName, getFirstName, mapProfileToAuthUser, roleLabels } from "@/lib/profile-utils";
 import {
   ChatBubble,
   Search,
@@ -15,12 +19,6 @@ import {
   Heart,
 } from "iconoir-react-native";
 
-const pulseItems = [
-  { crop: "Tomato", price: "GHC8/kg", accent: "#DC2626" },
-  { crop: "Yam", price: "GHC15/kg", accent: "#B45309" },
-  { crop: "Pepper", price: "GHC10/kg", accent: "#EF4444" },
-];
-
 const quickActions = [
   { label: "Browse\nProduce", Icon: Shop, href: "/(tabs)/marketplace" },
   { label: "My Orders", Icon: BoxIso, href: "/(tabs)/orders" },
@@ -30,10 +28,30 @@ const quickActions = [
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const user = useAuthStore((state) => state.user);
-  const firstName = user?.fullName?.split(" ")[0] ?? "Kofi";
-  const fullName = user?.fullName ?? "Kofi Mensah";
-  const role = user?.role ?? "buyer";
+  const { user, accessToken, setAuth } = useAuthStore();
+  const { data: profile } = useMyProfile();
+  const { data: listingsData, isLoading: isLoadingListings } = useMarketplaceListings();
+  const displayUser = profile ? mapProfileToAuthUser(profile, user) : user;
+  const firstName = getFirstName(displayUser);
+  const fullName = composeFullName(displayUser);
+  const role = displayUser?.role ?? "buyer";
+  const regionLabel = displayUser?.region ? `${displayUser.region} Region` : "";
+
+  useEffect(() => {
+    if (profile && accessToken) {
+      setAuth(mapProfileToAuthUser(profile, user), accessToken);
+    }
+  }, [accessToken, profile, setAuth, user]);
+
+  const marketplaceListings = useMemo(() => {
+    return (listingsData?.data || []).map(mapBackendListingToClient);
+  }, [listingsData?.data]);
+
+  const pulseItems = marketplaceListings.slice(0, 3).map((listing) => ({
+    crop: listing.cropName,
+    price: `GHC${listing.pricePerUnit}/${listing.unitOfMeasure}`,
+    accent: listing.accentColor,
+  }));
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -64,11 +82,13 @@ export default function HomeScreen() {
           </View>
 
           <Text className="mt-9 text-sm font-black text-green-100">
-            {getGreeting()}, {firstName}
+            {getGreeting()}{firstName ? `, ${firstName}` : ""}
           </Text>
-          <Text className="mt-1 text-2xl font-black text-white">{fullName}</Text>
+          <Text className="mt-1 text-2xl font-black text-white">
+            {fullName || "Complete your profile"}
+          </Text>
           <Text className="mt-2 text-sm font-black capitalize text-yellow-400">
-            Greater Accra - {role}
+            {[regionLabel, roleLabels[role]].filter(Boolean).join(" - ")}
           </Text>
 
           <View className="mt-6 min-h-14 flex-row items-center rounded-2xl bg-white px-4">
@@ -101,7 +121,13 @@ export default function HomeScreen() {
               className="mt-4"
               contentContainerClassName="gap-3"
             >
-              {pulseItems.map((item) => (
+              {isLoadingListings ? (
+                <ActivityIndicator color="#15803D" size="small" />
+              ) : pulseItems.length === 0 ? (
+                <Text className="py-3 text-sm font-semibold text-gray-400">
+                  No live market data yet.
+                </Text>
+              ) : pulseItems.map((item) => (
                 <View
                   key={item.crop}
                   className="min-w-32 flex-row items-center rounded-2xl bg-gray-50 px-3 py-2"
@@ -212,7 +238,17 @@ export default function HomeScreen() {
             className="mt-4"
             contentContainerClassName="gap-3 px-5"
           >
-            {marketplaceListings.slice(0, 4).map((listing) => (
+            {isLoadingListings ? (
+              <View className="w-40 items-center justify-center rounded-2xl bg-white p-8">
+                <ActivityIndicator color="#15803D" size="small" />
+              </View>
+            ) : marketplaceListings.length === 0 ? (
+              <View className="rounded-2xl bg-white px-5 py-6">
+                <Text className="text-sm font-semibold text-gray-400">
+                  No fresh produce is listed yet.
+                </Text>
+              </View>
+            ) : marketplaceListings.slice(0, 4).map((listing) => (
               <Link
                 key={listing.id}
                 href={{ pathname: "/listings/[id]", params: { id: listing.id } }}
