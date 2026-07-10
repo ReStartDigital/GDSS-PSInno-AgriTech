@@ -1,5 +1,5 @@
 import { Link } from "expo-router";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Image, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@vegelink/shared";
 import { listingCategories, marketplaceListings } from "@/lib/marketplace-data";
@@ -47,9 +47,11 @@ export default function HomeScreen() {
 
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-3">
-              <View className="h-7 w-7 items-center justify-center rounded-full bg-white">
-                <Text className="text-[9px] font-black text-green-800">VL</Text>
-              </View>
+              <Image
+                source={require("@/assets/images/vegelink-Photoroom.png")}
+                className="h-7 w-7"
+                resizeMode="contain"
+              />
               <Text className="text-lg font-black text-white">VegeLink</Text>
             </View>
 

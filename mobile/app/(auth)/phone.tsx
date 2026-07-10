@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View, ActivityIndicator, Alert } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View, ActivityIndicator, Alert, Image } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
 import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
@@ -167,9 +167,11 @@ export default function PhoneScreen() {
 
           <View className="mt-7 rounded-2xl border border-green-100 bg-green-50 p-4">
             <View className="flex-row items-center">
-              <View className="h-14 w-14 items-center justify-center rounded-2xl bg-green-800">
-                <Text className="text-lg font-black text-white">VL</Text>
-              </View>
+              <Image
+                source={require("@/assets/images/vegelink-Photoroom.png")}
+                className="h-14 w-14"
+                resizeMode="contain"
+              />
               <View className="ml-4 flex-1">
                 <Text className="text-sm font-black text-gray-950">
                   Registering as {roleLabels[safeRole]}

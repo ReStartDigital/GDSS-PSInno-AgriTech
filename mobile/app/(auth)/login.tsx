@@ -8,6 +8,7 @@ import {
   Text,
   TextInput,
   View,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -98,11 +99,11 @@ export default function LoginScreen() {
         <View className="flex-1 justify-center pt-8 pb-12">
           {/* Logo Brand Header */}
           <View className="flex-row items-center gap-3 mb-10">
-            <View className="h-9 w-9 items-center justify-center rounded-2xl bg-green-50">
-              <View className="h-5 w-5 items-center justify-center rounded-full bg-green-800">
-                <Text className="text-[10px] font-black text-white">VL</Text>
-              </View>
-            </View>
+            <Image
+              source={require("@/assets/images/vegelink-Photoroom.png")}
+              className="h-9 w-9"
+              resizeMode="contain"
+            />
             <Text className="text-lg font-black text-green-800">VegeLink</Text>
           </View>
 

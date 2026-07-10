@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { UserRole } from "@vegelink/shared";
 import { vlClassNames, vlStyles } from "@/lib/design-system";
@@ -72,11 +72,11 @@ export default function RegisterScreen() {
     <View className={vlClassNames.screen} style={{ paddingTop: insets.top }}>
       <View className="flex-1 px-6 pb-10 pt-4">
         <View className="flex-row items-center gap-3">
-          <View className="h-9 w-9 items-center justify-center rounded-2xl bg-green-50">
-            <View className="h-5 w-5 items-center justify-center rounded-full bg-green-800">
-              <Text className="text-[10px] font-black text-white">VL</Text>
-            </View>
-          </View>
+          <Image
+            source={require("@/assets/images/vegelink-Photoroom.png")}
+            className="h-9 w-9"
+            resizeMode="contain"
+          />
           <Text className="text-lg font-black text-green-800">VegeLink</Text>
         </View>
 

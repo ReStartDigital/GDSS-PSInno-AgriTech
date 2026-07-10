@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { UserRole, useAuthStore } from "@vegelink/shared";
 import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
@@ -50,9 +50,11 @@ export default function SuccessScreen() {
 
         <View className="mt-9 rounded-2xl border border-green-100 bg-green-50 p-5">
           <View className="flex-row items-center">
-            <View className="h-14 w-14 items-center justify-center rounded-2xl bg-green-800">
-              <Text className="text-lg font-black text-white">VL</Text>
-            </View>
+            <Image
+              source={require("@/assets/images/vegelink-Photoroom.png")}
+              className="h-14 w-14"
+              resizeMode="contain"
+            />
             <View className="ml-4 flex-1">
               <Text className="text-lg font-black text-green-900">
                 {roleLabels[role]}
