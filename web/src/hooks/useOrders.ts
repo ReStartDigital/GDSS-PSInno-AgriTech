@@ -72,3 +72,28 @@ export function useCancelOrder() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
   })
 }
+
+export function useNegotiateOrder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, counterPricePerKgGhs }: { id: string; counterPricePerKgGhs: number }) =>
+      ordersApi.negotiate(id, counterPricePerKgGhs),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+  })
+}
+
+export function useReadyPickupOrder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => ordersApi.readyPickup(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+  })
+}
+
+export function useVerifyPickupOrder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, pin }: { id: string; pin: string }) => ordersApi.verifyPickup(id, pin),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+  })
+}

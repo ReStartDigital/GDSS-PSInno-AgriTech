@@ -121,8 +121,8 @@ function RoleDashboard({ role }: { role: string }) {
               <Link to="/orders" key={o.id} style={{ textDecoration: 'none' }}>
                 <div className="dashboard-row">
                   <StatusBadge status={o.status} />
-                  <span style={{ color: '#374151', fontWeight: 600, fontSize: '0.88rem' }}>GH₵ {o.total_ghs}</span>
-                  <span style={{ color: '#9ca3af', fontSize: '0.8rem', marginLeft: 'auto' }}>{o.quantity_kg} kg</span>
+                  <span style={{ color: '#374151', fontWeight: 600, fontSize: '0.88rem' }}>GH₵ {o.totalGhs}</span>
+                  <span style={{ color: '#9ca3af', fontSize: '0.8rem', marginLeft: 'auto' }}>{o.quantityKg} kg</span>
                 </div>
               </Link>
             ))}

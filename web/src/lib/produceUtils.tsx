@@ -98,10 +98,8 @@ export function OrderModal({ listing, onClose }: { listing: ListingResponse; onC
   const quantityStr = watch('quantity_kg')
   const quantity = parseFloat(String(quantityStr || '0'))
   const subtotal = quantity > 0 ? quantity * listing.pricePerKgGhs : 0
-  const processingFee = subtotal * 0.015
-  const deliveryDistance = 12
-  const transportCost = currentMode === FulfilmentMode.DELIVERY ? deliveryDistance * 2.00 : 0
-  const totalGhs = subtotal + processingFee + transportCost
+  const transportCost = currentMode === FulfilmentMode.DELIVERY ? 25.00 : 0.00
+  const totalGhs = subtotal + transportCost
 
   return (
     <Modal onClose={onClose} maxWidth={480}>
@@ -246,16 +244,12 @@ export function OrderModal({ listing, onClose }: { listing: ListingResponse; onC
                 <span style={{ fontWeight: 600 }}>GH₵ {subtotal.toFixed(2)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', opacity: 0.8 }}>
-                <span>AgriSettle Split Fee (1.5%)</span>
-                <span>GH₵ {processingFee.toFixed(2)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', opacity: 0.8 }}>
-                <span>Logistics Fee ({currentMode === FulfilmentMode.DELIVERY ? `${deliveryDistance} km` : 'Pickup'})</span>
+                <span>Logistics Fee ({currentMode === FulfilmentMode.DELIVERY ? 'Flat Delivery' : 'Pickup'})</span>
                 <span>GH₵ {transportCost.toFixed(2)}</span>
               </div>
               <div style={{ height: 1, background: '#e5e7eb', margin: '4px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem', fontWeight: 800, color: '#264123' }}>
-                <span>Estimated Total</span>
+                <span>Total GHS</span>
                 <span>GH₵ {totalGhs.toFixed(2)}</span>
               </div>
             </div>

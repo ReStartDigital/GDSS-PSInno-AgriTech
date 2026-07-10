@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { authApi, usersApi } from '../lib/apiCalls'
 import { useAuthStore } from '../store/auth.store'
@@ -202,5 +202,63 @@ export function useUpdatePaymentDetails() {
       qc.invalidateQueries({ queryKey: ['profile'] })
       qc.invalidateQueries({ queryKey: ['users', 'me'] })
     },
+  })
+}
+
+/**
+ * GET /users/me
+ * Gets current private profile
+ */
+export function useProfile() {
+  return useQuery({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      const res = await usersApi.getProfile()
+      return res.data.data.user
+    },
+  })
+}
+
+/**
+ * PATCH /users/me
+ * Updates private profile
+ */
+export function useUpdateProfile() {
+  const qc = useQueryClient()
+  const setAuth = useAuthStore((s) => s.setAuth)
+  const accessToken = useAuthStore((s) => s.accessToken)
+  return useMutation({
+    mutationFn: (data: {
+      firstName?: string
+      middleName?: string
+      lastName?: string
+      email?: string
+      region?: string
+      language?: string
+      location?: { lat: number; lng: number }
+    }) => usersApi.updateProfile(data),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['profile'] })
+      qc.invalidateQueries({ queryKey: ['users', 'me'] })
+      
+      const dbUser = res.data.data.user
+      const fullName = [dbUser.firstName, dbUser.middleName, dbUser.lastName]
+        .filter(Boolean)
+        .join(' ')
+      
+      if (accessToken) {
+        setAuth({
+          id: dbUser.id,
+          phone: dbUser.phone,
+          role: dbUser.role,
+          fullName,
+          region: dbUser.region ?? undefined,
+          language: dbUser.language ?? undefined,
+          paymentDetailsSet: dbUser.paymentDetailsSet,
+          mobileMoneyNumber: dbUser.mobileMoneyNumber,
+          mobileMoneyNetwork: dbUser.mobileMoneyNetwork,
+        }, accessToken)
+      }
+    }
   })
 }
