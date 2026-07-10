@@ -4,20 +4,21 @@
   },
   "groups" : [
     {
-      "hidden" : true,
+      "hidden" : false,
       "layers" : [
         {
-          "image-name" : "vegelink.svg",
-          "name" : "vegelink",
+          "image-name" : "vegelink-Photoroom 2.png",
+          "name" : "vegelink-Photoroom 2",
           "position" : {
-            "scale" : 7,
+            "scale" : 8,
             "translation-in-points" : [
-              -17.534479000880765,
-              0
+              -28.5,
+              12.77974016988901
             ]
           }
         },
         {
+          "hidden" : false,
           "image-name" : "grid.png",
           "name" : "grid"
         }
@@ -32,21 +33,20 @@
       }
     },
     {
-      "hidden" : false,
+      "hidden" : true,
       "layers" : [
         {
-          "image-name" : "vegelink-Photoroom 2.png",
-          "name" : "vegelink-Photoroom 2",
+          "image-name" : "vegelink.svg",
+          "name" : "vegelink",
           "position" : {
-            "scale" : 15,
+            "scale" : 7,
             "translation-in-points" : [
-              0,
+              -17.534479000880765,
               0
             ]
           }
         },
         {
-          "hidden" : false,
           "image-name" : "grid.png",
           "name" : "grid"
         }
