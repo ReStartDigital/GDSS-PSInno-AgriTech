@@ -38,7 +38,7 @@ export function createApp(): Application {
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
     : [];
-
+  
   app.use(requestIdMiddleware);
   app.use(helmet());
   app.use(

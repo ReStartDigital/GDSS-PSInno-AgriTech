@@ -63,6 +63,43 @@ export class TransportController {
   };
 
   /**
+   * Get Transporter's Claimed Jobs
+   * Fetches all delivery jobs assigned to the authenticated transporter.
+   */
+  getMyJobs = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const transporterId = req.user!.sub;
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.max(
+        1,
+        Math.min(100, parseInt(req.query.limit as string) || 20),
+      );
+
+      const result = await this.transportService.getMyJobs(
+        transporterId,
+        page,
+        limit,
+      );
+
+      res.status(200).json({
+        success: true,
+        meta: {
+          total_records: result.total,
+          current_page: page,
+          limit,
+        },
+        data: result.data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
    * Atomic Job Acceptance Claim
    * Executes the strict pessimistic row lock sequence inside the state machine.
    */
