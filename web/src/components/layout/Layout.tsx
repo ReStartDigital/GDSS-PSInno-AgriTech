@@ -17,46 +17,45 @@ interface NavItem {
 function getRoleNav(role: string | undefined): NavItem[] {
   const base: NavItem[] = [
     { to: '/overview', label: 'Overview', icon: 'leaf' },
-    { to: '/admin',    label: 'Admin Portal', icon: 'shield' },
   ]
 
   switch (role) {
     case 'farmer':
       return [
         ...base,
-        { to: '/listings', label: 'My Listings',  icon: 'bag'      },
-        { to: '/orders',   label: 'My Orders',     icon: 'shopping' },
-        { to: '/profile',  label: 'Profile',       icon: 'user'     },
+        { to: '/listings', label: 'My Listings', icon: 'bag' },
+        { to: '/orders', label: 'My Orders', icon: 'shopping' },
+        { to: '/profile', label: 'Profile', icon: 'user' },
       ]
     case 'buyer':
       return [
         ...base,
         { to: '/marketplace', label: 'Marketplace', icon: 'shopping' },
-        { to: '/orders',      label: 'My Orders',   icon: 'bag'      },
-        { to: '/profile',     label: 'Profile',     icon: 'user'     },
+        { to: '/orders', label: 'My Orders', icon: 'bag' },
+        { to: '/profile', label: 'Profile', icon: 'user' },
       ]
     case 'transporter':
       return [
         ...base,
-        { to: '/jobs',    label: 'Available Jobs', icon: 'truck'  },
-        { to: '/orders',  label: 'My Deliveries',  icon: 'bag'    },
-        { to: '/profile', label: 'Profile',        icon: 'user'   },
+        { to: '/jobs', label: 'Available Jobs', icon: 'truck' },
+        { to: '/orders', label: 'My Deliveries', icon: 'bag' },
+        { to: '/profile', label: 'Profile', icon: 'user' },
       ]
     case 'agent':
       return [
         ...base,
-        { to: '/marketplace', label: 'Marketplace',     icon: 'shopping' },
-        { to: '/clients',     label: 'My Farmers',      icon: 'user'     },
-        { to: '/listings',    label: 'Client Listings',  icon: 'bag'      },
-        { to: '/orders',      label: 'All Orders',      icon: 'truck'    },
-        { to: '/profile',     label: 'Profile',         icon: 'shield'   },
+        { to: '/marketplace', label: 'Marketplace', icon: 'shopping' },
+        { to: '/clients', label: 'My Farmers', icon: 'user' },
+        { to: '/listings', label: 'Client Listings', icon: 'bag' },
+        { to: '/orders', label: 'All Orders', icon: 'truck' },
+        { to: '/profile', label: 'Profile', icon: 'shield' },
       ]
     default:
       return [
         ...base,
         { to: '/marketplace', label: 'Marketplace', icon: 'shopping' },
-        { to: '/orders',      label: 'Orders',      icon: 'bag'      },
-        { to: '/profile',     label: 'Profile',     icon: 'user'     },
+        { to: '/orders', label: 'Orders', icon: 'bag' },
+        { to: '/profile', label: 'Profile', icon: 'user' },
       ]
   }
 }
@@ -90,17 +89,17 @@ function formatPhone(phone: string) {
 // ── Role accent colors ─────────────────────────────────────────────────────────
 
 const ROLE_ACCENT: Record<string, string> = {
-  farmer:      '#d6ffcd',
-  buyer:       '#bfdbfe',
+  farmer: '#d6ffcd',
+  buyer: '#bfdbfe',
   transporter: '#fde68a',
-  agent:       '#fca5a5',
+  agent: '#fca5a5',
 }
 
 const ROLE_ICON: Record<string, IconName> = {
-  farmer:      'leaf',
-  buyer:       'shopping',
+  farmer: 'leaf',
+  buyer: 'shopping',
   transporter: 'truck',
-  agent:       'shield',
+  agent: 'shield',
 }
 
 // ── Layout ────────────────────────────────────────────────────────────────────
@@ -214,7 +213,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="topbar-actions">
             {!user ? (
               <>
-                <Link to="/auth/login"    className="secondary-button topbar-btn">Log In</Link>
+                <Link to="/auth/login" className="secondary-button topbar-btn">Log In</Link>
                 <Link to="/auth/register" className="primary-button topbar-btn">Register</Link>
               </>
             ) : (
