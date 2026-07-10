@@ -223,6 +223,11 @@ export function useUploadListingImage() {
 
 export function mapBackendListingToClient(item: BackendListing): any {
   const cropName = item.vegetableType.charAt(0).toUpperCase() + item.vegetableType.slice(1);
+  const harvestDate = new Date(item.harvestDate);
+  const today = new Date();
+  const isHarvestedToday =
+    !Number.isNaN(harvestDate.getTime()) &&
+    harvestDate.toDateString() === today.toDateString();
   
   // Choose accent/tint colors dynamically based on category/crop name
   let accentColor = "#15803D"; // green default
@@ -252,17 +257,17 @@ export function mapBackendListingToClient(item: BackendListing): any {
       id: item.farmer?.id || item.farmerId,
       fullName: item.farmer ? `${item.farmer.firstName} ${item.farmer.lastName}`.trim() : "Vegelink Farmer",
       phone: item.farmer?.phone || "",
-      rating: 4.8,
+      rating: 0,
       locationLabel: item.farmer?.region || "Ghana",
     },
     category: "Vegetables",
     harvestLabel: `Harvested ${item.harvestDate}`,
     packagingRecommendation: item.recommendedPackaging?.label || "Standard packaging",
-    distanceKm: 12,
-    deliveryEstimate: item.supportsDelivery ? "Same day" : "Pickup only",
+    distanceKm: 0,
+    deliveryEstimate: item.supportsDelivery ? "Delivery available" : "Pickup only",
     supportsDelivery: item.supportsDelivery,
     supportsPickup: item.supportsPickup,
-    freshnessTag: "Fresh today",
+    freshnessTag: isHarvestedToday ? "Fresh today" : "In season",
     accentColor,
     tintColor,
     ordersCount: 0,

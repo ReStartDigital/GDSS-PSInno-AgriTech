@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Image, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@vegelink/shared";
 import { SavedProduce, toSavedProduce, useUserSettingsStore } from "@/lib/user-settings-store";
-import { marketplaceListings } from "@/lib/marketplace-data";
 import { BottomSheet } from "@/components/layout/BottomSheet";
 import { vlClassNames, vlStyles } from "@/lib/design-system";
-import { useUpdateProfile, useMyEarnings } from "@/lib/user-api";
+import { useUpdateProfile, useMyProfile } from "@/lib/user-api";
 import { useMarketplaceListings, mapBackendListingToClient } from "@/lib/listings-api";
+import { useOrders } from "@/lib/orders-api";
+import { composeFullName, getFirstName, getLastName, mapProfileToAuthUser, roleLabels } from "@/lib/profile-utils";
 import {
   User,
   Bell,
@@ -17,7 +18,6 @@ import {
   Phone,
   LogOut,
   NavArrowRight,
-  Star,
   Check,
   Trash,
   MediaImage,
@@ -54,6 +54,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, accessToken, setAuth, clearAuth } = useAuthStore();
+  const { data: profile } = useMyProfile();
   
   const {
     savedListingIds,
@@ -67,10 +68,30 @@ export default function ProfileScreen() {
     toggleNotification,
   } = useUserSettingsStore();
 
-  const firstName = user?.firstName ?? user?.fullName?.split(" ")[0] ?? "Kofi";
-  const middleName = user?.middleName ?? "";
-  const lastName = user?.lastName ?? (user?.fullName ? user.fullName.split(" ").slice(1).join(" ") : "Mensah");
-  const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
+  const displayUser = profile ? mapProfileToAuthUser(profile, user) : user;
+  const firstName = getFirstName(displayUser);
+  const middleName = displayUser?.middleName ?? "";
+  const lastName = getLastName(displayUser);
+  const fullName = composeFullName(displayUser);
+  const role = displayUser?.role ?? "buyer";
+  const currentRegion = displayUser?.region || region;
+
+  useEffect(() => {
+    if (profile && accessToken) {
+      const nextUser = mapProfileToAuthUser(profile, user);
+      const hasChanged =
+        nextUser.firstName !== user?.firstName ||
+        nextUser.middleName !== user?.middleName ||
+        nextUser.lastName !== user?.lastName ||
+        nextUser.fullName !== user?.fullName ||
+        nextUser.role !== user?.role ||
+        nextUser.region !== user?.region;
+
+      if (hasChanged) {
+        setAuth(nextUser, accessToken);
+      }
+    }
+  }, [accessToken, profile, setAuth, user]);
   // Modal control state
   const [activeModal, setActiveModal] = useState<"edit_profile" | "notifications" | "saved" | "language" | "help" | null>(null);
 
@@ -83,7 +104,7 @@ export default function ProfileScreen() {
   const [editRegionState, setEditRegionState] = useState(region);
 
   const updateProfileMutation = useUpdateProfile();
-  const { data: earningsData } = useMyEarnings();
+  const { data: ordersData } = useOrders();
 
   const handleLogout = () => {
     clearAuth();
@@ -120,18 +141,17 @@ export default function ProfileScreen() {
       },
       {
         onSuccess: () => {
-          setAuth(
-            {
-              ...user,
-              firstName: first,
-              middleName: middle || null,
-              lastName: last,
-              fullName: [first, middle, last].filter(Boolean).join(" ").trim(),
-              email: emailToSend,
-              phone: editPhone.trim(),
-            },
-            accessToken
-          );
+          const updatedUser = mapProfileToAuthUser({
+            ...displayUser,
+            firstName: first,
+            middleName: middle || null,
+            lastName: last,
+            fullName: [first, middle, last].filter(Boolean).join(" ").trim(),
+            email: emailToSend,
+            phone: editPhone.trim(),
+            region: editRegionState,
+          }, displayUser);
+          setAuth(updatedUser, accessToken);
           setRegion(editRegionState);
           setActiveModal(null);
         },
@@ -146,7 +166,7 @@ export default function ProfileScreen() {
   const backendListings = listingsData?.data?.map(mapBackendListingToClient) || [];
 
   const savedListingsById = new Map(
-    [...backendListings, ...marketplaceListings].map((listing) => [
+    backendListings.map((listing) => [
       listing.id,
       toSavedProduce(listing),
     ]),
@@ -172,23 +192,24 @@ export default function ProfileScreen() {
               <Text className="text-2xl font-black text-white">{initials(fullName)}</Text>
             </View>
             <View className="ml-5 flex-1">
-              <Text className="text-xl font-black text-gray-950">{fullName}</Text>
-              <Text className="mt-2 text-sm font-semibold text-gray-500">
-                {region} Region
+              <Text className="text-xl font-black text-gray-950">
+                {fullName || "Complete your profile"}
               </Text>
+              <Text className="mt-2 text-sm font-semibold text-gray-500">
+                {roleLabels[role]}
+              </Text>
+              {currentRegion ? (
+              <Text className="mt-1 text-sm font-semibold text-gray-400">
+                {currentRegion} Region
+              </Text>
+              ) : null}
             </View>
           </View>
 
           <View className="mt-6 flex-row gap-3">
-            <StatTile value={(earningsData?.totalOrders ?? 0).toString()} label="Orders" />
+            <StatTile value={(ordersData?.data?.length ?? 0).toString()} label="Orders" />
             <StatTile value={savedListingIds.length.toString()} label="Saved" />
-            <View className="h-16 flex-1 items-center justify-center rounded-2xl bg-green-50">
-              <View className="flex-row items-center gap-1">
-                <Star color="#F59E0B" fill="#F59E0B" width={16} height={16} strokeWidth={2} />
-                <Text className="text-xl font-black text-green-800">4.8</Text>
-              </View>
-              <Text className="mt-1 text-xs font-semibold text-gray-500">Rating</Text>
-            </View>
+            <StatTile value={roleLabels[role]} label="Role" />
           </View>
         </View>
 
@@ -199,17 +220,17 @@ export default function ProfileScreen() {
               icon={User}
               tone="green"
               onPress={() => {
-                const currentFirst = user?.firstName ?? user?.fullName?.split(" ")[0] ?? "";
-                const currentMiddle = user?.middleName ?? "";
-                const currentLast = user?.lastName ?? user?.fullName?.split(" ").slice(1).join(" ") ?? "";
-                const currentEmail = user?.email ?? "";
+                const currentFirst = getFirstName(displayUser);
+                const currentMiddle = displayUser?.middleName ?? "";
+                const currentLast = getLastName(displayUser);
+                const currentEmail = displayUser?.email ?? "";
                 const isAutogenerated = !currentEmail || currentEmail.endsWith("@vegelink.app");
                 setEditFirstName(currentFirst);
                 setEditMiddleName(currentMiddle);
                 setEditLastName(currentLast);
                 setEditEmail(isAutogenerated ? "" : currentEmail);
-                setEditPhone(user?.phone ?? "");
-                setEditRegionState(region);
+                setEditPhone(displayUser?.phone ?? "");
+                setEditRegionState(currentRegion);
                 setActiveModal("edit_profile");
               }}
             />

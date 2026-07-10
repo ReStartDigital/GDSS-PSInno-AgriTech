@@ -58,7 +58,7 @@ export function ListingFlatList() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const { data: listingsData, isLoading, refetch, isFetching } = useMarketplaceListings();
-  const marketplaceListings = useMemo(() => {
+  const backendListings = useMemo(() => {
     const raw = listingsData?.data || [];
     return raw.map(mapBackendListingToClient);
   }, [listingsData?.data]);
@@ -69,7 +69,7 @@ export function ListingFlatList() {
   const filteredListings = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
-    return marketplaceListings
+    return backendListings
       .filter((listing) => {
         const matchesCategory =
           selectedCategory === "All" || listing.category === selectedCategory;
@@ -104,7 +104,7 @@ export function ListingFlatList() {
 
         return left.distanceKm - right.distanceKm;
       });
-  }, [searchQuery, selectedCategory, selectedRegion, sortMode, marketplaceListings]);
+  }, [searchQuery, selectedCategory, selectedRegion, sortMode, backendListings]);
 
   const resetFilters = () => {
     setSelectedCategory("All");
@@ -135,7 +135,7 @@ export function ListingFlatList() {
             <View>
               <Text className="text-3xl font-black text-gray-950">Browse Produce</Text>
               <Text className="mt-1 text-sm font-black text-gray-400">
-                {marketplaceListings.length} products available
+                {backendListings.length} products available
               </Text>
             </View>
 

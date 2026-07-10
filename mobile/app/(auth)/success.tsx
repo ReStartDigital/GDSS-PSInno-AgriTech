@@ -1,25 +1,19 @@
 import { Pressable, Text, View, Image } from "react-native";
 import { useRouter } from "expo-router";
-import { UserRole, useAuthStore } from "@vegelink/shared";
+import { useAuthStore } from "@vegelink/shared";
 import { vlClassNames, vlColors, vlStyles } from "@/lib/design-system";
 import { Check, NavArrowRight } from "iconoir-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-const roleLabels: Record<UserRole, string> = {
-  farmer: "Farmer",
-  buyer: "Buyer",
-  transporter: "Transporter",
-  agent: "Agent",
-  admin: "Admin",
-};
+import { composeFullName, getFirstName, roleLabels } from "@/lib/profile-utils";
 
 export default function SuccessScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
-  const firstName = user?.fullName?.split(" ")[0] || "Kofi";
-  const fullName = user?.fullName || "Kofi Mensah";
+  const firstName = getFirstName(user);
+  const fullName = composeFullName(user);
   const role = user?.role ?? "farmer";
+  const regionLabel = user?.region ? `${user.region} Region` : "";
 
   return (
     <View className={vlClassNames.screen} style={{ paddingTop: insets.top }}>
@@ -41,7 +35,7 @@ export default function SuccessScreen() {
           </View>
 
           <Text className="mt-4 text-center text-4xl font-black leading-tight text-gray-950">
-            Welcome, {firstName}!
+            Welcome{firstName ? `, ${firstName}` : ""}!
           </Text>
           <Text className="mt-5 max-w-xs text-center text-base leading-7 text-gray-600">
             Your VegeLink account is ready. Let{'\''} start trading.
@@ -61,19 +55,13 @@ export default function SuccessScreen() {
               </Text>
               <Text className="mt-1 text-sm font-black text-gray-950">{fullName}</Text>
               <Text className="mt-1 text-xs font-semibold text-gray-500">
-                Greater Accra Region
+                {regionLabel}
               </Text>
             </View>
             <View className="h-11 w-11 items-center justify-center rounded-full bg-green-800">
               <Check color="#FFFFFF" width={22} height={22} strokeWidth={2.5} />
             </View>
           </View>
-        </View>
-
-        <View className="mt-9 flex-row justify-center gap-8">
-          <Stat value="12K+" label="Farmers" />
-          <Stat value="8K+" label="Buyers" />
-          <Stat value="2K+" label="Drivers" />
         </View>
 
         <View className="mt-auto">
@@ -94,15 +82,6 @@ export default function SuccessScreen() {
           </Text>
         </View>
       </View>
-    </View>
-  );
-}
-
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <View className="items-center">
-      <Text className="text-2xl font-black text-green-800">{value}</Text>
-      <Text className="mt-1 text-xs font-semibold text-gray-500">{label}</Text>
     </View>
   );
 }

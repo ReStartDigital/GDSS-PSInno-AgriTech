@@ -31,7 +31,10 @@ export default function ListingsScreen() {
 
   // Stats calculation
   const totalOrders = listings.reduce((sum, l) => sum + l.ordersCount, 0);
-  const estRevenue = 2660; // Baseline as shown in screenshot
+  const estRevenue = listings.reduce(
+    (sum, item) => sum + item.pricePerUnit * item.availableQuantity,
+    0,
+  );
 
   const toggleListingStatus = (id: string, currentStatus: string) => {
     const nextBackendStatus = currentStatus === "available" ? "cancelled" : "active";

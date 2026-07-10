@@ -39,7 +39,18 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (profile && accessToken) {
-      setAuth(mapProfileToAuthUser(profile, user), accessToken);
+      const nextUser = mapProfileToAuthUser(profile, user);
+      const hasChanged =
+        nextUser.firstName !== user?.firstName ||
+        nextUser.middleName !== user?.middleName ||
+        nextUser.lastName !== user?.lastName ||
+        nextUser.fullName !== user?.fullName ||
+        nextUser.role !== user?.role ||
+        nextUser.region !== user?.region;
+
+      if (hasChanged) {
+        setAuth(nextUser, accessToken);
+      }
     }
   }, [accessToken, profile, setAuth, user]);
 
