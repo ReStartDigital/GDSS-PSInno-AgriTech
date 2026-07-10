@@ -102,13 +102,14 @@ export interface ApiUser {
 }
 
 // ── API Error envelope ────────────────────────────────────────────────────────
-/** Matches backend error shape: `{ error: { code, message } }` */
+/** Matches backend error shape: `{ error: { code, message, details } }` */
 export interface ApiErrorShape {
   response?: {
     data?: {
       error?: {
         code?: string
         message?: string
+        details?: Record<string, string[]>
       }
     }
   }

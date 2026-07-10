@@ -302,7 +302,7 @@ function CreateListingForm({
       onSuccess: () => {
         reset()
         onClose()
-        toast.success(`"${data.vegetable_type || 'Produce'}" listing created successfully!`)
+        onSuccess?.(data.vegetable_type || 'Produce')
       },
       onError: (err: any) => {
         const errorData = getApiErrorData(err);
