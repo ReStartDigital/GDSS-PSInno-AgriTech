@@ -142,7 +142,9 @@ export class TransportRepository {
       .leftJoinAndSelect("order.listing", "listing")
       .leftJoinAndSelect("listing.farmer", "farmer")
       .leftJoinAndSelect("order.buyer", "buyer")
-      .where("tr.transporterId = :transporterId", { transporterId: params.transporterId })
+      .where("tr.transporterId = :transporterId", {
+        transporterId: params.transporterId,
+      })
       .orderBy("tr.updatedAt", "DESC");
 
     const [jobs, total] = await Promise.all([

@@ -11,8 +11,13 @@ export const cloudinaryClient = {
   async uploadBuffer(
     fileBuffer: Buffer,
     folderPath: string,
-    publicId?: string
-  ): Promise<{ url: string; thumbnail_url: string; thumbnailUrl?: string; publicId: string }> {
+    publicId?: string,
+  ): Promise<{
+    url: string;
+    thumbnail_url: string;
+    thumbnailUrl?: string;
+    publicId: string;
+  }> {
     return new Promise((resolve, reject) => {
       // Graceful fallback for local development or preview environments when no API key is set
       const missingCredentials =
@@ -35,6 +40,7 @@ export const cloudinaryClient = {
         });
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const options: any = {
         folder: folderPath,
       };
@@ -59,7 +65,7 @@ export const cloudinaryClient = {
             thumbnailUrl: thumb,
             publicId: result.public_id,
           });
-        }
+        },
       );
 
       uploadStream.end(fileBuffer);

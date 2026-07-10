@@ -56,121 +56,123 @@ export class OrdersService {
     dto: CreateOrderDto,
   ): Promise<OrderEntity> {
     // We execute the entire lifecycle inside a managed database transaction closure
-    const {saveOrder, farmer} = await this.dataSource.transaction(async (manager) => {
-      const activeStatuses = [
-        OrderStatus.PENDING,
-        OrderStatus.PENDING_AGENT_CONFIRMATION,
-        OrderStatus.PENDING_SMS_CONFIRMATION,
-        OrderStatus.NEGOTIATING,
-      ];
-      // Use transactional managers instead of global unsynced repositories
-      const txListingsRepo = manager.getRepository(ProduceListingEntity);
-      const txUsersRepo = manager.getRepository(User);
-      const txOrdersRepo = manager.getRepository(OrderEntity);
+    const { saveOrder, farmer } = await this.dataSource.transaction(
+      async (manager) => {
+        const activeStatuses = [
+          OrderStatus.PENDING,
+          OrderStatus.PENDING_AGENT_CONFIRMATION,
+          OrderStatus.PENDING_SMS_CONFIRMATION,
+          OrderStatus.NEGOTIATING,
+        ];
+        // Use transactional managers instead of global unsynced repositories
+        const txListingsRepo = manager.getRepository(ProduceListingEntity);
+        const txUsersRepo = manager.getRepository(User);
+        const txOrdersRepo = manager.getRepository(OrderEntity);
 
-      // 1. Fetch the produce listing with a write lock to ensure stock doesn't shift mid-flight
-      const listing = await txListingsRepo.findOne({
-        where: { id: dto.listing_id },
-        lock: { mode: "pessimistic_write" },
-      });
+        // 1. Fetch the produce listing with a write lock to ensure stock doesn't shift mid-flight
+        const listing = await txListingsRepo.findOne({
+          where: { id: dto.listing_id },
+          lock: { mode: "pessimistic_write" },
+        });
 
-      if (!listing || listing.status !== "active") {
-        throw new NotFoundException(
-          "Listing not found or no longer active",
-          ErrorCode.LISTING_NOT_ACTIVE_FOR_ORDER,
-        );
-      }
+        if (!listing || listing.status !== "active") {
+          throw new NotFoundException(
+            "Listing not found or no longer active",
+            ErrorCode.LISTING_NOT_ACTIVE_FOR_ORDER,
+          );
+        }
 
-      // 2. Prevent farmers from buying their own items
-      if (listing.farmerId === buyerId) {
-        throw new BadRequestException(
-          "You cannot purchase your own produce listing",
-          ErrorCode.ORDER_FORBIDDEN,
-        );
-      }
+        // 2. Prevent farmers from buying their own items
+        if (listing.farmerId === buyerId) {
+          throw new BadRequestException(
+            "You cannot purchase your own produce listing",
+            ErrorCode.ORDER_FORBIDDEN,
+          );
+        }
 
-      // Check if an active contract already exists for this buyer/listing pair
-      const existingOrder = await txOrdersRepo.findOne({
-        where: {
+        // Check if an active contract already exists for this buyer/listing pair
+        const existingOrder = await txOrdersRepo.findOne({
+          where: {
+            buyerId,
+            listingId: dto.listing_id,
+            status: In(activeStatuses),
+          },
+        });
+        console.log(existingOrder);
+        if (existingOrder) {
+          throw new BadRequestException(
+            "You already have an active order pending confirmation for this listing.",
+            ErrorCode.BAD_REQUEST,
+          );
+        }
+
+        // 3. Check stock capacity
+        const requestedQty = dto.quantity_kg;
+        const availableStock =
+          Number(listing.quantityKg) - Number(listing.committedKg || 0);
+
+        if (requestedQty > availableStock) {
+          throw new BadRequestException(
+            `Requested quantity exceeds available stock (${availableStock}kg remaining)`,
+            ErrorCode.QUANTITY_EXCEEDS_AVAILABLE,
+          );
+        }
+
+        // 4. Resolve the farmer context and location markers
+        const farmer = await txUsersRepo.findOneBy({ id: listing.farmerId });
+        if (!farmer) {
+          throw new NotFoundException(
+            "Farmer account record not found",
+            ErrorCode.ORDER_FORBIDDEN,
+          );
+        }
+
+        // 5. Billing Calculus
+        const pricePerKg = Number(listing.pricePerKgGhs);
+        const produceSubtotal = requestedQty * pricePerKg;
+
+        // In a future sprint, this can be linked up directly to the PostGIS calculation tool
+        const transportCostEstimate =
+          dto.mode === FulfilmentMode.DELIVERY ? 25.0 : 0.0;
+        const totalGhs = produceSubtotal + transportCostEstimate;
+
+        // 6. Determine starting lifecycle state via the state machine ruleset
+        const targetStatus = resolveInitialStatus(farmer.orderMode);
+
+        // 7. Commit order parameters inside the transaction boundary
+        const orderData = txOrdersRepo.create({
           buyerId,
+          farmerId: listing.farmerId,
           listingId: dto.listing_id,
-          status: In(activeStatuses),
-        },
-      });
-      console.log(existingOrder);
-      if (existingOrder) {
-        throw new BadRequestException(
-          "You already have an active order pending confirmation for this listing.",
-          ErrorCode.BAD_REQUEST,
-        );
-      }
+          mode: dto.mode,
+          quantityKg: requestedQty,
+          pricePerKgGhs: pricePerKg,
+          produceSubtotalGhs: produceSubtotal,
+          packagingTypeId: dto.packaging_type_id || null,
+          transportCostEstimateGhs: transportCostEstimate,
+          totalGhs,
+          deliveryAddress: dto.delivery_address || null,
+          deliveryLocation: dto.delivery_location
+            ? {
+                type: "Point",
+                coordinates: [
+                  dto.delivery_location.lng,
+                  dto.delivery_location.lat,
+                ],
+              }
+            : null,
+          status: targetStatus,
+        });
 
-      // 3. Check stock capacity
-      const requestedQty = dto.quantity_kg;
-      const availableStock =
-        Number(listing.quantityKg) - Number(listing.committedKg || 0);
+        const saveOrder = await txOrdersRepo.save(orderData);
 
-      if (requestedQty > availableStock) {
-        throw new BadRequestException(
-          `Requested quantity exceeds available stock (${availableStock}kg remaining)`,
-          ErrorCode.QUANTITY_EXCEEDS_AVAILABLE,
-        );
-      }
+        // 8. Atomically reduce available stock quantity from the catalog listing
+        listing.committedKg = Number(listing.committedKg || 0) + requestedQty;
+        await txListingsRepo.save(listing);
 
-      // 4. Resolve the farmer context and location markers
-      const farmer = await txUsersRepo.findOneBy({ id: listing.farmerId });
-      if (!farmer) {
-        throw new NotFoundException(
-          "Farmer account record not found",
-          ErrorCode.ORDER_FORBIDDEN,
-        );
-      }
-
-      // 5. Billing Calculus
-      const pricePerKg = Number(listing.pricePerKgGhs);
-      const produceSubtotal = requestedQty * pricePerKg;
-
-      // In a future sprint, this can be linked up directly to the PostGIS calculation tool
-      const transportCostEstimate =
-        dto.mode === FulfilmentMode.DELIVERY ? 25.0 : 0.0;
-      const totalGhs = produceSubtotal + transportCostEstimate;
-
-      // 6. Determine starting lifecycle state via the state machine ruleset
-      const targetStatus = resolveInitialStatus(farmer.orderMode);
-
-      // 7. Commit order parameters inside the transaction boundary
-      const orderData = txOrdersRepo.create({
-        buyerId,
-        farmerId: listing.farmerId,
-        listingId: dto.listing_id,
-        mode: dto.mode,
-        quantityKg: requestedQty,
-        pricePerKgGhs: pricePerKg,
-        produceSubtotalGhs: produceSubtotal,
-        packagingTypeId: dto.packaging_type_id || null,
-        transportCostEstimateGhs: transportCostEstimate,
-        totalGhs,
-        deliveryAddress: dto.delivery_address || null,
-        deliveryLocation: dto.delivery_location
-          ? {
-              type: "Point",
-              coordinates: [
-                dto.delivery_location.lng,
-                dto.delivery_location.lat,
-              ],
-            }
-          : null,
-        status: targetStatus,
-      });
-
-      const saveOrder = await txOrdersRepo.save(orderData);
-
-      // 8. Atomically reduce available stock quantity from the catalog listing
-      listing.committedKg = Number(listing.committedKg || 0) + requestedQty;
-      await txListingsRepo.save(listing);
-
-      return {saveOrder, farmer};
-    });
+        return { saveOrder, farmer };
+      },
+    );
 
     // 9. Automated Transport Trigger Condition
     if (
