@@ -28,6 +28,8 @@ export interface MarketplaceListing {
   packagingRecommendation: string;
   distanceKm: number;
   deliveryEstimate: string;
+  supportsDelivery?: boolean;
+  supportsPickup?: boolean;
   freshnessTag: "Fresh today" | "Hot seller" | "Top rated" | "Best value" | "In season";
   accentColor: string;
   tintColor: string;

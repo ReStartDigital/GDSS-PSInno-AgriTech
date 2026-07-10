@@ -45,22 +45,68 @@ export interface CreateOrderDto {
   packaging_type_id?: string | null;
 }
 
+interface BackendOrdersPage {
+  data: BackendOrder[];
+  meta: {
+    total_records?: number;
+    current_page?: number;
+    total_pages?: number;
+    total?: number;
+    page?: number;
+    limit: number;
+  };
+}
+
+function unwrapApiData<T>(response: any): T {
+  return response?.success === true && "data" in response ? response.data : response;
+}
+
+function normalizeOrdersPage(response: any): BackendOrdersPage {
+  if (Array.isArray(response?.data)) {
+    return {
+      data: response.data,
+      meta: response.meta || {
+        total_records: response.data.length,
+        current_page: 1,
+        total_pages: 1,
+        limit: response.data.length,
+      },
+    };
+  }
+
+  const unwrapped = unwrapApiData<BackendOrdersPage | BackendOrder[]>(response);
+
+  if (Array.isArray(unwrapped)) {
+    return {
+      data: unwrapped,
+      meta: {
+        total_records: unwrapped.length,
+        current_page: 1,
+        total_pages: 1,
+        limit: unwrapped.length,
+      },
+    };
+  }
+
+  return {
+    data: unwrapped?.data || [],
+    meta: unwrapped?.meta || {
+      total_records: 0,
+      current_page: 1,
+      total_pages: 1,
+      limit: 20,
+    },
+  };
+}
+
 // ── QUERY HOOKS ──────────────────────────────────────────────────────────────
 
 export function useOrders(filters: { page?: number; limit?: number } = {}) {
   return useQuery({
     queryKey: ["orders", filters],
     queryFn: async () => {
-      const response = await apiClient.get<{
-        data: BackendOrder[];
-        meta: {
-          total: number;
-          page: number;
-          limit: number;
-          totalPages: number;
-        };
-      }>("/orders", { params: filters });
-      return response.data;
+      const response = await apiClient.get<BackendOrdersPage>("/orders", { params: filters });
+      return normalizeOrdersPage(response);
     },
     staleTime: 1000 * 30, // 30 seconds stale time
   });
@@ -71,9 +117,7 @@ export function useOrderDetails(id: string) {
     queryKey: ["order", id],
     queryFn: async () => {
       const response = await apiClient.get<BackendOrder>(`/orders/${id}`);
-      // The backend GET /orders/:id returns the object directly wrapped inside success:true, data
-      // which Axios interceptor unwraps to just the BackendOrder object.
-      return response as any;
+      return unwrapApiData<BackendOrder>(response);
     },
     enabled: !!id,
   });
@@ -86,7 +130,7 @@ export function useCreateOrder() {
   return useMutation({
     mutationFn: async (data: CreateOrderDto) => {
       const response = await apiClient.post<BackendOrder>("/orders", data);
-      return response as any;
+      return unwrapApiData<BackendOrder>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -100,7 +144,7 @@ export function useConfirmOrder() {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await apiClient.patch<BackendOrder>(`/orders/${id}/confirm`);
-      return response as any;
+      return unwrapApiData<BackendOrder>(response);
     },
     onSuccess: (data, id) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -116,7 +160,7 @@ export function useDeclineOrder() {
       const response = await apiClient.patch<BackendOrder>(`/orders/${id}/decline`, {
         decline_reason: reason,
       });
-      return response as any;
+      return unwrapApiData<BackendOrder>(response);
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -132,7 +176,7 @@ export function useNegotiateOrder() {
       const response = await apiClient.patch<BackendOrder>(`/orders/${id}/negotiate`, {
         counter_price_per_kg_ghs: price,
       });
-      return response as any;
+      return unwrapApiData<BackendOrder>(response);
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -146,7 +190,7 @@ export function usePackOrder() {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await apiClient.patch<BackendOrder>(`/orders/${id}/pack`);
-      return response as any;
+      return unwrapApiData<BackendOrder>(response);
     },
     onSuccess: (data, id) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -162,7 +206,7 @@ export function useCancelOrder() {
       const response = await apiClient.patch<BackendOrder>(`/orders/${id}/cancel`, {
         cancellation_reason: reason,
       });
-      return response as any;
+      return unwrapApiData<BackendOrder>(response);
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -177,7 +221,7 @@ export function useMarkReadyForPickup() {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await apiClient.patch<BackendOrder>(`/orders/${id}/ready-pickup`);
-      return response as any;
+      return unwrapApiData<BackendOrder>(response);
     },
     onSuccess: (data, id) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -193,7 +237,7 @@ export function useVerifyPickup() {
       const response = await apiClient.post<BackendOrder>(`/orders/${id}/verify-pickup`, {
         verification_pin: pin,
       });
-      return response as any;
+      return unwrapApiData<BackendOrder>(response);
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });

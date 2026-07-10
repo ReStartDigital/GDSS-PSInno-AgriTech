@@ -3,11 +3,12 @@ import { Alert, Image, Pressable, ScrollView, Text, TextInput, View } from "reac
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@vegelink/shared";
-import { useUserSettingsStore } from "@/lib/user-settings-store";
+import { SavedProduce, toSavedProduce, useUserSettingsStore } from "@/lib/user-settings-store";
 import { marketplaceListings } from "@/lib/marketplace-data";
 import { BottomSheet } from "@/components/layout/BottomSheet";
 import { vlClassNames, vlStyles } from "@/lib/design-system";
 import { useUpdateProfile, useMyEarnings } from "@/lib/user-api";
+import { useMarketplaceListings, mapBackendListingToClient } from "@/lib/listings-api";
 import {
   User,
   Bell,
@@ -56,6 +57,7 @@ export default function ProfileScreen() {
   
   const {
     savedListingIds,
+    savedProduces,
     language,
     region,
     notifications,
@@ -140,9 +142,19 @@ export default function ProfileScreen() {
     );
   };
 
-  const savedListings = marketplaceListings.filter((l) =>
-    savedListingIds.includes(l.id)
+  const { data: listingsData } = useMarketplaceListings();
+  const backendListings = listingsData?.data?.map(mapBackendListingToClient) || [];
+
+  const savedListingsById = new Map(
+    [...backendListings, ...marketplaceListings].map((listing) => [
+      listing.id,
+      toSavedProduce(listing),
+    ]),
   );
+
+  const savedListings = savedListingIds
+    .map((savedId) => savedListingsById.get(savedId) || savedProduces[savedId])
+    .filter((item): item is SavedProduce => Boolean(item));
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -399,8 +411,8 @@ export default function ProfileScreen() {
                     }}
                   >
                     <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm">
-                      {item.imageUrls?.[0] ? (
-                        <Image source={{ uri: item.imageUrls[0] }} className="h-full w-full" resizeMode="cover" />
+                      {item.imageUrl ? (
+                        <Image source={{ uri: item.imageUrl }} className="h-full w-full" resizeMode="cover" />
                       ) : (
                         <MediaImage color="#9CA3AF" width={20} height={20} strokeWidth={2} />
                       )}

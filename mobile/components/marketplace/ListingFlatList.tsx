@@ -22,7 +22,7 @@ import {
   Xmark,
   Check,
 } from "iconoir-react-native";
-import { useUserSettingsStore } from "@/lib/user-settings-store";
+import { toSavedProduce, useUserSettingsStore } from "@/lib/user-settings-store";
 
 type SortMode = "nearest" | "price_low" | "price_high" | "stock";
 type ViewMode = "grid" | "list";
@@ -268,7 +268,7 @@ function ListCard({ listing }: { listing: MarketplaceListing }) {
             className="ml-3 h-10 w-10 items-center justify-center rounded-full bg-gray-50 active:bg-gray-100"
             onPress={(e) => {
               e.stopPropagation();
-              toggleSaveListing(listing.id);
+              toggleSaveListing(listing.id, toSavedProduce(listing));
             }}
           >
             <Heart
@@ -303,7 +303,7 @@ function GridCard({ listing }: { listing: MarketplaceListing }) {
             className="absolute right-3 top-3 h-9 w-9 items-center justify-center rounded-full bg-white active:bg-gray-100 shadow-sm"
             onPress={(e) => {
               e.stopPropagation();
-              toggleSaveListing(listing.id);
+              toggleSaveListing(listing.id, toSavedProduce(listing));
             }}
           >
             <Heart

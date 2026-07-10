@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View, ActivityIndicator, Image, Dimensions } from "react-native";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useUserSettingsStore } from "@/lib/user-settings-store";
+import { toSavedProduce, useUserSettingsStore } from "@/lib/user-settings-store";
 import { vlClassNames } from "@/lib/design-system";
 import { initials } from "@/lib/utils";
 import { useListingDetails, mapBackendListingToClient } from "@/lib/listings-api";
@@ -115,7 +115,7 @@ export default function ListingDetailScreen() {
             <View className="flex-row gap-3">
               <Pressable
                 className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm active:bg-gray-50"
-                onPress={() => listing && toggleSaveListing(listing.id)}
+                onPress={() => listing && toggleSaveListing(listing.id, toSavedProduce(listing))}
               >
                 <Heart
                   color={saved ? "#EF4444" : "#6B7280"}
@@ -289,7 +289,13 @@ export default function ListingDetailScreen() {
       </ScrollView>
 
       <View className="absolute bottom-0 left-0 right-0 bg-white px-5 pt-4 shadow-2xl" style={{ paddingBottom: Math.max(insets.bottom, 28) }}>
-        <Link href={`/listings/${listing.id}/order`} asChild>
+        <Link
+          href={{
+            pathname: "/listings/[id]/order",
+            params: { id: listing.id, quantity: String(quantity) },
+          }}
+          asChild
+        >
           <Pressable className={vlClassNames.primaryButton}>
             <Text className={vlClassNames.primaryButtonText}>
               Order · GHC{total}

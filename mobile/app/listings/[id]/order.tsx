@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View, ActivityIndicator, Linking, Platform } from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View, ActivityIndicator, Linking, Platform } from "react-native";
 import { Alert } from "@/lib/alert-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,20 +19,24 @@ import {
 import { useListingDetails, mapBackendListingToClient } from "@/lib/listings-api";
 import { useCreateOrder } from "@/lib/orders-api";
 import { MarketplaceListing } from "@/lib/marketplace-data";
-import { useAuthStore } from "@vegelink/shared";
 
 type DeliveryMode = "pickup" | "delivery";
 
 export default function ListingOrderScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, quantity: quantityParam } = useLocalSearchParams<{ id: string; quantity?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(() => {
+    const parsedQuantity = Number(quantityParam);
+    return Number.isFinite(parsedQuantity) && parsedQuantity > 0
+      ? Math.floor(parsedQuantity)
+      : 1;
+  });
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("delivery");
+  const [deliveryAddress, setDeliveryAddress] = useState("Deliver to customer location");
 
   const { data: rawListing, isLoading } = useListingDetails(id || "");
   const createOrderMutation = useCreateOrder();
-  const authUser = useAuthStore((s) => s.user);
 
   const listing = useMemo(() => {
     return rawListing ? mapBackendListingToClient(rawListing) : null;
@@ -84,13 +88,24 @@ export default function ListingOrderScreen() {
     );
   }
 
-  const produceSubtotal = listing.pricePerUnit * quantity;
-  const transportTotal = deliveryMode === "delivery" ? transportFee * quantity : 0;
+  const canDeliver = listing.supportsDelivery !== false;
+  const canPickup = listing.supportsPickup !== false;
+  const canOrder = listing.availableQuantity > 0 && (canDeliver || canPickup);
+  const selectedDeliveryMode =
+    deliveryMode === "delivery" && !canDeliver && canPickup
+      ? "pickup"
+      : deliveryMode === "pickup" && !canPickup && canDeliver
+      ? "delivery"
+      : deliveryMode;
+  const maxQuantity = Math.max(1, Math.floor(listing.availableQuantity || 0));
+  const selectedQuantity = Math.min(quantity, maxQuantity);
+  const produceSubtotal = listing.pricePerUnit * selectedQuantity;
+  const transportTotal = selectedDeliveryMode === "delivery" ? transportFee * selectedQuantity : 0;
   const total = produceSubtotal + transportTotal;
 
-  const decrement = () => setQuantity((current) => Math.max(1, current - 1));
+  const decrement = () => setQuantity((current) => Math.max(1, Math.min(maxQuantity, current - 1)));
   const increment = () =>
-    setQuantity((current) => Math.min(listing ? listing.availableQuantity : 9999, current + 1));
+    setQuantity((current) => Math.min(maxQuantity, current + 1));
 
   const openDirections = () => {
     if (!listing) return;
@@ -106,25 +121,45 @@ export default function ListingOrderScreen() {
   const handleOrder = () => {
     if (!listing || !rawListing) return;
 
+    if (!canOrder) {
+      Alert.alert(
+        "Not Available",
+        "This listing is not currently available for checkout.",
+        [],
+        { type: "warning" },
+      );
+      return;
+    }
+
+    if (selectedDeliveryMode === "delivery" && deliveryAddress.trim().length < 5) {
+      Alert.alert(
+        "Delivery Address Required",
+        "Please enter a delivery address before placing this order.",
+        [],
+        { type: "warning" },
+      );
+      return;
+    }
+
     createOrderMutation.mutate({
       listing_id: rawListing.id,
-      quantity_kg: quantity,
-      mode: deliveryMode,
-      delivery_address: deliveryMode === "delivery" ? "Deliver to customer location" : null,
+      quantity_kg: selectedQuantity,
+      mode: selectedDeliveryMode,
+      delivery_address: selectedDeliveryMode === "delivery" ? deliveryAddress.trim() : null,
       packaging_type_id: rawListing.recommendedPackagingId || null,
     }, {
       onSuccess: (createdOrder) => {
-        const modeLabel = deliveryMode === "pickup" ? "Self Pickup" : "Transporter Delivery";
+        const modeLabel = selectedDeliveryMode === "pickup" ? "Self Pickup" : "Transporter Delivery";
 
         Alert.alert(
           "Order Placed ✅",
-          `${quantity} ${listing.unitOfMeasure} of ${listing.cropName} ordered via ${modeLabel}.${
-            deliveryMode === "pickup" 
+          `${selectedQuantity} ${listing.unitOfMeasure} of ${listing.cropName} ordered via ${modeLabel}.${
+            selectedDeliveryMode === "pickup" 
               ? "\n\nYou'll get directions to the farm once the farmer confirms." 
               : "\n\nA transporter will be matched to deliver your order."
           }`,
           [
-            ...(deliveryMode === "pickup"
+            ...(selectedDeliveryMode === "pickup"
               ? [{
                   text: "Get Directions",
                   onPress: () => {
@@ -220,26 +255,30 @@ export default function ListingOrderScreen() {
         </Text>
 
         <View className="mt-4 gap-3">
-          <DeliveryOption
-            title="Self Pickup"
-            subtitle="Go to the farm and collect your produce yourself. No transport fee."
-            icon={<MapPin color={deliveryMode === "pickup" ? "#166534" : "#6B7280"} width={22} height={22} strokeWidth={2} />}
-            selected={deliveryMode === "pickup"}
-            onPress={() => setDeliveryMode("pickup")}
-            badge="Free"
-          />
-          <DeliveryOption
-            title="Transporter Delivery"
-            subtitle="A transporter picks up from the farm and delivers to you."
-            icon={<Truck color={deliveryMode === "delivery" ? "#1D4ED8" : "#6B7280"} width={22} height={22} strokeWidth={2} />}
-            selected={deliveryMode === "delivery"}
-            onPress={() => setDeliveryMode("delivery")}
-            badge={`GHC${transportFee}/${listing.unitOfMeasure}`}
-          />
+          {canPickup && (
+            <DeliveryOption
+              title="Self Pickup"
+              subtitle="Go to the farm and collect your produce yourself. No transport fee."
+              icon={<MapPin color={selectedDeliveryMode === "pickup" ? "#166534" : "#6B7280"} width={22} height={22} strokeWidth={2} />}
+              selected={selectedDeliveryMode === "pickup"}
+              onPress={() => setDeliveryMode("pickup")}
+              badge="Free"
+            />
+          )}
+          {canDeliver && (
+            <DeliveryOption
+              title="Transporter Delivery"
+              subtitle="A transporter picks up from the farm and delivers to you."
+              icon={<Truck color={selectedDeliveryMode === "delivery" ? "#1D4ED8" : "#6B7280"} width={22} height={22} strokeWidth={2} />}
+              selected={selectedDeliveryMode === "delivery"}
+              onPress={() => setDeliveryMode("delivery")}
+              badge={`GHC${transportFee}/${listing.unitOfMeasure}`}
+            />
+          )}
         </View>
 
         {/* Self Pickup Info */}
-        {deliveryMode === "pickup" && (
+        {selectedDeliveryMode === "pickup" && (
           <View className="mt-4 rounded-2xl border border-green-200 bg-green-50 p-4">
             <View className="flex-row items-center gap-2">
               <MapPin color="#166534" width={16} height={16} strokeWidth={2} />
@@ -261,21 +300,37 @@ export default function ListingOrderScreen() {
         )}
 
         {/* Transporter Delivery Estimate */}
-        {deliveryMode === "delivery" && (
-          <View className="mt-4 rounded-3xl border border-dashed border-blue-200 bg-blue-50/50 p-4">
-            <View className="flex-row items-center gap-2">
-              <Truck color="#2563EB" width={18} height={18} strokeWidth={2} />
-              <Text className="text-sm font-black text-gray-700">
-                Transport Estimate
+        {selectedDeliveryMode === "delivery" && (
+          <View className="mt-4 gap-4">
+            <View className="rounded-2xl border border-blue-100 bg-white p-4">
+              <Text className="text-xs font-black uppercase text-gray-500">
+                Delivery Address
               </Text>
-            </View>
-            <View className="mt-4 flex-row gap-3">
-              <EstimateTile value={listing.deliveryEstimate} label="Delivery" />
-              <EstimateTile value={`${listing.distanceKm} km`} label="Distance" />
-              <EstimateTile
-                value={`GHC${transportFee}/${listing.unitOfMeasure}`}
-                label="Transport fee"
+              <TextInput
+                value={deliveryAddress}
+                onChangeText={setDeliveryAddress}
+                placeholder="Enter delivery address"
+                placeholderTextColor="#9CA3AF"
+                className="mt-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-base font-semibold text-gray-950"
+                multiline
               />
+            </View>
+
+            <View className="rounded-3xl border border-dashed border-blue-200 bg-blue-50/50 p-4">
+              <View className="flex-row items-center gap-2">
+                <Truck color="#2563EB" width={18} height={18} strokeWidth={2} />
+                <Text className="text-sm font-black text-gray-700">
+                  Transport Estimate
+                </Text>
+              </View>
+              <View className="mt-4 flex-row gap-3">
+                <EstimateTile value={listing.deliveryEstimate} label="Delivery" />
+                <EstimateTile value={`${listing.distanceKm} km`} label="Distance" />
+                <EstimateTile
+                  value={`GHC${transportFee}/${listing.unitOfMeasure}`}
+                  label="Transport fee"
+                />
+              </View>
             </View>
           </View>
         )}
@@ -291,7 +346,7 @@ export default function ListingOrderScreen() {
             <Minus color="#6B7280" width={18} height={18} strokeWidth={2.5} />
           </Pressable>
           <View className="h-12 flex-1 items-center justify-center rounded-2xl border border-green-200 bg-green-50">
-            <Text className="text-xl font-black text-green-800">{quantity}</Text>
+            <Text className="text-xl font-black text-green-800">{selectedQuantity}</Text>
           </View>
           <Pressable
             className="h-12 w-12 items-center justify-center rounded-2xl bg-green-800 shadow-sm"
@@ -306,13 +361,13 @@ export default function ListingOrderScreen() {
           <View className="flex-row items-center justify-between">
             <Text className="text-xs font-black text-gray-500">Produce</Text>
             <Text className="text-sm font-black text-gray-700">
-              GHC{listing.pricePerUnit} × {quantity} = GHC{produceSubtotal}
+              GHC{listing.pricePerUnit} × {selectedQuantity} = GHC{produceSubtotal}
             </Text>
           </View>
           <View className="mt-2 flex-row items-center justify-between">
             <Text className="text-xs font-black text-gray-500">Transport</Text>
             <Text className="text-sm font-black text-gray-700">
-              {deliveryMode === "pickup" ? "Free (Self Pickup)" : `GHC${transportTotal}`}
+              {selectedDeliveryMode === "pickup" ? "Free (Self Pickup)" : `GHC${transportTotal}`}
             </Text>
           </View>
           <View className="mt-3 border-t border-gray-200 pt-3 flex-row items-center justify-between">
@@ -326,13 +381,13 @@ export default function ListingOrderScreen() {
         <Pressable
           className={vlClassNames.primaryButton}
           onPress={handleOrder}
-          disabled={createOrderMutation.isPending}
+          disabled={createOrderMutation.isPending || !canOrder}
         >
           {createOrderMutation.isPending ? (
             <ActivityIndicator color="white" size="small" />
           ) : (
             <Text className={vlClassNames.primaryButtonText}>
-              {deliveryMode === "pickup" ? "Order & Pickup" : "Order & Deliver"} — GHC{total}
+              {selectedDeliveryMode === "pickup" ? "Order & Pickup" : "Order & Deliver"} — GHC{total}
             </Text>
           )}
         </Pressable>

@@ -260,6 +260,8 @@ export function mapBackendListingToClient(item: BackendListing): any {
     packagingRecommendation: item.recommendedPackaging?.label || "Standard packaging",
     distanceKm: 12,
     deliveryEstimate: item.supportsDelivery ? "Same day" : "Pickup only",
+    supportsDelivery: item.supportsDelivery,
+    supportsPickup: item.supportsPickup,
     freshnessTag: "Fresh today",
     accentColor,
     tintColor,
