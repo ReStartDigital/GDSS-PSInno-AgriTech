@@ -40,7 +40,6 @@ export const authApi = {
       email: data.email || undefined,
       region: data.region || undefined,
       language: data.language || undefined,
-      location: data.location || undefined,
     }),
 
   /**
@@ -158,8 +157,10 @@ export const listingsApi = {
 export const ordersApi = {
   getMyOrders: () => api.get('/orders'),
   getById: (id: string) => api.get(`/orders/${id}`),
-  place: (listingId: string, data: PlaceOrderFormData) =>
-    api.post('/orders', { listing_id: listingId, ...data }),
+  place: (listingId: string, data: PlaceOrderFormData) => {
+    const { listing_id: _, ...rest } = data
+    return api.post('/orders', { listing_id: listingId, ...rest })
+  },
   confirm: (id: string) => api.patch(`/orders/${id}/confirm`, {}),
   cancel: (id: string, reason: string) =>
     api.patch(`/orders/${id}/cancel`, { cancellation_reason: reason }),
