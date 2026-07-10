@@ -117,7 +117,13 @@ describe('createListingSchema', () => {
 
 // ── placeOrderSchema ──────────────────────────────────────────────────────────
 describe('placeOrderSchema', () => {
-  const valid = { quantity_kg: 50, delivery_address: 'Kumasi Central Market', mode: 'delivery' as const }
+  const valid = {
+    listing_id: '123e4567-e89b-12d3-a456-426614174000',
+    quantity_kg: 50,
+    delivery_address: 'Kumasi Central Market',
+    delivery_location: { lat: 6.6745, lng: -1.5644 },
+    mode: 'delivery' as const,
+  }
 
   it('accepts a valid delivery order', () => {
     expect(placeOrderSchema.safeParse(valid).success).toBe(true)
