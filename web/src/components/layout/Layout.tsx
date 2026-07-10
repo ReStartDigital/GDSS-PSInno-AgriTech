@@ -44,15 +44,8 @@ function getRoleNav(role: string | undefined): NavItem[] {
     case 'agent':
       return [
         ...base,
-        { to: '/marketplace', label: 'Marketplace', icon: 'shopping' },
         { to: '/clients', label: 'My Farmers', icon: 'user' },
-        { to: '/listings', label: 'Client Listings', icon: 'bag' },
-        { to: '/orders', label: 'All Orders', icon: 'truck' },
-        { to: '/profile', label: 'Profile', icon: 'shield' },
         { to: '/marketplace', label: 'Marketplace',     icon: 'shopping' },
-        { to: '/clients',     label: 'My Farmers',      icon: 'user'     },
-        // { to: '/listings',    label: 'Client Listings',  icon: 'bag'      },
-        // { to: '/orders',      label: 'All Orders',      icon: 'truck'    },
         { to: '/profile',     label: 'Profile',         icon: 'shield'   },
       ]
     default:
