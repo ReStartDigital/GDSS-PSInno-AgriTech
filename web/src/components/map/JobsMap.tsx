@@ -25,9 +25,10 @@ const dropoffIcon = L.icon({
 interface RouteMapPreviewProps {
   pickup: [number, number]; // [lat, lng]
   dropoff: [number, number]; // [lat, lng]
+  interactive?: boolean;
 }
 
-export function JobsMap({ pickup, dropoff }: RouteMapPreviewProps) {
+export function JobsMap({ pickup, dropoff, interactive = false }: RouteMapPreviewProps) {
   const center: [number, number] = [(pickup[0] + dropoff[0]) / 2, (pickup[1] + dropoff[1]) / 2];
 
   return (
@@ -35,10 +36,10 @@ export function JobsMap({ pickup, dropoff }: RouteMapPreviewProps) {
       center={center} 
       zoom={11} 
       style={{ height: '100%', width: '100%' }}
-      dragging={false}
-      zoomControl={false}
-      scrollWheelZoom={false}
-      doubleClickZoom={false}
+      dragging={interactive}
+      zoomControl={interactive}
+      scrollWheelZoom={interactive}
+      doubleClickZoom={interactive}
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <Marker position={pickup} icon={pickupIcon} />

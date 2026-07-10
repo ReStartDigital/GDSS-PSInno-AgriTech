@@ -21,6 +21,24 @@ export interface Job {
   }
 }
 
+function mapBackendJob(job: any): Job {
+  let mappedStatus = job.status
+  if (job.status === 'open') mappedStatus = 'pending'
+  else if (job.status === 'accepted') mappedStatus = 'assigned'
+  else if (job.status === 'en_route') mappedStatus = 'in_transit'
+
+  const pickupName = job.order?.listing?.farmer?.region || 'Farm'
+  const dropoffName = job.order?.deliveryAddress || 'Buyer'
+  const route = `${pickupName} to ${dropoffName}`
+
+  return {
+    ...job,
+    status: mappedStatus,
+    costGhs: Number(job.estimatedCostGhs || job.estimated_cost_ghs || 0),
+    route: job.route || route,
+  } as Job
+}
+
 export function useJobs() {
   return useQuery<Job[]>({
     queryKey: ['jobs'],
@@ -33,16 +51,24 @@ export function useJobs() {
         } else if (resData.success && resData.data && Array.isArray(resData.data.data)) {
           jobs = resData.data.data
         }
-        return jobs.map((job: any) => {
-          let mappedStatus = job.status
-          if (job.status === 'open') mappedStatus = 'pending'
-          else if (job.status === 'accepted') mappedStatus = 'assigned'
-          else if (job.status === 'en_route') mappedStatus = 'in_transit'
-          return {
-            ...job,
-            status: mappedStatus,
-          }
-        }) as Job[]
+        return jobs.map(mapBackendJob)
+      }),
+  })
+}
+
+export function useMyTransporterJobs() {
+  return useQuery<Job[]>({
+    queryKey: ['my-jobs'],
+    queryFn: () =>
+      transportApi.getMyJobs().then((r) => {
+        const resData = r.data
+        let jobs: any[] = []
+        if (resData.success && Array.isArray(resData.data)) {
+          jobs = resData.data
+        } else if (resData.success && resData.data && Array.isArray(resData.data.data)) {
+          jobs = resData.data.data
+        }
+        return jobs.map(mapBackendJob)
       }),
   })
 }
@@ -53,6 +79,7 @@ export function useAcceptJob() {
     mutationFn: (id: string) => transportApi.accept(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['jobs'] })
+      qc.invalidateQueries({ queryKey: ['my-jobs'] })
       qc.invalidateQueries({ queryKey: ['orders'] })
     },
   })
@@ -72,6 +99,7 @@ export function useUpdateJobStatus() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['jobs'] })
+      qc.invalidateQueries({ queryKey: ['my-jobs'] })
       qc.invalidateQueries({ queryKey: ['orders'] })
     },
   })

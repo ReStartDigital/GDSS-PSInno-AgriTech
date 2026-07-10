@@ -84,6 +84,9 @@ export class TransportRepository {
     const queryBuilder = this.repo
       .createQueryBuilder("tr")
       .leftJoinAndSelect("tr.order", "order")
+      .leftJoinAndSelect("order.listing", "listing")
+      .leftJoinAndSelect("listing.farmer", "farmer")
+      .leftJoinAndSelect("order.buyer", "buyer")
       .where("tr.status = :status", { status: TransportStatus.OPEN });
 
     if (params.lat && params.lng) {
@@ -116,6 +119,33 @@ export class TransportRepository {
     } else {
       queryBuilder.orderBy("tr.createdAt", "DESC");
     }
+
+    const [jobs, total] = await Promise.all([
+      queryBuilder.take(params.limit).skip(params.offset).getMany(),
+      queryBuilder.getCount(),
+    ]);
+
+    return { jobs, total };
+  }
+
+  /**
+   * Locates transport jobs assigned to a specific transporter
+   */
+  async findMyJobs(params: {
+    transporterId: string;
+    limit: number;
+    offset: number;
+  }): Promise<{ jobs: any[]; total: number }> {
+    const queryBuilder = this.repo
+      .createQueryBuilder("tr")
+      .leftJoinAndSelect("tr.order", "order")
+      .leftJoinAndSelect("order.listing", "listing")
+      .leftJoinAndSelect("listing.farmer", "farmer")
+      .leftJoinAndSelect("order.buyer", "buyer")
+      .where("tr.transporterId = :transporterId", {
+        transporterId: params.transporterId,
+      })
+      .orderBy("tr.updatedAt", "DESC");
 
     const [jobs, total] = await Promise.all([
       queryBuilder.take(params.limit).skip(params.offset).getMany(),

@@ -8,17 +8,15 @@ import type {
   RegistrationTokenPayload,
 } from "../../common/types/express.js";
 
-
-const node_env = process.env.NODE_ENV
+const node_env = process.env.NODE_ENV;
 
 let privateKey = "";
 let publicKey = "";
 
-
-if(node_env === "development"){
-  privateKey = process.env.JWT_PRIVATE_KEY_PATH || "./keys/private.pem"
-  publicKey =process.env.JWT_PUBLIC_KEY_PATH || "./keys/public.pem"
-}else{
+if (node_env === "development") {
+  privateKey = process.env.JWT_PRIVATE_KEY_PATH || "./keys/private.pem";
+  publicKey = process.env.JWT_PUBLIC_KEY_PATH || "./keys/public.pem";
+} else {
   privateKey = fs.readFileSync(
     process.env.JWT_PRIVATE_KEY_PATH || "./keys/private.pem",
     "utf8",

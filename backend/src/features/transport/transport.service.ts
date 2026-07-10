@@ -85,6 +85,23 @@ export class TransportService {
     };
   }
 
+  async getMyJobs(
+    transporterId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ data: any[]; total: number }> {
+    const offset = (page - 1) * limit;
+    const { jobs, total } = await this.transportRepo.findMyJobs({
+      transporterId,
+      limit,
+      offset,
+    });
+    return {
+      data: jobs,
+      total,
+    };
+  }
+
   async acceptJob(
     requestId: string,
     transporterId: string,

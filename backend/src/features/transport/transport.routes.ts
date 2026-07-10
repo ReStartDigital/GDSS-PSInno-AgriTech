@@ -196,6 +196,44 @@ transportRouter.get(
 
 /**
  * @openapi
+ * /api/v1/transport/my-jobs:
+ *   get:
+ *     summary: Retrieve claimed logistics contracts
+ *     description: Returns a paginated list of transport requests assigned to the authenticated transporter.
+ *     tags:
+ *       - Transport Logistics
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page offset index.
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *         description: Number of records returned per page.
+ *     responses:
+ *       200:
+ *         description: A paginated list of transporter's jobs.
+ *       401:
+ *         description: Unauthorized.
+ */
+transportRouter.get(
+  "/my-jobs",
+  authorize(UserRole.TRANSPORTER),
+  controller.getMyJobs,
+);
+
+/**
+ * @openapi
  * /api/v1/transport/{id}/accept:
  *   patch:
  *     summary: Accept and claim a freight hauling job request

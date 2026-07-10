@@ -40,6 +40,7 @@ export const authApi = {
       email: data.email || undefined,
       region: data.region || undefined,
       language: data.language || undefined,
+      location: (data as any).location || undefined,
     }),
 
   /**
@@ -158,18 +159,26 @@ export const ordersApi = {
   getMyOrders: () => api.get('/orders'),
   getById: (id: string) => api.get(`/orders/${id}`),
   place: (listingId: string, data: PlaceOrderFormData) => {
-    const { listing_id: _, ...rest } = data
-    return api.post('/orders', { listing_id: listingId, ...rest })
+    const { listing_id, ...rest } = data;
+    return api.post('/orders', { listing_id: listingId || listing_id, ...rest });
   },
   confirm: (id: string) => api.patch(`/orders/${id}/confirm`, {}),
   cancel: (id: string, reason: string) =>
     api.patch(`/orders/${id}/cancel`, { cancellation_reason: reason }),
+  negotiate: (id: string, counterPricePerKgGhs: number) =>
+    api.patch(`/orders/${id}/negotiate`, { counter_price_per_kg_ghs: counterPricePerKgGhs }),
+  readyPickup: (id: string) =>
+    api.patch(`/orders/${id}/ready-pickup`, {}),
+  verifyPickup: (id: string, pin: string) =>
+    api.post(`/orders/${id}/verify-pickup`, { verification_pin: pin }),
 }
 
 // ── Transport API ──
 export const transportApi = {
   getJobs: (params?: Record<string, string | number | undefined>) =>
     api.get('/transport/available', { params }),
+  getMyJobs: (params?: Record<string, string | number | undefined>) =>
+    api.get('/transport/my-jobs', { params }),
   accept: (id: string) => api.patch(`/transport/${id}/accept`, {}),
   arrive: (id: string) => api.patch(`/transport/${id}/arrive`, {}),
   confirmDelivery: (id: string, verification_pin: string) =>
@@ -191,10 +200,9 @@ export const usersApi = {
 
   /** PATCH /users/me — update mutable profile fields */
   updateProfile: (data: {
-    first_name?: string
-    middle_name?: string
-    last_name?: string
-    phone?: string
+    firstName?: string
+    middleName?: string
+    lastName?: string
     email?: string
     region?: string
     language?: string
