@@ -36,7 +36,7 @@ export const createOrderSchema = z
   .refine(
     (data) => {
       if (data.mode === FulfilmentMode.DELIVERY) {
-        return !!data.delivery_address && !!data.delivery_location;
+        return !!data.delivery_address;
       }
       return true;
     },

@@ -174,28 +174,24 @@ export class OrdersService {
         order.status === OrderStatus.CONFIRMED &&
         order.mode === FulfilmentMode.DELIVERY
       ) {
-        // Enforce location guards before dispatching to PostGIS parameters
-        if (!dto.delivery_location || !farmer.location) {
-          throw new BadRequestException(
-            "Spatial coordinates for both pickup (farmer) and dropoff (buyer) are mandatory for auto-confirmed delivery orders.",
-            ErrorCode.BAD_REQUEST,
-          );
+        // Only auto-dispatch if both spatial coordinates are available.
+        // When delivery_location is omitted (e.g. frontend only sent a text address),
+        // skip auto-dispatch — the transport job can be created manually later.
+        if (dto.delivery_location && farmer.location) {
+          await this.transportService.requestHauling({
+            order_id: order.id,
+            pickup_location: {
+              latitude: farmer.location.coordinates[1],
+              longitude: farmer.location.coordinates[0],
+            },
+            dropoff_location: {
+              latitude: dto.delivery_location.lat,
+              longitude: dto.delivery_location.lng,
+            },
+            packaging_type_name: dto.packaging_type_name || "Standard Sacks",
+            special_handling: dto.special_handling,
+          });
         }
-
-        // Automatically dispatch the transport job to the market pool
-        await this.transportService.requestHauling({
-          order_id: order.id,
-          pickup_location: {
-            latitude: farmer.location.coordinates[1], // Extracting Lat from GeoJSON point [lng, lat]
-            longitude: farmer.location.coordinates[0], // Extracting Lng from GeoJSON point [lng, lat]
-          },
-          dropoff_location: {
-            latitude: dto.delivery_location.lat,
-            longitude: dto.delivery_location.lng,
-          },
-          packaging_type_name: dto.packaging_type_name || "Standard Sacks",
-          special_handling: dto.special_handling,
-        });
       }
 
       return order;

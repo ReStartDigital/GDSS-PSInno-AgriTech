@@ -110,35 +110,8 @@ router.get(
   ordersController.getOrderById,
 );
 
-/**
- * @openapi
- * /api/v1/orders:
- *   post:
- *     summary: Place a new order
- *     description: Initiates a purchase checkout against a crop listing, immediately establishing a stock reservation (soft-hold).
- *     tags:
- *       - Orders
- *     security:
- *       - BearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/CreateOrderBody'
- *     responses:
- *       201:
- *         description: Order placed successfully and stock allocation reserved.
- *       400:
- *         description: Bad Request (e.g., requested quantity exceeds stock availability).
- *       401:
- *         description: Unauthorized. Invalid or missing token.
- *       403:
- *         description: Forbidden. User lacks the BUYER role.
- *       404:
- *         description: Target listing or producer account not found.
- */
-router.post("/", authorize(UserRole.BUYER), ordersController.createOrder);
+// NOTE: POST /orders is already defined via the .route("/") chain above (line 77-80).
+// A duplicate was removed here to prevent double-registration.
 
 /**
  * @openapi
