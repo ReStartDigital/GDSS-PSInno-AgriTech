@@ -153,22 +153,22 @@ function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
         <h3 className="mp-card-name">#{order.id.slice(0, 8)}</h3>
         <p className="mp-card-farmer">
           <span style={{ opacity: 0.5, marginRight: 4 }}>Placed</span>
-          {new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+          {new Date(order.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
         </p>
 
         {/* Price + quantity meta */}
         <div className="mp-card-meta">
           <div>
-            <span className="mp-card-price">GH₵ {order.totalGhs}</span>
+            <span className="mp-card-price">GH₵ {order.total_ghs}</span>
             <span className="mp-card-per"> total</span>
           </div>
-          <div className="mp-card-qty">{order.quantityKg} kg</div>
+          <div className="mp-card-qty">{order.quantity_kg} kg</div>
         </div>
 
-        {order.deliveryAddress && (
+        {order.delivery_address && (
           <p className="mp-card-date">
             <span style={{ opacity: 0.55 }}>To:</span>{' '}
-            {order.deliveryAddress}
+            {order.delivery_address}
           </p>
         )}
 
@@ -315,7 +315,7 @@ function OrderDetail({ order, onClose }: { order: Order; onClose: () => void }) 
         ))}
       </div>
 
-      {order.deliveryAddress && (
+      {order.delivery_address && (
         <div style={{ padding: '12px 16px', borderRadius: 12, background: 'rgba(214,255,205,0.3)', marginBottom: 16 }}>
           <strong style={{ fontSize: '0.8rem', color: '#264123', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Delivery Address</strong>
           <p style={{ margin: '4px 0 0', color: '#374151' }}>{order.deliveryAddress}</p>

@@ -16,34 +16,39 @@ interface NavItem {
 /** Returns role-specific nav items with proper labels */
 function getRoleNav(role: string | undefined): NavItem[] {
   const base: NavItem[] = [
-    { to: '/overview', label: 'Overview', icon: 'leaf' }
+    { to: '/overview', label: 'Overview', icon: 'leaf' },
   ]
 
   switch (role) {
     case 'farmer':
       return [
         ...base,
-        { to: '/listings', label: 'My Listings',  icon: 'bag'      },
-        { to: '/orders',   label: 'My Orders',     icon: 'shopping' },
-        { to: '/profile',  label: 'Profile',       icon: 'user'     },
+        { to: '/listings', label: 'My Listings', icon: 'bag' },
+        { to: '/orders', label: 'My Orders', icon: 'shopping' },
+        { to: '/profile', label: 'Profile', icon: 'user' },
       ]
     case 'buyer':
       return [
         ...base,
         { to: '/marketplace', label: 'Marketplace', icon: 'shopping' },
-        { to: '/orders',      label: 'My Orders',   icon: 'bag'      },
-        { to: '/profile',     label: 'Profile',     icon: 'user'     },
+        { to: '/orders', label: 'My Orders', icon: 'bag' },
+        { to: '/profile', label: 'Profile', icon: 'user' },
       ]
     case 'transporter':
       return [
         ...base,
-        { to: '/jobs',    label: 'Available Jobs', icon: 'truck'  },
-        { to: '/orders',  label: 'My Deliveries',  icon: 'bag'    },
-        { to: '/profile', label: 'Profile',        icon: 'user'   },
+        { to: '/jobs', label: 'Available Jobs', icon: 'truck' },
+        { to: '/orders', label: 'My Deliveries', icon: 'bag' },
+        { to: '/profile', label: 'Profile', icon: 'user' },
       ]
     case 'agent':
       return [
         ...base,
+        { to: '/marketplace', label: 'Marketplace', icon: 'shopping' },
+        { to: '/clients', label: 'My Farmers', icon: 'user' },
+        { to: '/listings', label: 'Client Listings', icon: 'bag' },
+        { to: '/orders', label: 'All Orders', icon: 'truck' },
+        { to: '/profile', label: 'Profile', icon: 'shield' },
         { to: '/marketplace', label: 'Marketplace',     icon: 'shopping' },
         { to: '/clients',     label: 'My Farmers',      icon: 'user'     },
         // { to: '/listings',    label: 'Client Listings',  icon: 'bag'      },
@@ -54,8 +59,8 @@ function getRoleNav(role: string | undefined): NavItem[] {
       return [
         ...base,
         { to: '/marketplace', label: 'Marketplace', icon: 'shopping' },
-        { to: '/orders',      label: 'Orders',      icon: 'bag'      },
-        { to: '/profile',     label: 'Profile',     icon: 'user'     },
+        { to: '/orders', label: 'Orders', icon: 'bag' },
+        { to: '/profile', label: 'Profile', icon: 'user' },
       ]
   }
 }
@@ -89,17 +94,17 @@ function formatPhone(phone: string) {
 // ── Role accent colors ─────────────────────────────────────────────────────────
 
 const ROLE_ACCENT: Record<string, string> = {
-  farmer:      '#d6ffcd',
-  buyer:       '#bfdbfe',
+  farmer: '#d6ffcd',
+  buyer: '#bfdbfe',
   transporter: '#fde68a',
-  agent:       '#fca5a5',
+  agent: '#fca5a5',
 }
 
 const ROLE_ICON: Record<string, IconName> = {
-  farmer:      'leaf',
-  buyer:       'shopping',
+  farmer: 'leaf',
+  buyer: 'shopping',
   transporter: 'truck',
-  agent:       'shield',
+  agent: 'shield',
 }
 
 // ── Layout ────────────────────────────────────────────────────────────────────
@@ -205,6 +210,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <NavLink to="/marketplace" className={({ isActive }) => `topbar-nav-link ${isActive ? 'active' : ''}`}>Marketplace</NavLink>
               <NavLink to="/how-it-works" className={({ isActive }) => `topbar-nav-link ${isActive ? 'active' : ''}`}>How it Works</NavLink>
               <NavLink to="/about" className={({ isActive }) => `topbar-nav-link ${isActive ? 'active' : ''}`}>About</NavLink>
+              {/* <NavLink to="/admin" className={({ isActive }) => `topbar-nav-link ${isActive ? 'active' : ''}`}>Admin Portal</NavLink> */}
             </nav>
           )}
 
@@ -212,7 +218,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="topbar-actions">
             {!user ? (
               <>
-                <Link to="/auth/login"    className="secondary-button topbar-btn">Log In</Link>
+                <Link to="/auth/login" className="secondary-button topbar-btn">Log In</Link>
                 <Link to="/auth/register" className="primary-button topbar-btn">Register</Link>
               </>
             ) : (
@@ -249,6 +255,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <NavLink to="/marketplace" className={({ isActive }) => `mobile-menu-link ${isActive ? 'active' : ''}`}>Marketplace</NavLink>
               <NavLink to="/how-it-works" className={({ isActive }) => `mobile-menu-link ${isActive ? 'active' : ''}`}>How it Works</NavLink>
               <NavLink to="/about" className={({ isActive }) => `mobile-menu-link ${isActive ? 'active' : ''}`}>About</NavLink>
+              {/* <NavLink to="/admin" className={({ isActive }) => `mobile-menu-link ${isActive ? 'active' : ''}`}>Admin Portal</NavLink> */}
             </nav>
             <div className="mobile-menu-actions">
               <Link to="/auth/login" className="secondary-button mobile-menu-btn">Log In</Link>
